@@ -44,11 +44,14 @@ Board Game Night is your all-in-one companion for organizing tabletop gaming ses
 ### Managing Your Collection
 
 #### Import from BoardGameGeek
-1. Go to **My Collection**
-2. Click **Import from BGG**
-3. Enter your BGG username
-4. Select which games to import
-5. Optionally enrich with descriptions and images
+**Note:** A Board Game Geek (BGG) XML API key is required for importing your collection.
+
+1. **Get your BGG API key** - Visit [BoardGameGeek API](https://boardgamegeek.com/wiki/page/BGG_XML_API2) and sign in to obtain your API credentials
+2. Go to **My Collection** in the app
+3. Click **Import from BGG**
+4. Enter your BGG username
+5. Select which games to import
+6. Optionally enrich with descriptions and images
 
 #### Add Games Manually
 1. Click **Add Game**
@@ -133,11 +136,20 @@ DATABASE_URL="postgresql://..."
 NEXTAUTH_SECRET="your-secret-key"
 NEXTAUTH_URL="http://localhost:3000"
 
+# Board Game Geek API (Required for BGG collection import)
+BGG_API_KEY="your-bgg-api-key"
+
 # APIs (optional - for image search and YouTube)
 GOOGLE_API_KEY="..."
 GOOGLE_CX="..."
 YOUTUBE_API_KEY="..."
 ```
+
+**Getting a BGG API Key:**
+- Visit [BoardGameGeek API](https://boardgamegeek.com/wiki/page/BGG_XML_API2)
+- Sign in to your BGG account
+- Request an API key from the API documentation
+- The BGG XML API is rate-limited, so be mindful of usage
 
 ## 🚦 Development
 
