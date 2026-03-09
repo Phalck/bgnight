@@ -169,6 +169,26 @@ YOUTUBE_API_KEY="..."
 - Request an API key from the API documentation
 - **Note:** Only required if you want to search and import directly from BGG. CSV upload works without an API key.
 
+**Getting a Google API Key (for image search):**
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to **APIs & Services** → **Credentials**
+4. Click **Create Credentials** → **API Key**
+5. Enable the **Custom Search API** for your project
+6. Create a Custom Search Engine at [Google Programmable Search Engine](https://programmablesearchengine.google.com/)
+7. Copy your **Search Engine ID** (this is your `GOOGLE_CX` value)
+- **Note:** Required for searching game images from Google
+
+**Getting a YouTube API Key (for video search):**
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to **APIs & Services** → **Library**
+4. Search for **YouTube Data API v3** and enable it
+5. Go to **APIs & Services** → **Credentials**
+6. Click **Create Credentials** → **API Key**
+7. Copy the generated API key
+- **Note:** Required for searching YouTube videos and tutorials for games
+
 ## 🚦 Development
 
 ```bash
