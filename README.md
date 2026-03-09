@@ -43,21 +43,26 @@ Board Game Night is your all-in-one companion for organizing tabletop gaming ses
 
 ### Managing Your Collection
 
-#### Import from BoardGameGeek
-**Note:** A Board Game Geek (BGG) XML API key is required for importing your collection.
+#### Adding Games
+1. Go to **My Collection**
+2. Click **Add Game**
+3. Choose your import method:
 
-1. **Get your BGG API key** - Visit [BoardGameGeek API](https://boardgamegeek.com/wiki/page/BGG_XML_API2) and sign in to obtain your API credentials
-2. Go to **My Collection** in the app
-3. Click **Import from BGG**
-4. Enter your BGG username
-5. Select which games to import
-6. Optionally enrich with descriptions and images
+**Option A: Search & Import from BGG (requires API key)**
+- Enter your BGG username to search your collection
+- Select games to import
+- Optionally enrich with descriptions and images
+- **Note:** Requires a Board Game Geek XML API key (see Environment Variables)
 
-#### Add Games Manually
-1. Click **Add Game**
-2. Enter game details (title, players, duration, etc.)
-3. Upload or search for cover images
-4. Save to your collection
+**Option B: Upload BGG CSV Export (no API key needed)**
+- Export your collection as CSV from your [BGG account](https://boardgamegeek.com/collection)
+- Upload the CSV file directly
+- Games are imported automatically
+
+**Option C: Manual Entry**
+- Enter game details (title, players, duration, etc.)
+- Upload or search for cover images
+- Save to your collection
 
 ### Planning a Game Night
 1. Go to **Plan BGN**
@@ -136,7 +141,7 @@ DATABASE_URL="postgresql://..."
 NEXTAUTH_SECRET="your-secret-key"
 NEXTAUTH_URL="http://localhost:3000"
 
-# Board Game Geek API (Required for BGG collection import)
+# Board Game Geek API (Optional - only needed for BGG search/import)
 BGG_API_KEY="your-bgg-api-key"
 
 # APIs (optional - for image search and YouTube)
@@ -149,7 +154,7 @@ YOUTUBE_API_KEY="..."
 - Visit [BoardGameGeek API](https://boardgamegeek.com/wiki/page/BGG_XML_API2)
 - Sign in to your BGG account
 - Request an API key from the API documentation
-- The BGG XML API is rate-limited, so be mindful of usage
+- **Note:** Only required if you want to search and import directly from BGG. CSV upload works without an API key.
 
 ## 🚦 Development
 
