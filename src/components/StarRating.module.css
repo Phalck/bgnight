@@ -1,0 +1,45 @@
+.container {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.star:hover:not(:disabled) {
+  transform: scale(1.2);
+}
+
+.star:disabled {
+  cursor: default;
+}
+
+.filled {
+  color: #fbbf24; /* amber-400 */
+}
+
+.empty {
+  color: #4b5563; /* gray-600 */
+}
+
+.small .star {
+  font-size: 1rem;
+}
+
+.medium .star {
+  font-size: 1.5rem;
+}
+
+.large .star {
+  font-size: 2rem;
+}
+
+.readOnly {
+  pointer-events: none;
+}

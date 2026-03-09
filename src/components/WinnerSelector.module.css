@@ -1,0 +1,61 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hint {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-style: italic;
+  margin: 0;
+  padding: 0.5rem;
+}
+
+.checkboxList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+.checkbox:hover {
+  background: var(--card);
+  border-color: var(--primary);
+}
+
+.checkbox.selected {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: #fbbf24;
+}
+
+.checkbox input {
+  accent-color: var(--primary);
+}
+
+.playerName {
+  color: var(--text-primary);
+}
+
+.winnerBadge {
+  font-size: 1rem;
+  margin-left: 0.25rem;
+}
+
+.summary {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0 0;
+}

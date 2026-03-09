@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  name              String?
+  password          String
+  games             Game[]
+  players           Player[]
+  playLogs          PlayLog[]
+  plannedGameNights PlannedGameNight[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Game {
+  id              String   @id @default(cuid())
+  bggId           Int      @unique
+  title           String
+  thumbnail       String?
+  image           String?
+  minPlayers      Int
+  maxPlayers      Int
+  minPlayTime     Int?
+  maxPlayTime     Int?
+  yearPublished   Int?
+  description     String?
+  mechanics       String
+  categories      String
+  designers       String
+  publishers      String
+  artists         String   @default("")
+  minAge          Int?
+  complexity      Float?
+  bggRating       Float?
+  bggRatingsCount Int?
+  bggRank         Int?
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playLogs        PlayLog[]
+  plannedGames    PlannedGame[]
+  createdAt       DateTime @default(now())
+}
+
+model Player {
+  id                String   @id @default(cuid())
+  name              String
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playLogs          PlayLog[] @relation("PlayLogPlayers")
+  wins              PlayLog[] @relation("PlayLogWinners")
+  plannedGameNights PlannedGameNight[] @relation("PlannedGameNightPlayers")
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  
+  @@unique([name, userId])
+  @@index([userId])
+}
+
+model PlayLog {
+  id          String   @id @default(cuid())
+  gameId      String
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playedAt    DateTime @default(now())
+  players     Player[] @relation("PlayLogPlayers")
+  winners     Player[] @relation("PlayLogWinners")
+  duration    Int?
+  location    String?
+  rating      Int?
+  notes       String?
+  createdAt   DateTime @default(now())
+  
+  @@index([gameId])
+  @@index([userId])
+  @@index([playedAt])
+}
+
+model PlannedGameNight {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plannedAt     DateTime @default(now())
+  eventDateTime DateTime?
+  location      String?
+  customMessage String?
+  games         PlannedGame[]
+  players       Player[]    @relation("PlannedGameNightPlayers")
+  createdAt     DateTime @default(now())
+  
+  @@index([userId])
+  @@index([plannedAt])
+}
+
+model PlannedGame {
+  id                String   @id @default(cuid())
+  plannedNightId    String
+  plannedNight      PlannedGameNight @relation(fields: [plannedNightId], references: [id], onDelete: Cascade)
+  gameId            String
+  game              Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  youtubeVideoId    String?
+  youtubeVideoTitle String?
+  youtubeVideoUrl   String?
+  order             Int
+  
+  @@index([plannedNightId])
+  @@index([gameId])
+}

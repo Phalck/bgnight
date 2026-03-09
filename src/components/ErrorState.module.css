@@ -1,0 +1,101 @@
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.message {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  max-width: 400px;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.retryBtn {
+  background: var(--primary);
+  border: none;
+  color: var(--bg-dark);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.retryBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(230, 169, 25, 0.3);
+}
+
+/* Inline Error Styles */
+.inlineError {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  color: #ef4444;
+  font-size: 0.9375rem;
+}
+
+.inlineIcon {
+  font-size: 1.25rem;
+}
+
+.inlineMessage {
+  flex: 1;
+}
+
+.inlineRetry {
+  background: transparent;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.inlineRetry:hover {
+  background: #ef4444;
+  color: white;
+}
+
+@media (max-width: 480px) {
+  .errorState {
+    padding: 3rem 1.5rem;
+  }
+  
+  .icon {
+    font-size: 3rem;
+  }
+  
+  .title {
+    font-size: 1.25rem;
+  }
+}

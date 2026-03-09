@@ -1,0 +1,9 @@
+{
+  "buildCommand": "./build.sh",
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "regions": ["iad1"],
+  "env": {
+    "PRISMA_CLI_QUERY_ENGINE_TYPE": "library"
+  }
+}
