@@ -89,6 +89,19 @@ To restore:
 3. Upload your backup JSON file
 4. Resolve any conflicts (Skip, Replace, or Keep Both)
 
+### Delete Your Account
+**⚠️ Warning:** This action is permanent and cannot be undone. All your data including games, plays, and planned nights will be deleted.
+
+1. Click **Settings** (⚙️) in the header
+2. Go to the **Danger Zone** section
+3. Click **Remove User Account**
+4. Enter your email address to receive a verification code
+5. Check your email and enter the 6-digit verification code
+6. Type **DELETE** to confirm the deletion
+7. Click **Delete Permanently**
+
+Your account and all associated data will be permanently removed.
+
 ## 🛠️ Tech Stack
 
 - **Framework:** [Next.js 16](https://nextjs.org/) with App Router
