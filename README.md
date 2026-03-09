@@ -38,7 +38,7 @@ Board Game Night is your all-in-one companion for organizing tabletop gaming ses
 ### Getting Started
 1. **Create an account** - Sign up with your email at https://bgnight.vercel.app
 2. **Import your collection** - Use the BGG import feature or add games manually
-3. **Add players** - Create profiles for your regular gaming group
+3. **Log a play** - Select a game and log your first play session with friends
 4. **Start planning** - Create your first game night!
 
 ### Managing Your Collection
