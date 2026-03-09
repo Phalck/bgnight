@@ -207,12 +207,7 @@ npm run build
 
 ## 🌐 Deployment
 
-The app is automatically deployed to Vercel on every push to the main branch.
-
-To deploy manually:
-```bash
-vercel --prod
-```
+For detailed deployment instructions, including how to set up your own instance of Board Game Night on Vercel with all required services and environment variables, see **[DEPLOYMENT.md](DEPLOYMENT.md)**.
 
 ## 📝 License
 
