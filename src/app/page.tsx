@@ -65,6 +65,13 @@ export default function Home() {
             </a>
           </div>
         </div>
+        <div className={styles.bggAttribution}>
+          <img 
+            src="/pic7779581.webp" 
+            alt="BoardGameGeek" 
+            className={styles.bggLogo}
+          />
+        </div>
       </main>
     </>
   );
