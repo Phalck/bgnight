@@ -66,11 +66,18 @@ export default function Home() {
           </div>
         </div>
         <div className={styles.bggAttribution}>
-          <img 
-            src="/pic7779581.webp" 
-            alt="BoardGameGeek" 
-            className={styles.bggLogo}
-          />
+          <a 
+            href="https://boardgamegeek.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            title="Visit BoardGameGeek"
+          >
+            <img 
+              src="/pic7779581.webp" 
+              alt="BoardGameGeek" 
+              className={styles.bggLogo}
+            />
+          </a>
         </div>
       </main>
     </>
