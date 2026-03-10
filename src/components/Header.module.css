@@ -260,7 +260,12 @@
   color: var(--secondary);
 }
 
-.mobileSettingsBtn {
+.mobileSettingsSection {
+  margin: 0.5rem 0;
+}
+
+.mobileSettingsToggle {
+  width: 100%;
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-secondary);
@@ -269,15 +274,81 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobileSettingsToggle:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.expandIcon {
+  font-size: 0.75rem;
+  transition: transform 0.2s;
+}
+
+.expandIcon.expanded {
+  transform: rotate(180deg);
+}
+
+.mobileSettingsContent {
+  padding: 0.5rem 0 0.5rem 1rem;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobileSettingsGroup {
+  margin-bottom: 1rem;
+}
+
+.mobileSettingsGroupTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.5rem 0;
+  padding: 0 0.5rem;
+}
+
+.mobileSettingsItem {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 0.625rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
   text-align: left;
+  transition: all 0.15s;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.mobileSettingsBtn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+.mobileSettingsItem:hover {
+  background: var(--bg-dark);
+}
+
+.mobileSettingsItem.danger {
+  color: var(--secondary);
+}
+
+.mobileSettingsItem.danger:hover {
+  background: rgba(233, 69, 96, 0.1);
 }
 
 .desktopSettings {
