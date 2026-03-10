@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useToast } from '@/components/Toast';
 import { RestoreModal } from '@/components/RestoreModal';
 import { ConfirmDeleteModal } from '@/components/ConfirmDeleteModal';
@@ -97,7 +97,8 @@ export function SettingsMenu() {
       }
       
       addToast('Account deleted successfully', 'success');
-      router.push('/');
+      // Sign out and redirect to home page
+      await signOut({ callbackUrl: '/' });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete account';
       addToast(errorMessage, 'error');
