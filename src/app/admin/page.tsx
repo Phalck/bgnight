@@ -1,25 +1,86 @@
 import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 import styles from './page.module.css';
 
 async function getAdminStats() {
   try {
-    const res = await fetch(`${process.env.NEXTAUTH_URL}/api/admin/stats`, {
-      headers: {
-        cookie: '',
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+      totalUsers,
+      activeUsers,
+      adminUsers,
+      newUsersThisMonth,
+      newUsersThisWeek,
+      totalGames,
+      totalPlays,
+      totalInviteCodes,
+      usedInviteCodes,
+      activeInviteCodes,
+      usersByMonth,
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { isActive: true } }),
+      prisma.user.count({ where: { role: 'ADMIN' } }),
+      prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+      prisma.user.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+      prisma.game.count(),
+      prisma.playLog.count(),
+      prisma.inviteCode.count(),
+      prisma.inviteCode.count({ where: { usedBy: { not: null } } }),
+      prisma.inviteCode.count({ where: { usedBy: null, isActive: true } }),
+      prisma.user.groupBy({
+        by: ['createdAt'],
+        _count: { id: true },
+        where: { createdAt: { gte: new Date(now.getFullYear(), now.getMonth() - 5, 1) } },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    const monthlyData = [];
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthName = monthDate.toLocaleString('default', { month: 'short' });
+      const year = monthDate.getFullYear();
+      
+      const count = usersByMonth.filter(u => {
+        const userDate = new Date(u.createdAt);
+        return userDate.getMonth() === monthDate.getMonth() &&
+               userDate.getFullYear() === monthDate.getFullYear();
+      }).reduce((sum, u) => sum + u._count.id, 0);
+      
+      monthlyData.push({ month: `${monthName} ${year}`, count });
+    }
+
+    return {
+      users: {
+        total: totalUsers,
+        active: activeUsers,
+        admins: adminUsers,
+        newThisMonth: newUsersThisMonth,
+        newThisWeek: newUsersThisWeek,
+        growthByMonth: monthlyData,
       },
-    });
-    
-    if (!res.ok) throw new Error('Failed to fetch stats');
-    return res.json();
+      content: { games: totalGames, plays: totalPlays },
+      inviteCodes: { total: totalInviteCodes, used: usedInviteCodes, active: activeInviteCodes },
+    };
   } catch (error) {
-    console.error('Error fetching stats:', error);
+    console.error('Error fetching admin stats:', error);
     return null;
   }
 }
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
+  
+  if (!session?.user || session.user.role !== 'ADMIN') {
+    redirect('/');
+  }
+  
   const stats = await getAdminStats();
 
   return (
