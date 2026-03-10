@@ -51,6 +51,8 @@ The first user to register automatically becomes an admin and gains access to th
 
 ### Getting Started
 1. **Create an account** - Sign up with your email at https://bgnight.vercel.app
+   - If the site is in **invite-only mode**, you will need an invite code from an administrator
+   - The invite code field will appear automatically when required
 2. **Import your collection** - Use the BGG import feature or add games manually
 3. **Log a play** - Select a game and log your first play session with friends
 4. **Start planning** - Create your first game night!
