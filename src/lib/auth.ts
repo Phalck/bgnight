@@ -20,7 +20,7 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
 
-        if (!user) {
+        if (!user || !user.isActive) {
           return null;
         }
 
@@ -37,6 +37,8 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
+          role: user.role,
+          mustChangePassword: user.mustChangePassword,
         };
       },
     }),
@@ -51,14 +53,25 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = user.role;
+        token.mustChangePassword = user.mustChangePassword;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.mustChangePassword = token.mustChangePassword as boolean;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Redirect to change password if required
+      if (url.includes('/change-password')) {
+        return url;
+      }
+      return baseUrl;
     },
   },
 };

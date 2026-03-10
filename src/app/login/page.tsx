@@ -30,7 +30,15 @@ export default function LoginPage() {
     if (result?.error) {
       setError('Invalid email or password');
     } else {
-      router.push('/collection');
+      // Check if user needs to change password
+      const session = await fetch('/api/auth/session');
+      const sessionData = await session.json();
+      
+      if (sessionData?.user?.mustChangePassword) {
+        router.push('/change-password');
+      } else {
+        router.push('/collection');
+      }
     }
   };
 

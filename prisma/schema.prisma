@@ -7,17 +7,47 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  name               String?
+  password           String
+  role               UserRole @default(USER)
+  isActive           Boolean  @default(true)
+  mustChangePassword Boolean  @default(false)
+  games              Game[]
+  players            Player[]
+  playLogs           PlayLog[]
+  plannedGameNights  PlannedGameNight[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model SiteSettings {
   id                String   @id @default(cuid())
-  email             String   @unique
-  name              String?
-  password          String
-  games             Game[]
-  players           Player[]
-  playLogs          PlayLog[]
-  plannedGameNights PlannedGameNight[]
-  createdAt         DateTime @default(now())
+  allowRegistration Boolean  @default(true)
+  inviteOnlyMode    Boolean  @default(false)
   updatedAt         DateTime @updatedAt
+}
+
+model InviteCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  createdBy   String
+  usedBy      String?  @unique
+  usedAt      DateTime?
+  expiresAt   DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([code])
+  @@index([isActive])
+  @@index([createdBy])
 }
 
 model Game {
