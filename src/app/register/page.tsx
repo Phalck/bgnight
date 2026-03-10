@@ -22,7 +22,7 @@ export default function RegisterPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch('/api/admin/settings');
+        const res = await fetch('/api/settings/public');
         if (res.ok) {
           const data = await res.json();
           setInviteOnlyMode(data.inviteOnlyMode || false);
