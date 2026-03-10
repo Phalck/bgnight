@@ -33,6 +33,20 @@ Board Game Night is your all-in-one companion for organizing tabletop gaming ses
 - **Restore** - Import backups with conflict resolution
 - **Account deletion** - Secure account removal with email verification
 
+### 👑 Admin Panel (Admin Users Only)
+The first user to register automatically becomes an admin and gains access to the admin panel at `/admin`.
+
+**Admin Features:**
+- **Dashboard** - View site statistics including total users, games, plays, and user growth charts
+- **User Management** - Manage all users: reset passwords, enable/disable accounts, toggle admin roles, delete users
+- **Site Settings** - Control registration settings (open/closed, invite-only mode)
+- **Invite Codes** - Generate and manage invite codes for invite-only registration
+
+**Accessing Admin Panel:**
+1. Log in as an admin user
+2. Click **Settings** (⚙️) in the header
+3. Select **👑 Admin Panel** from the dropdown menu
+
 ## 🚀 How to Use
 
 ### Getting Started
@@ -101,6 +115,45 @@ To restore:
 7. Click **Delete Permanently**
 
 Your account and all associated data will be permanently removed.
+
+### 👑 Admin Features
+
+**Note:** Admin features are only available to users with the ADMIN role. The first user to register on the site automatically becomes an admin.
+
+#### Managing Users
+1. Go to **Admin Panel** → **Users**
+2. View all registered users with search and filter options
+3. Available actions for each user:
+   - **👑 Toggle Admin** - Promote/demote user to/from admin role
+   - **✅/🚫 Enable/Disable** - Activate or deactivate user account
+   - **🔑 Reset Password** - Reset user's password to "ChangeMe123!" (user must change on next login)
+   - **🗑️ Delete** - Permanently delete user and all their data
+
+#### Site Settings
+1. Go to **Admin Panel** → **Settings**
+2. Configure registration options:
+   - **Allow Registration** - Enable/disable new user registrations
+   - **Invite-Only Mode** - Require invite codes for registration (must enable registration first)
+
+#### Invite Codes
+1. Go to **Admin Panel** → **Invite Codes**
+2. Generate new invite codes:
+   - Select number of codes to generate (1-50)
+   - Optional: Set expiration date
+   - Click "Generate Codes"
+3. Copy codes and share with invited users
+4. Monitor usage: View which codes have been used and when
+5. Delete codes that are no longer needed
+
+#### Site Statistics
+The admin dashboard displays:
+- **Total Users** - Overall user count
+- **Active Users** - Users with active accounts
+- **New This Month/Week** - Recent registrations
+- **Total Games** - Games across all users
+- **Total Plays** - Logged plays across all users
+- **Active Invite Codes** - Available unused codes
+- **User Growth Chart** - 6-month registration trend
 
 ## 🛠️ Tech Stack
 
