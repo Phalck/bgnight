@@ -109,12 +109,10 @@ To restore:
 1. Click **Settings** (⚙️) in the header
 2. Go to the **Danger Zone** section
 3. Click **Remove User Account**
-4. Enter your email address to receive a verification code
-5. Check your email and enter the 6-digit verification code
-6. Type **DELETE** to confirm the deletion
-7. Click **Delete Permanently**
+4. Type **DELETE** to confirm the deletion
+5. Click **Delete Permanently**
 
-Your account and all associated data will be permanently removed.
+Your account and all associated data will be permanently removed, and you will be automatically logged out.
 
 ### 👑 Admin Features
 
