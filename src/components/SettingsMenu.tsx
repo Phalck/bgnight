@@ -6,7 +6,6 @@ import { useSession } from 'next-auth/react';
 import { useToast } from '@/components/Toast';
 import { RestoreModal } from '@/components/RestoreModal';
 import { ConfirmDeleteModal } from '@/components/ConfirmDeleteModal';
-import { EmailVerificationModal } from '@/components/EmailVerificationModal';
 import styles from './SettingsMenu.module.css';
 
 export function SettingsMenu() {
@@ -21,13 +20,9 @@ export function SettingsMenu() {
   const [showDeleteCollectionModal, setShowDeleteCollectionModal] = useState(false);
   const [showDeletePlaysModal, setShowDeletePlaysModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
-  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
 
   // Restore type
   const [restoreType, setRestoreType] = useState<'collection' | 'plays'>('collection');
-  
-  // Account deletion verification code
-  const [accountDeletionCode, setAccountDeletionCode] = useState('');
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -90,12 +85,10 @@ export function SettingsMenu() {
     }
   };
 
-  const handleDeleteAccount = async (code: string) => {
+  const handleDeleteAccount = async () => {
     try {
       const response = await fetch('/api/user/delete-request', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
       });
       
       if (!response.ok) {
@@ -199,7 +192,7 @@ export function SettingsMenu() {
               <button
                 className={`${styles.menuItem} ${styles.danger}`}
                 onClick={() => {
-                  setShowEmailVerificationModal(true);
+                  setShowDeleteAccountModal(true);
                   setIsOpen(false);
                 }}
               >
@@ -256,24 +249,12 @@ export function SettingsMenu() {
         />
       )}
 
-      {showEmailVerificationModal && (
-        <EmailVerificationModal
-          onVerify={(code) => {
-            setAccountDeletionCode(code);
-            setShowEmailVerificationModal(false);
-            setShowDeleteAccountModal(true);
-          }}
-          onClose={() => setShowEmailVerificationModal(false)}
-        />
-      )}
-
       {showDeleteAccountModal && (
         <ConfirmDeleteModal
           title="Remove User Account"
           message="This will permanently delete your account and all associated data. This action cannot be undone."
           itemCount="account"
-          requireCode={true}
-          onConfirm={() => handleDeleteAccount(accountDeletionCode)}
+          onConfirm={handleDeleteAccount}
           onClose={() => setShowDeleteAccountModal(false)}
         />
       )}
