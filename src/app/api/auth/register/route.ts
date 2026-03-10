@@ -8,9 +8,9 @@ export async function POST(request: Request) {
 
     // Check site settings
     const settings = await prisma.siteSettings.findFirst();
-    
-    // If settings exist and registration is disabled
-    if (settings && !settings.allowRegistration) {
+
+    // If no settings exist or registration is disabled
+    if (!settings?.allowRegistration) {
       return NextResponse.json(
         { error: 'Registration is currently disabled' },
         { status: 403 }
