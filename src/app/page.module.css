@@ -85,45 +85,6 @@
   line-height: 1.5;
 }
 
-.adminSection {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 2rem;
-  margin: 2rem 0;
-  text-align: center;
-}
-
-.adminIcon {
-  font-size: 2.5rem;
-  display: block;
-  margin-bottom: 1rem;
-}
-
-.adminSection h2 {
-  font-family: var(--font-heading);
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.adminSection p {
-  color: var(--text-secondary);
-  max-width: 600px;
-  margin: 0 auto 1.5rem;
-  line-height: 1.6;
-}
-
-.adminFeatures {
-  display: flex;
-  gap: 1.5rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
 .cta {
   display: flex;
   gap: 1rem;
