@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useToast } from '@/components/Toast';
 import { RestoreModal } from '@/components/RestoreModal';
 import { ConfirmDeleteModal } from '@/components/ConfirmDeleteModal';
@@ -10,6 +11,7 @@ import styles from './SettingsMenu.module.css';
 
 export function SettingsMenu() {
   const router = useRouter();
+  const { data: session } = useSession();
   const { addToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -194,7 +196,7 @@ export function SettingsMenu() {
               >
                 🗑️ Delete Logged Plays
               </button>
-              <button 
+              <button
                 className={`${styles.menuItem} ${styles.danger}`}
                 onClick={() => {
                   setShowEmailVerificationModal(true);
@@ -204,6 +206,24 @@ export function SettingsMenu() {
                 ⚠️ Remove User Account
               </button>
             </div>
+
+            {session?.user?.role === 'ADMIN' && (
+              <>
+                <div className={styles.divider} />
+                <div className={styles.section}>
+                  <h4 className={styles.sectionTitle}>Administration</h4>
+                  <button
+                    className={styles.menuItem}
+                    onClick={() => {
+                      router.push('/admin');
+                      setIsOpen(false);
+                    }}
+                  >
+                    👑 Admin Panel
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
