@@ -288,6 +288,17 @@ export default function CollectionPage() {
 
   const handleView = (game: Game) => {
     setViewingGame(game);
+    // Reset modal states to prevent data from previous game persisting
+    setExpandedSections({
+      details: false,
+      mechanics: false,
+      categories: false,
+      description: false,
+      videos: false,
+    });
+    setVideoSearchResults([]);
+    setPlayingVideoId(null);
+    setGameDescription('');
   };
 
   const handleEdit = (game: Game) => {
