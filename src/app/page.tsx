@@ -56,6 +56,21 @@ export default function Home() {
               <p>Pick a date, one or more games and send an invite with learn to play videos</p>
             </div>
           </div>
+          <div className={styles.adminSection}>
+            <span className={styles.adminIcon}>⚙️</span>
+            <h2>Site Administration</h2>
+            <p>
+              Built-in admin tools let you manage users, control site registration settings, 
+              and view detailed statistics. The first person to register automatically becomes 
+              the site administrator.
+            </p>
+            <div className={styles.adminFeatures}>
+              <span>👥 User Management</span>
+              <span>🔧 Site Settings</span>
+              <span>📊 Statistics</span>
+              <span>💾 Backup & Restore</span>
+            </div>
+          </div>
           <div className={styles.cta}>
             <a href="/login" className={styles.primaryBtn}>
               Get Started
