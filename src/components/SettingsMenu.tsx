@@ -117,6 +117,7 @@ export function SettingsMenu() {
           className={styles.settingsBtn}
           onClick={() => setIsOpen(!isOpen)}
           title="Settings"
+          data-settings-trigger
         >
           ⚙️ Settings
         </button>

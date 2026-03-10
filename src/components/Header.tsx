@@ -70,7 +70,9 @@ export function Header() {
           {session ? (
             <>
               <span className={styles.userName}>{session.user.name || session.user.email}</span>
-              <SettingsMenu />
+              <div className={styles.desktopSettings}>
+                <SettingsMenu />
+              </div>
               <button onClick={() => signOut()} className={styles.logoutBtn}>
                 Logout
               </button>
@@ -148,6 +150,18 @@ export function Header() {
                     {session.user.name || session.user.email}
                   </span>
                 </div>
+                
+                <button 
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    // Open settings by simulating click on settings button
+                    const settingsBtn = document.querySelector('[data-settings-trigger]') as HTMLButtonElement;
+                    if (settingsBtn) settingsBtn.click();
+                  }}
+                  className={styles.mobileSettingsBtn}
+                >
+                  ⚙️ Settings
+                </button>
                 
                 <button 
                   onClick={() => {
