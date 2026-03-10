@@ -66,7 +66,7 @@ export function SettingsMenu() {
       
       const data = await response.json();
       addToast(data.message, 'success');
-      router.refresh();
+      window.location.reload();
     } catch (error) {
       addToast('Failed to delete collection', 'error');
     }
@@ -79,7 +79,7 @@ export function SettingsMenu() {
       
       const data = await response.json();
       addToast(data.message, 'success');
-      router.refresh();
+      window.location.reload();
     } catch (error) {
       addToast('Failed to delete plays', 'error');
     }
