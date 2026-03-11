@@ -146,7 +146,7 @@
 .filterRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 2rem;
   align-items: flex-start;
 }
 
@@ -201,7 +201,7 @@
 
 .searchGroup {
   flex: 1;
-  min-width: 200px;
+  min-width: 220px;
   max-width: 300px;
 }
 
@@ -436,6 +436,18 @@
 
   .statsSection {
     width: 100%;
+  }
+}
+
+@media (max-width: 750px) {
+  .filterRow {
+    flex-direction: column;
+  }
+
+  .dateGroup,
+  .searchGroup {
+    width: 100%;
+    max-width: none;
   }
 }
 
