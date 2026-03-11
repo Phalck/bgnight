@@ -28,6 +28,15 @@ Board Game Night is your all-in-one companion for organizing tabletop gaming ses
 - **Statistics** - View play history and game statistics
 - **Ratings & notes** - Rate games and add personal notes
 
+### 📈 Past BGNs Statistics
+The Past BGNs page includes a comprehensive statistics panel that displays insights from all your logged game nights:
+
+- **Top Winner** - Player with the most wins (displays "(tied)" when multiple players share the top spot)
+- **Most Played Games** - Top 3 games ranked by play count
+- **Busiest Game Night** - Date when you played the most games
+
+The statistics panel is always visible alongside the filters, showing helpful placeholder messages when you haven't logged any plays yet. Statistics are calculated from all your logged plays and are not affected by the active filters, giving you a complete overview of your gaming history.
+
 ### ⚙️ Data Management
 - **Backup** - Export your collection and play logs as JSON
 - **Restore** - Import backups with conflict resolution
