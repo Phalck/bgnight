@@ -31,6 +31,8 @@ interface SuggestedGame {
   categories: string[];
   bggRating?: number | null;
   matchScore: number;
+  playCount: number;
+  lastPlayedAt?: string | null;
 }
 
 interface YouTubeVideo {
@@ -77,6 +79,16 @@ export default function PlanBGNPage() {
     maxBggRating: 10,
   });
   
+  // Toolbar: search, sort, artwork
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'az' | 'za' | 'playTime' | 'latestPlayed' | 'mostPlayed'>('az');
+  const [showArtwork, setShowArtwork] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('bgnight_plan_showArtwork') !== 'false';
+    }
+    return true;
+  });
+
   // Filtered suggestions
   const [filteredSuggestions, setFilteredSuggestions] = useState<SuggestedGame[]>([]);
   
@@ -127,11 +139,26 @@ export default function PlanBGNPage() {
     }
   }, [status, router, fetchPlayers]);
 
-  // Filter suggestions based on post-search filters
+  // Save artwork preference to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bgnight_plan_showArtwork', showArtwork.toString());
+    }
+  }, [showArtwork]);
+
+  // Filter suggestions based on post-search filters and search query
   useEffect(() => {
     if (!hasSearched) return;
     
-    const filtered = suggestions.filter(game => {
+    let filtered = suggestions.filter(game => {
+      // Search filter (case-insensitive, real-time)
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        if (!game.title.toLowerCase().includes(query)) {
+          return false;
+        }
+      }
+
       // Player count filter
       if (game.minPlayers > postSearchFilters.maxPlayers || 
           game.maxPlayers < postSearchFilters.minPlayers) {
@@ -169,6 +196,28 @@ export default function PlanBGNPage() {
       
       return true;
     });
+
+    // Sort filtered results
+    filtered = filtered.sort((a, b) => {
+      switch (sortOrder) {
+        case 'az':
+          return a.title.localeCompare(b.title);
+        case 'za':
+          return b.title.localeCompare(a.title);
+        case 'playTime':
+          return (a.maxPlayTime || 0) - (b.maxPlayTime || 0);
+        case 'latestPlayed':
+          // Sort by last played date (most recent first), nulls last
+          if (!a.lastPlayedAt && !b.lastPlayedAt) return 0;
+          if (!a.lastPlayedAt) return 1;
+          if (!b.lastPlayedAt) return -1;
+          return new Date(b.lastPlayedAt).getTime() - new Date(a.lastPlayedAt).getTime();
+        case 'mostPlayed':
+          return b.playCount - a.playCount;
+        default:
+          return 0;
+      }
+    });
     
     setFilteredSuggestions(filtered);
     
@@ -177,7 +226,7 @@ export default function PlanBGNPage() {
       setSelectedGames([]);
       setSelectedVideos(new Map());
     }
-  }, [suggestions, postSearchFilters, hasSearched]);
+  }, [suggestions, postSearchFilters, searchQuery, sortOrder, hasSearched]);
 
   // Initialize filtered suggestions when suggestions change
   useEffect(() => {
@@ -429,21 +478,56 @@ export default function PlanBGNPage() {
 
           {!searching && suggestions.length > 0 && (
             <>
-              <div className={styles.resultsHeader}>
-                <div className={styles.resultsHeaderLeft}>
-                  <h2 className={styles.sectionTitle}>
-                    Select Games ({selectedGames.length} selected)
-                  </h2>
-                  <p className={styles.instructionNote}>
-                    👇 Select the games you want to play, then scroll down to continue
-                  </p>
+              <h2 className={styles.sectionTitle}>
+                Select Games ({selectedGames.length} selected)
+              </h2>
+              <p className={styles.instructionNote}>
+                👇 Select the games you want to play, then scroll down to continue
+              </p>
+
+              <div className={styles.toolbar}>
+                <div className={styles.searchContainer}>
+                  <span className={styles.searchIcon}>🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Search games..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={styles.searchInput}
+                  />
                 </div>
-                <button 
-                  className={styles.filterToggleBtn}
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  {showFilters ? 'Hide Filters' : 'Show Filters'} 🔍
-                </button>
+
+                <div className={styles.toolbarActions}>
+                  <div className={styles.sortContainer}>
+                    <label>Sort:</label>
+                    <select
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
+                      className={styles.sortSelect}
+                    >
+                      <option value="az">A-Z</option>
+                      <option value="za">Z-A</option>
+                      <option value="playTime">Play Time</option>
+                      <option value="latestPlayed">Latest Played</option>
+                      <option value="mostPlayed">Most Played</option>
+                    </select>
+                  </div>
+
+                  <button
+                    className={`${styles.artworkToggle} ${showArtwork ? styles.artworkToggleActive : ''}`}
+                    onClick={() => setShowArtwork(!showArtwork)}
+                    title={showArtwork ? 'Hide artwork' : 'Show artwork'}
+                  >
+                    {showArtwork ? '🙈' : '🖼️'}
+                  </button>
+
+                  <button
+                    className={styles.filterToggle}
+                    onClick={() => setShowFilters(!showFilters)}
+                  >
+                    {showFilters ? 'Hide Filters' : 'Show Filters'}
+                  </button>
+                </div>
               </div>
 
               {showFilters && (
@@ -615,6 +699,7 @@ export default function PlanBGNPage() {
                     game={game}
                     selected={!!selectedGames.find(g => g.id === game.id)}
                     onToggle={() => toggleGameSelection(game)}
+                    showArtwork={showArtwork}
                   />
                 ))}
               </div>

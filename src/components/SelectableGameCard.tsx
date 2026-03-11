@@ -17,9 +17,10 @@ interface SelectableGameCardProps {
   game: SuggestedGame;
   selected: boolean;
   onToggle: () => void;
+  showArtwork?: boolean;
 }
 
-export function SelectableGameCard({ game, selected, onToggle }: SelectableGameCardProps) {
+export function SelectableGameCard({ game, selected, onToggle, showArtwork = true }: SelectableGameCardProps) {
   const formatPlayers = () => {
     if (game.minPlayers === game.maxPlayers) {
       return `${game.minPlayers} players`;
@@ -42,15 +43,17 @@ export function SelectableGameCard({ game, selected, onToggle }: SelectableGameC
         />
       </div>
       
-      <div className={styles.imageContainer}>
-        {game.thumbnail ? (
-          <img src={game.thumbnail} alt={game.title} className={styles.image} />
-        ) : (
-          <div className={styles.placeholder}>
-            <span>🎲</span>
-          </div>
-        )}
-      </div>
+      {showArtwork && (
+        <div className={styles.imageContainer}>
+          {game.thumbnail ? (
+            <img src={game.thumbnail} alt={game.title} className={styles.image} />
+          ) : (
+            <div className={styles.placeholder}>
+              <span>🎲</span>
+            </div>
+          )}
+        </div>
+      )}
       
       <div className={styles.content}>
         <h3 className={styles.title}>{game.title}</h3>

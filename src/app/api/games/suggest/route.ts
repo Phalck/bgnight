@@ -28,8 +28,35 @@ export async function GET(request: Request) {
       where: { userId: session.user.id },
     });
 
+    // Fetch play logs for all games to get play counts and last played dates
+    const playLogs = await prisma.playLog.findMany({
+      where: { userId: session.user.id },
+      select: {
+        gameId: true,
+        playedAt: true,
+      },
+    });
+
+    // Group play logs by gameId
+    const playStats = new Map<string, { playCount: number; lastPlayedAt: Date | null }>();
+    playLogs.forEach(log => {
+      const existing = playStats.get(log.gameId);
+      if (existing) {
+        existing.playCount++;
+        if (log.playedAt && (!existing.lastPlayedAt || log.playedAt > existing.lastPlayedAt)) {
+          existing.lastPlayedAt = log.playedAt;
+        }
+      } else {
+        playStats.set(log.gameId, {
+          playCount: 1,
+          lastPlayedAt: log.playedAt,
+        });
+      }
+    });
+
     const suggestions = games
       .map(game => {
+        const stats = playStats.get(game.id) || { playCount: 0, lastPlayedAt: null };
         const gameMechanics = JSON.parse(game.mechanics || '[]') as string[];
         const gameCategories = JSON.parse(game.categories || '[]') as string[];
         
@@ -84,6 +111,8 @@ export async function GET(request: Request) {
           publishers: JSON.parse(game.publishers || '[]'),
           matchScore,
           reasons,
+          playCount: stats.playCount,
+          lastPlayedAt: stats.lastPlayedAt,
         };
       })
       .filter((g): g is NonNullable<typeof g> => g !== null)
