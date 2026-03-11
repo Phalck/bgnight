@@ -502,63 +502,67 @@ export default function PlanBGNPage() {
                     </div>
                   </div>
 
-                  {allMechanics.length > 0 && (
-                    <div className={styles.filterGroup}>
-                      <label>Mechanics ({allMechanics.length} available)</label>
-                      <div className={styles.checkboxList}>
-                        {allMechanics.map(mechanic => (
-                          <label key={mechanic} className={styles.checkbox}>
-                            <input
-                              type="checkbox"
-                              checked={postSearchFilters.mechanics.includes(mechanic)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setPostSearchFilters({
-                                    ...postSearchFilters,
-                                    mechanics: [...postSearchFilters.mechanics, mechanic]
-                                  });
-                                } else {
-                                  setPostSearchFilters({
-                                    ...postSearchFilters,
-                                    mechanics: postSearchFilters.mechanics.filter(m => m !== mechanic)
-                                  });
-                                }
-                              }}
-                            />
-                            {mechanic}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {(allCategories.length > 0 || allMechanics.length > 0) && (
+                    <div className={styles.filterRow}>
+                      {allCategories.length > 0 && (
+                        <div className={styles.filterGroup}>
+                          <label>Categories ({allCategories.length})</label>
+                          <div className={styles.checkboxList}>
+                            {allCategories.map(category => (
+                              <label key={category} className={styles.checkbox}>
+                                <input
+                                  type="checkbox"
+                                  checked={postSearchFilters.categories.includes(category)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setPostSearchFilters({
+                                        ...postSearchFilters,
+                                        categories: [...postSearchFilters.categories, category]
+                                      });
+                                    } else {
+                                      setPostSearchFilters({
+                                        ...postSearchFilters,
+                                        categories: postSearchFilters.categories.filter(c => c !== category)
+                                      });
+                                    }
+                                  }}
+                                />
+                                {category}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
-                  {allCategories.length > 0 && (
-                    <div className={styles.filterGroup}>
-                      <label>Categories ({allCategories.length} available)</label>
-                      <div className={styles.checkboxList}>
-                        {allCategories.map(category => (
-                          <label key={category} className={styles.checkbox}>
-                            <input
-                              type="checkbox"
-                              checked={postSearchFilters.categories.includes(category)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setPostSearchFilters({
-                                    ...postSearchFilters,
-                                    categories: [...postSearchFilters.categories, category]
-                                  });
-                                } else {
-                                  setPostSearchFilters({
-                                    ...postSearchFilters,
-                                    categories: postSearchFilters.categories.filter(c => c !== category)
-                                  });
-                                }
-                              }}
-                            />
-                            {category}
-                          </label>
-                        ))}
-                      </div>
+                      {allMechanics.length > 0 && (
+                        <div className={styles.filterGroup}>
+                          <label>Mechanics ({allMechanics.length})</label>
+                          <div className={styles.checkboxList}>
+                            {allMechanics.map(mechanic => (
+                              <label key={mechanic} className={styles.checkbox}>
+                                <input
+                                  type="checkbox"
+                                  checked={postSearchFilters.mechanics.includes(mechanic)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setPostSearchFilters({
+                                        ...postSearchFilters,
+                                        mechanics: [...postSearchFilters.mechanics, mechanic]
+                                      });
+                                    } else {
+                                      setPostSearchFilters({
+                                        ...postSearchFilters,
+                                        mechanics: postSearchFilters.mechanics.filter(m => m !== mechanic)
+                                      });
+                                    }
+                                  }}
+                                />
+                                {mechanic}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
