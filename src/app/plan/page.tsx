@@ -50,22 +50,12 @@ export default function PlanBGNPage() {
   // Loading states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searching, setSearching] = useState(false);
-  
   // Players
   const [players, setPlayers] = useState<Player[]>([]);
-  
-  // Filter form
-  const [formData, setFormData] = useState({
-    players: '4',
-    maxTime: '120',
-    mechanics: [] as string[],
-    categories: [] as string[],
-  });
-  
-  // Suggestions
+   
+  // Suggestions - load all games immediately
   const [suggestions, setSuggestions] = useState<SuggestedGame[]>([]);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] = useState(true); // Always true to show filters immediately
   
   // Post-search filters
   const [showFilters, setShowFilters] = useState(false);
@@ -131,13 +121,42 @@ export default function PlanBGNPage() {
     }
   }, [addToast]);
 
+  const fetchAllGames = useCallback(async () => {
+    try {
+      const data = await api.get<any[]>('/api/games');
+      // Transform games to SuggestedGame format
+      const transformedGames: SuggestedGame[] = data.map(game => ({
+        id: game.id,
+        title: game.title,
+        thumbnail: game.thumbnail,
+        minPlayers: game.minPlayers,
+        maxPlayers: game.maxPlayers,
+        minPlayTime: game.minPlayTime,
+        maxPlayTime: game.maxPlayTime,
+        mechanics: game.mechanics || [],
+        categories: game.categories || [],
+        bggRating: game.bggRating,
+        matchScore: 100, // All games are a 100% match when showing all
+        playCount: 0,
+        lastPlayedAt: null,
+      }));
+      setSuggestions(transformedGames);
+      setFilteredSuggestions(transformedGames);
+      setError(null);
+    } catch (err) {
+      const message = api.getErrorMessage(err);
+      setError(message);
+      addToast(message, 'error');
+    }
+  }, [addToast]);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
     } else if (status === 'authenticated') {
-      fetchPlayers().then(() => setLoading(false));
+      Promise.all([fetchPlayers(), fetchAllGames()]).then(() => setLoading(false));
     }
-  }, [status, router, fetchPlayers]);
+  }, [status, router, fetchPlayers, fetchAllGames]);
 
   // Save artwork preference to localStorage
   useEffect(() => {
@@ -239,33 +258,6 @@ export default function PlanBGNPage() {
       const message = api.getErrorMessage(err);
       addToast(message, 'error');
       return null;
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearching(true);
-    setHasSearched(true);
-    setSelectedGames([]);
-    setSelectedVideos(new Map());
-    setShowEventDetails(false);
-
-    const params = new URLSearchParams({
-      players: formData.players,
-      maxTime: formData.maxTime,
-    });
-
-    if (formData.mechanics.length > 0) params.set('mechanics', formData.mechanics.join(','));
-    if (formData.categories.length > 0) params.set('categories', formData.categories.join(','));
-
-    try {
-      const data = await api.get<SuggestedGame[]>(`/api/games/suggest?${params}`);
-      setSuggestions(data);
-    } catch (err) {
-      const message = api.getErrorMessage(err);
-      addToast(message, 'error');
-    } finally {
-      setSearching(false);
     }
   };
 
@@ -413,64 +405,14 @@ export default function PlanBGNPage() {
             <p className={styles.subtitle}>Organize your game night</p>
           </div>
 
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <div className={styles.fieldGroup}>
-              <div className={styles.field}>
-                <label htmlFor="players">Number of Players</label>
-                <input
-                  id="players"
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={formData.players}
-                  onChange={(e) => setFormData({ ...formData, players: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label htmlFor="maxTime">Available Time (minutes)</label>
-                <select
-                  id="maxTime"
-                  value={formData.maxTime}
-                  onChange={(e) => setFormData({ ...formData, maxTime: e.target.value })}
-                >
-                  <option value="30">30 min</option>
-                  <option value="60">1 hour</option>
-                  <option value="90">1.5 hours</option>
-                  <option value="120">2 hours</option>
-                  <option value="180">3 hours</option>
-                  <option value="240">4 hours</option>
-                </select>
-              </div>
-            </div>
-
-            <button type="submit" className={styles.submitBtn} disabled={searching}>
-              {searching ? (
-                <>
-                  <LoadingSpinner size="small" />
-                  Finding games...
-                </>
-              ) : 'Find Games'}
-            </button>
-          </form>
-
-          {searching && (
-            <div className={styles.loadingContainer}>
-              <LoadingSpinner size="large" />
-              <p className={styles.loadingText}>Searching your collection...</p>
-            </div>
-          )}
-
-          {!searching && hasSearched && suggestions.length === 0 && (
+          {suggestions.length === 0 ? (
             <div className={styles.empty}>
-              <span className={styles.emptyIcon}>😔</span>
-              <h2>No games found</h2>
-              <p>Your collection doesn&apos;t have games matching these criteria.</p>
+              <span className={styles.emptyIcon}>📚</span>
+              <h2>Your collection is empty</h2>
+              <p>Add some games to your collection first to plan a game night.</p>
+              <a href="/collection" className={styles.linkBtn}>Go to Collection →</a>
             </div>
-          )}
-
-          {!searching && suggestions.length > 0 && (
+          ) : (
             <>
               <h2 className={styles.sectionTitle}>
                 Select Games ({selectedGames.length} selected)
