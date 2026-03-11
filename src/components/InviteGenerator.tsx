@@ -55,22 +55,23 @@ export function InviteGenerator({
     // Parse the datetime string (YYYY-MM-DDTHH:mm) manually to avoid timezone issues
     const [datePart, timePart] = datetimeString.split('T');
     if (!datePart || !timePart) return '';
-    
+
     const [year, month, day] = datePart.split('-').map(Number);
     const [hours, minutes] = timePart.split(':').map(Number);
-    
-    // Create date using local timezone
-    const date = new Date(year, month - 1, day, hours, minutes);
-    
-    return date.toLocaleString('sv-SE', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
+
+    // Create date for weekday and month names
+    const date = new Date(year, month - 1, day);
+
+    // Format date parts using Swedish locale for consistent output
+    const weekday = date.toLocaleDateString('sv-SE', { weekday: 'long' });
+    const monthName = date.toLocaleDateString('sv-SE', { month: 'long' });
+
+    // Format time in 24h format with leading zeros
+    const paddedHours = hours.toString().padStart(2, '0');
+    const paddedMinutes = minutes.toString().padStart(2, '0');
+
+    // Always return 24h format: "Monday, 11 March 2025, 14:30"
+    return `${weekday}, ${day} ${monthName} ${year}, ${paddedHours}:${paddedMinutes}`;
   };
 
   const formatPlayers = (min: number, max: number) => {
