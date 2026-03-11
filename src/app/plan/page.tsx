@@ -467,9 +467,9 @@ export default function PlanBGNPage() {
 
               {showFilters && (
                 <div className={styles.filtersPanel}>
-                  <div className={styles.filterRow}>
-                    <div className={styles.filterGroup}>
-                      <label>Number of Players</label>
+                  <div className={styles.filterRowCompact}>
+                    <div className={styles.filterGroupSmall}>
+                      <label>Players</label>
                       <input
                         type="number"
                         min="1"
@@ -479,92 +479,89 @@ export default function PlanBGNPage() {
                           ...postSearchFilters,
                           playerCount: parseInt(e.target.value) || 4
                         })}
-                        className={styles.numberInput}
+                        className={styles.numberInputSmall}
                       />
                     </div>
 
-                    <div className={styles.filterGroup}>
-                      <label>Max Play Time</label>
+                    <div className={styles.filterGroupSmall}>
+                      <label>Time</label>
                       <select
                         value={postSearchFilters.maxTime}
                         onChange={(e) => setPostSearchFilters({
                           ...postSearchFilters,
                           maxTime: parseInt(e.target.value)
                         })}
+                        className={styles.selectSmall}
                       >
-                        <option value="30">30 min</option>
-                        <option value="60">1 hour</option>
-                        <option value="90">1.5 hours</option>
-                        <option value="120">2 hours</option>
-                        <option value="180">3 hours</option>
-                        <option value="240">4 hours+</option>
+                        <option value="30">30m</option>
+                        <option value="60">1h</option>
+                        <option value="90">1.5h</option>
+                        <option value="120">2h</option>
+                        <option value="180">3h</option>
+                        <option value="240">4h+</option>
                       </select>
                     </div>
+
+                    {allCategories.length > 0 && (
+                      <div className={styles.filterGroupSmall}>
+                        <label>Categories ({allCategories.length})</label>
+                        <div className={styles.checkboxListSmall}>
+                          {allCategories.map(category => (
+                            <label key={category} className={styles.checkboxSmall}>
+                              <input
+                                type="checkbox"
+                                checked={postSearchFilters.categories.includes(category)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setPostSearchFilters({
+                                      ...postSearchFilters,
+                                      categories: [...postSearchFilters.categories, category]
+                                    });
+                                  } else {
+                                    setPostSearchFilters({
+                                      ...postSearchFilters,
+                                      categories: postSearchFilters.categories.filter(c => c !== category)
+                                    });
+                                  }
+                                }}
+                              />
+                              {category}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {allMechanics.length > 0 && (
+                      <div className={styles.filterGroupSmall}>
+                        <label>Mechanics ({allMechanics.length})</label>
+                        <div className={styles.checkboxListSmall}>
+                          {allMechanics.map(mechanic => (
+                            <label key={mechanic} className={styles.checkboxSmall}>
+                              <input
+                                type="checkbox"
+                                checked={postSearchFilters.mechanics.includes(mechanic)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setPostSearchFilters({
+                                      ...postSearchFilters,
+                                      mechanics: [...postSearchFilters.mechanics, mechanic]
+                                    });
+                                  } else {
+                                    setPostSearchFilters({
+                                      ...postSearchFilters,
+                                      mechanics: postSearchFilters.mechanics.filter(m => m !== mechanic)
+                                    });
+                                  }
+                                }}
+                              />
+                              {mechanic}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {(allCategories.length > 0 || allMechanics.length > 0) && (
-                    <div className={styles.filterRow}>
-                      {allCategories.length > 0 && (
-                        <div className={styles.filterGroup}>
-                          <label>Categories ({allCategories.length})</label>
-                          <div className={styles.checkboxList}>
-                            {allCategories.map(category => (
-                              <label key={category} className={styles.checkbox}>
-                                <input
-                                  type="checkbox"
-                                  checked={postSearchFilters.categories.includes(category)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setPostSearchFilters({
-                                        ...postSearchFilters,
-                                        categories: [...postSearchFilters.categories, category]
-                                      });
-                                    } else {
-                                      setPostSearchFilters({
-                                        ...postSearchFilters,
-                                        categories: postSearchFilters.categories.filter(c => c !== category)
-                                      });
-                                    }
-                                  }}
-                                />
-                                {category}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {allMechanics.length > 0 && (
-                        <div className={styles.filterGroup}>
-                          <label>Mechanics ({allMechanics.length})</label>
-                          <div className={styles.checkboxList}>
-                            {allMechanics.map(mechanic => (
-                              <label key={mechanic} className={styles.checkbox}>
-                                <input
-                                  type="checkbox"
-                                  checked={postSearchFilters.mechanics.includes(mechanic)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setPostSearchFilters({
-                                        ...postSearchFilters,
-                                        mechanics: [...postSearchFilters.mechanics, mechanic]
-                                      });
-                                    } else {
-                                      setPostSearchFilters({
-                                        ...postSearchFilters,
-                                        mechanics: postSearchFilters.mechanics.filter(m => m !== mechanic)
-                                      });
-                                    }
-                                  }}
-                                />
-                                {mechanic}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
 
                   {bggRatings.length > 0 && (
                     <div className={styles.filterRow}>

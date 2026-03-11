@@ -530,9 +530,9 @@
 .filtersPanel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
+  border-radius: 8px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
   animation: slideDown 0.3s ease-out;
 }
 
@@ -558,6 +558,100 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+/* Compact 4-column filter row */
+.filterRowCompact {
+  display: grid;
+  grid-template-columns: 80px 80px 1fr 1fr;
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.filterGroupSmall {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.filterGroupSmall label {
+  font-weight: 500;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.numberInputSmall {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  width: 60px;
+}
+
+.numberInputSmall:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.selectSmall {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.25rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  width: 70px;
+}
+
+.selectSmall:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.checkboxListSmall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  max-height: 60px;
+  overflow-y: auto;
+  padding: 0.25rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.checkboxSmall {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  background: var(--surface);
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.checkboxSmall:hover {
+  background: var(--card);
+}
+
+.checkboxSmall input {
+  accent-color: var(--primary);
+  width: 12px;
+  height: 12px;
+}
+
+/* Responsive: Stack filters on smaller screens */
+@media (max-width: 768px) {
+  .filterRowCompact {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
 }
 
 .filterGroup label {
@@ -636,12 +730,13 @@
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-secondary);
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  padding: 0.375rem 1rem;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
+  font-size: 0.875rem;
   transition: all 0.2s;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 .clearFiltersBtn:hover {
