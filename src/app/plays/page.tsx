@@ -141,6 +141,77 @@ export default function PastBGNsPage() {
     return Object.keys(groupedPlays).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
   }, [groupedPlays]);
 
+  // Calculate statistics from ALL plays (not filtered)
+  const statistics = useMemo(() => {
+    if (plays.length === 0) return null;
+
+    // 1. Player with most wins (handle ties - show first alphabetically + "(tied)")
+    const winCounts = new Map<string, { id: string; name: string; wins: number }>();
+    plays.forEach(play => {
+      play.winners.forEach(winner => {
+        const current = winCounts.get(winner.id);
+        if (current) {
+          current.wins++;
+        } else {
+          winCounts.set(winner.id, { id: winner.id, name: winner.name, wins: 1 });
+        }
+      });
+    });
+    
+    const sortedWinners = Array.from(winCounts.values()).sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return a.name.localeCompare(b.name); // Alphabetical for ties
+    });
+    
+    const maxWins = sortedWinners[0]?.wins || 0;
+    const winnersWithMaxWins = sortedWinners.filter(w => w.wins === maxWins);
+    const topWinner = winnersWithMaxWins.length > 0 ? {
+      ...winnersWithMaxWins[0],
+      isTied: winnersWithMaxWins.length > 1
+    } : null;
+
+    // 2. Top 3 most played games
+    const gameCounts = new Map<string, { id: string; title: string; plays: number }>();
+    plays.forEach(play => {
+      const current = gameCounts.get(play.game.id);
+      if (current) {
+        current.plays++;
+      } else {
+        gameCounts.set(play.game.id, { id: play.game.id, title: play.game.title, plays: 1 });
+      }
+    });
+    const topGames = Array.from(gameCounts.values())
+      .sort((a, b) => b.plays - a.plays)
+      .slice(0, 3);
+
+    // 3. Date with most plays
+    const dateCounts = new Map<string, { date: string; count: number }>();
+    plays.forEach(play => {
+      const dateKey = new Date(play.playedAt).toISOString().split('T')[0];
+      const current = dateCounts.get(dateKey);
+      if (current) {
+        current.count++;
+      } else {
+        dateCounts.set(dateKey, { date: dateKey, count: 1 });
+      }
+    });
+    const sortedDates = Array.from(dateCounts.values()).sort((a, b) => b.count - a.count);
+    const busiestDate = sortedDates[0] || null;
+
+    return { topWinner, topGames, busiestDate };
+  }, [plays]);
+
+  // Format date to match GameNightCard format
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('sv-SE', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   const handleDeletePlay = async (playId: string) => {
     try {
       await api.del(`/api/plays/${playId}`);
@@ -266,73 +337,129 @@ export default function PastBGNsPage() {
             <span className={styles.count}>{plays.length} play{plays.length !== 1 ? 's' : ''} logged</span>
           </div>
 
-          {/* Filters */}
-          <div className={styles.filters}>
-            {/* Row 1: Date Range and Game Search */}
-            <div className={styles.filterRow}>
-              <div className={`${styles.filterGroup} ${styles.dateGroup}`}>
-                <label>Date Range</label>
-                <div className={styles.dateRange}>
-                  <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className={styles.dateInput}
-                    placeholder="From"
-                  />
-                  <span>to</span>
-                  <input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    className={styles.dateInput}
-                    placeholder="To"
-                  />
-                </div>
-              </div>
-
-              <div className={`${styles.filterGroup} ${styles.searchGroup}`}>
-                <label>Game Search</label>
-                <input
-                  type="text"
-                  value={gameSearch}
-                  onChange={(e) => setGameSearch(e.target.value)}
-                  placeholder="Search games..."
-                  className={styles.searchInput}
-                />
-              </div>
-
-              {hasFilters && (
-                <button className={styles.clearBtn} onClick={handleClearFilters}>
-                  Clear Filters
-                </button>
-              )}
-            </div>
-
-            {/* Row 2: Players */}
-            <div className={styles.filterRow}>
-              <div className={`${styles.filterGroup} ${styles.playersGroup}`}>
-                <label>Players</label>
-                <div className={styles.playerFilters}>
-                  {allPlayers.map(player => (
-                    <label key={player.id} className={styles.playerCheckbox}>
+          {/* Filters and Statistics */}
+          <div className={styles.contentWrapper}>
+            <div className={styles.filtersSection}>
+              <div className={styles.filters}>
+                {/* Row 1: Date Range and Game Search */}
+                <div className={styles.filterRow}>
+                  <div className={`${styles.filterGroup} ${styles.dateGroup}`}>
+                    <label>Date Range</label>
+                    <div className={styles.dateRange}>
                       <input
-                        type="checkbox"
-                        checked={selectedPlayers.includes(player.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedPlayers([...selectedPlayers, player.id]);
-                          } else {
-                            setSelectedPlayers(selectedPlayers.filter(id => id !== player.id));
-                          }
-                        }}
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className={styles.dateInput}
+                        placeholder="From"
                       />
-                      <span>{player.name}</span>
-                    </label>
-                  ))}
+                      <span>to</span>
+                      <input
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className={styles.dateInput}
+                        placeholder="To"
+                      />
+                    </div>
+                  </div>
+
+                  <div className={`${styles.filterGroup} ${styles.searchGroup}`}>
+                    <label>Game Search</label>
+                    <input
+                      type="text"
+                      value={gameSearch}
+                      onChange={(e) => setGameSearch(e.target.value)}
+                      placeholder="Search games..."
+                      className={styles.searchInput}
+                    />
+                  </div>
+
+                  {hasFilters && (
+                    <button className={styles.clearBtn} onClick={handleClearFilters}>
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+
+                {/* Row 2: Players */}
+                <div className={styles.filterRow}>
+                  <div className={`${styles.filterGroup} ${styles.playersGroup}`}>
+                    <label>Players</label>
+                    <div className={styles.playerFilters}>
+                      {allPlayers.map(player => (
+                        <label key={player.id} className={styles.playerCheckbox}>
+                          <input
+                            type="checkbox"
+                            checked={selectedPlayers.includes(player.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedPlayers([...selectedPlayers, player.id]);
+                              } else {
+                                setSelectedPlayers(selectedPlayers.filter(id => id !== player.id));
+                              }
+                            }}
+                          />
+                          <span>{player.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Statistics Box */}
+            {statistics && (
+              <div className={styles.statsSection}>
+                <div className={styles.statsBox}>
+                  <h3 className={styles.statsTitle}>📊 Statistics</h3>
+                  
+                  {/* Player with most wins */}
+                  {statistics.topWinner && (
+                    <div className={styles.statItem}>
+                      <div className={styles.statLabel}>Top Winner</div>
+                      <div className={styles.statValue}>
+                        {statistics.topWinner.name}
+                        {statistics.topWinner.isTied && <span className={styles.tiedIndicator}> (tied)</span>}
+                        <span className={styles.statSubtext}>
+                          {statistics.topWinner.wins} win{statistics.topWinner.wins !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top 3 most played games */}
+                  {statistics.topGames.length > 0 && (
+                    <div className={styles.statItem}>
+                      <div className={styles.statLabel}>Most Played Games</div>
+                      <div className={styles.statList}>
+                        {statistics.topGames.map((game, index) => (
+                          <div key={game.id} className={styles.statListItem}>
+                            <span className={styles.statRank}>#{index + 1}</span>
+                            <span className={styles.statName}>{game.title}</span>
+                            <span className={styles.statCount}>{game.plays}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Date with most games */}
+                  {statistics.busiestDate && (
+                    <div className={styles.statItem}>
+                      <div className={styles.statLabel}>Busiest Game Night</div>
+                      <div className={styles.statValue}>
+                        {formatDate(statistics.busiestDate.date)}
+                        <span className={styles.statSubtext}>
+                          {statistics.busiestDate.count} game{statistics.busiestDate.count !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Results */}
