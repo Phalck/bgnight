@@ -410,6 +410,24 @@
   border-radius: 4px;
 }
 
+.statEmptyMessage {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: 0.75rem;
+  background: var(--bg-dark);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.statEmpty {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .contentWrapper {

@@ -143,8 +143,6 @@ export default function PastBGNsPage() {
 
   // Calculate statistics from ALL plays (not filtered)
   const statistics = useMemo(() => {
-    if (plays.length === 0) return null;
-
     // 1. Player with most wins (handle ties - show first alphabetically + "(tied)")
     const winCounts = new Map<string, { id: string; name: string; wins: number }>();
     plays.forEach(play => {
@@ -198,7 +196,7 @@ export default function PastBGNsPage() {
     const sortedDates = Array.from(dateCounts.values()).sort((a, b) => b.count - a.count);
     const busiestDate = sortedDates[0] || null;
 
-    return { topWinner, topGames, busiestDate };
+    return { topWinner, topGames, busiestDate, hasData: plays.length > 0 };
   }, [plays]);
 
   // Format date to match GameNightCard format
@@ -409,57 +407,67 @@ export default function PastBGNsPage() {
               </div>
             </div>
 
-            {/* Statistics Box */}
-            {statistics && (
-              <div className={styles.statsSection}>
-                <div className={styles.statsBox}>
-                  <h3 className={styles.statsTitle}>📊 Statistics</h3>
-                  
-                  {/* Player with most wins */}
-                  {statistics.topWinner && (
-                    <div className={styles.statItem}>
-                      <div className={styles.statLabel}>Top Winner</div>
-                      <div className={styles.statValue}>
-                        {statistics.topWinner.name}
-                        {statistics.topWinner.isTied && <span className={styles.tiedIndicator}> (tied)</span>}
-                        <span className={styles.statSubtext}>
-                          {statistics.topWinner.wins} win{statistics.topWinner.wins !== 1 ? 's' : ''}
-                        </span>
-                      </div>
+            {/* Statistics Box - Always visible */}
+            <div className={styles.statsSection}>
+              <div className={styles.statsBox}>
+                <h3 className={styles.statsTitle}>📊 Statistics</h3>
+                
+                {!statistics.hasData && (
+                  <div className={styles.statEmptyMessage}>
+                    Start logging plays to see your statistics!
+                  </div>
+                )}
+                
+                {/* Player with most wins */}
+                <div className={styles.statItem}>
+                  <div className={styles.statLabel}>Top Winner</div>
+                  {statistics.topWinner ? (
+                    <div className={styles.statValue}>
+                      {statistics.topWinner.name}
+                      {statistics.topWinner.isTied && <span className={styles.tiedIndicator}> (tied)</span>}
+                      <span className={styles.statSubtext}>
+                        {statistics.topWinner.wins} win{statistics.topWinner.wins !== 1 ? 's' : ''}
+                      </span>
                     </div>
+                  ) : (
+                    <div className={styles.statEmpty}>No winners yet</div>
                   )}
+                </div>
 
-                  {/* Top 3 most played games */}
-                  {statistics.topGames.length > 0 && (
-                    <div className={styles.statItem}>
-                      <div className={styles.statLabel}>Most Played Games</div>
-                      <div className={styles.statList}>
-                        {statistics.topGames.map((game, index) => (
-                          <div key={game.id} className={styles.statListItem}>
-                            <span className={styles.statRank}>#{index + 1}</span>
-                            <span className={styles.statName}>{game.title}</span>
-                            <span className={styles.statCount}>{game.plays}</span>
-                          </div>
-                        ))}
-                      </div>
+                {/* Top 3 most played games */}
+                <div className={styles.statItem}>
+                  <div className={styles.statLabel}>Most Played Games</div>
+                  {statistics.topGames.length > 0 ? (
+                    <div className={styles.statList}>
+                      {statistics.topGames.map((game, index) => (
+                        <div key={game.id} className={styles.statListItem}>
+                          <span className={styles.statRank}>#{index + 1}</span>
+                          <span className={styles.statName}>{game.title}</span>
+                          <span className={styles.statCount}>{game.plays}</span>
+                        </div>
+                      ))}
                     </div>
+                  ) : (
+                    <div className={styles.statEmpty}>No games played yet</div>
                   )}
+                </div>
 
-                  {/* Date with most games */}
-                  {statistics.busiestDate && (
-                    <div className={styles.statItem}>
-                      <div className={styles.statLabel}>Busiest Game Night</div>
-                      <div className={styles.statValue}>
-                        {formatDate(statistics.busiestDate.date)}
-                        <span className={styles.statSubtext}>
-                          {statistics.busiestDate.count} game{statistics.busiestDate.count !== 1 ? 's' : ''}
-                        </span>
-                      </div>
+                {/* Date with most games */}
+                <div className={styles.statItem}>
+                  <div className={styles.statLabel}>Busiest Game Night</div>
+                  {statistics.busiestDate ? (
+                    <div className={styles.statValue}>
+                      {formatDate(statistics.busiestDate.date)}
+                      <span className={styles.statSubtext}>
+                        {statistics.busiestDate.count} game{statistics.busiestDate.count !== 1 ? 's' : ''}
+                      </span>
                     </div>
+                  ) : (
+                    <div className={styles.statEmpty}>No game nights yet</div>
                   )}
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Results */}
