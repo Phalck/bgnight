@@ -220,12 +220,6 @@ export default function PlanBGNPage() {
     });
     
     setFilteredSuggestions(filtered);
-    
-    // Clear selections when filters change and results are different
-    if (filtered.length !== suggestions.length) {
-      setSelectedGames([]);
-      setSelectedVideos(new Map());
-    }
   }, [suggestions, postSearchFilters, searchQuery, sortOrder, hasSearched]);
 
   // Initialize filtered suggestions when suggestions change
