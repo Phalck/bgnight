@@ -60,8 +60,7 @@ export default function PlanBGNPage() {
   // Post-search filters
   const [showFilters, setShowFilters] = useState(false);
   const [postSearchFilters, setPostSearchFilters] = useState({
-    minPlayers: 1,
-    maxPlayers: 20,
+    playerCount: 4,
     maxTime: 240,
     mechanics: [] as string[],
     categories: [] as string[],
@@ -178,9 +177,9 @@ export default function PlanBGNPage() {
         }
       }
 
-      // Player count filter
-      if (game.minPlayers > postSearchFilters.maxPlayers || 
-          game.maxPlayers < postSearchFilters.minPlayers) {
+      // Player count filter - game must support exactly the group size
+      if (postSearchFilters.playerCount < game.minPlayers || 
+          postSearchFilters.playerCount > game.maxPlayers) {
         return false;
       }
       
@@ -470,30 +469,18 @@ export default function PlanBGNPage() {
                 <div className={styles.filtersPanel}>
                   <div className={styles.filterRow}>
                     <div className={styles.filterGroup}>
-                      <label>Player Count</label>
-                      <div className={styles.rangeInputs}>
-                        <input
-                          type="number"
-                          min="1"
-                          max="20"
-                          value={postSearchFilters.minPlayers}
-                          onChange={(e) => setPostSearchFilters({
-                            ...postSearchFilters,
-                            minPlayers: parseInt(e.target.value) || 1
-                          })}
-                        />
-                        <span>to</span>
-                        <input
-                          type="number"
-                          min="1"
-                          max="20"
-                          value={postSearchFilters.maxPlayers}
-                          onChange={(e) => setPostSearchFilters({
-                            ...postSearchFilters,
-                            maxPlayers: parseInt(e.target.value) || 20
-                          })}
-                        />
-                      </div>
+                      <label>Number of Players</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={postSearchFilters.playerCount}
+                        onChange={(e) => setPostSearchFilters({
+                          ...postSearchFilters,
+                          playerCount: parseInt(e.target.value) || 4
+                        })}
+                        className={styles.numberInput}
+                      />
                     </div>
 
                     <div className={styles.filterGroup}>
@@ -609,12 +596,11 @@ export default function PlanBGNPage() {
                     </div>
                   )}
 
-                  <button 
+                  <button
                     className={styles.clearFiltersBtn}
                     onClick={() => {
                       setPostSearchFilters({
-                        minPlayers: 1,
-                        maxPlayers: 20,
+                        playerCount: 4,
                         maxTime: 240,
                         mechanics: [],
                         categories: [],
