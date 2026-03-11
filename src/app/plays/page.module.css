@@ -200,9 +200,9 @@
 }
 
 .searchGroup {
-  flex: 1;
-  min-width: 220px;
-  max-width: 300px;
+  flex: 0 0 180px;
+  min-width: 180px;
+  max-width: 180px;
 }
 
 .playersGroup {
