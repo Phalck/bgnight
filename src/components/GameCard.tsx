@@ -23,10 +23,9 @@ interface GameCardProps {
   playCount?: number;
   onPlayCountClick?: () => void;
   showArtwork?: boolean;
-  viewMode?: 'grid' | 'list';
 }
 
-export function GameCard({ game, playCount, onPlayCountClick, showArtwork = true, viewMode = 'grid' }: GameCardProps) {
+export function GameCard({ game, playCount, onPlayCountClick, showArtwork = true }: GameCardProps) {
   const formatPlayTime = () => {
     if (!game.minPlayTime && !game.maxPlayTime) return null;
     const min = game.minPlayTime || 0;
@@ -41,32 +40,32 @@ export function GameCard({ game, playCount, onPlayCountClick, showArtwork = true
     return `${game.minPlayers}-${game.maxPlayers} players`;
   };
 
-  const visibleTags = game.mechanics.slice(0, viewMode === 'list' ? 2 : 3);
-  const visibleCategories = game.categories.slice(0, viewMode === 'list' ? 2 : 3);
+  const visibleTags = game.mechanics.slice(0, 2);
+  const visibleCategories = game.categories.slice(0, 2);
 
-  // Use high-res image if available, fall back to thumbnail
-  const imageUrl = game.image || game.thumbnail;
+  // Use only thumbnail (not full-res image)
+  const imageUrl = game.thumbnail;
 
   return (
-    <div className={`${styles.card} ${!showArtwork ? styles.compactCard : ''} ${viewMode === 'list' ? styles.listCard : styles.gridCard}`}>
+    <div className={`${styles.card} ${!showArtwork ? styles.compactCard : ''}`}>
       {showArtwork && (
-        <div className={viewMode === 'list' ? styles.listImageContainer : styles.gridImageContainer}>
+        <div className={styles.imageContainer}>
           {imageUrl ? (
             <img 
               src={imageUrl} 
               alt={game.title} 
-              className={viewMode === 'list' ? styles.listImage : styles.gridImage}
+              className={styles.image}
               loading="lazy"
             />
           ) : (
-            <div className={viewMode === 'list' ? styles.listPlaceholder : styles.placeholder}>
+            <div className={styles.placeholder}>
               <span>🎲</span>
             </div>
           )}
         </div>
       )}
-      <div className={`${styles.content} ${!showArtwork ? styles.compactContent : ''} ${viewMode === 'list' ? styles.listContent : ''}`}>
-        <div className={viewMode === 'list' ? styles.listMainInfo : ''}>
+      <div className={`${styles.content} ${!showArtwork ? styles.compactContent : ''}`}>
+        <div className={styles.mainInfo}>
           <h3 className={styles.title}>{game.title}</h3>
           {game.designers && (
             (Array.isArray(game.designers) ? game.designers.length > 0 : game.designers.trim().length > 0) && (
@@ -76,7 +75,7 @@ export function GameCard({ game, playCount, onPlayCountClick, showArtwork = true
             )
           )}
         </div>
-        <div className={viewMode === 'list' ? styles.listDetails : ''}>
+        <div className={styles.details}>
           <div className={styles.badges}>
             <span className={styles.badge}>{formatPlayers()}</span>
             {formatPlayTime() && (
@@ -126,7 +125,7 @@ export function GameCard({ game, playCount, onPlayCountClick, showArtwork = true
           )}
         </div>
         {(game.bggRating || game.complexity || game.bggRank) && (
-          <div className={`${styles.bggStats} ${viewMode === 'list' ? styles.listBggStats : ''}`}>
+          <div className={styles.bggStats}>
             {game.bggRating && game.bggRating > 0 && (
               <span className={styles.bggRating}>
                 ⭐ {game.bggRating.toFixed(1)}/10

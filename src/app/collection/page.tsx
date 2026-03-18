@@ -141,18 +141,6 @@ export default function CollectionPage() {
     localStorage.setItem('bgnight_showArtwork', showArtwork.toString());
   }, [showArtwork]);
 
-  // View mode state - default to 'grid'
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
-    if (typeof window === 'undefined') return 'grid';
-    const saved = localStorage.getItem('bgnight_viewMode');
-    return (saved === 'list' ? 'list' : 'grid') as 'grid' | 'list';
-  });
-
-  // Save view mode preference to localStorage
-  useEffect(() => {
-    localStorage.setItem('bgnight_viewMode', viewMode);
-  }, [viewMode]);
-  
   // Video states
   const [videoSearchResults, setVideoSearchResults] = useState<YouTubeVideo[]>([]);
   const [loadingVideos, setLoadingVideos] = useState(false);
@@ -685,14 +673,6 @@ export default function CollectionPage() {
               </div>
               
               <button
-                className={`${styles.viewModeToggle} ${viewMode === 'list' ? styles.viewModeToggleActive : ''}`}
-                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                title={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
-              >
-                {viewMode === 'grid' ? '☰' : '⊞'}
-              </button>
-
-              <button
                 className={`${styles.artworkToggle} ${showArtwork ? styles.artworkToggleActive : ''}`}
                 onClick={() => setShowArtwork(!showArtwork)}
                 title={showArtwork ? 'Hide artwork' : 'Show artwork'}
@@ -828,11 +808,11 @@ export default function CollectionPage() {
               )}
             </div>
           ) : (
-            <div className={viewMode === 'list' ? styles.list : styles.grid}>
+            <div className={styles.grid}>
               {filteredGames.map((game) => (
                 <div
                   key={game.id}
-                  className={viewMode === 'list' ? styles.listCardWrapper : styles.cardWrapper}
+                  className={styles.cardWrapper}
                   onClick={() => handleView(game)}
                   style={{ cursor: 'pointer' }}
                 >
@@ -841,7 +821,6 @@ export default function CollectionPage() {
                     playCount={playCounts.get(game.id) || 0}
                     onPlayCountClick={() => setViewingHistoryGame(game)}
                     showArtwork={showArtwork}
-                    viewMode={viewMode}
                   />
                 </div>
               ))}

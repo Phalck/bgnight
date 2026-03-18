@@ -174,40 +174,6 @@
   opacity: 0.9;
 }
 
-.viewModeToggle {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1.25rem;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  height: 40px;
-}
-
-.viewModeToggle:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.viewModeToggleActive {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--bg-dark);
-}
-
-.viewModeToggleActive:hover {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--bg-dark);
-  opacity: 0.9;
-}
-
 .filters {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -299,17 +265,17 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 1rem;
 }
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.listCardWrapper {
+.cardWrapper {
   width: 100%;
 }
 
