@@ -13,18 +13,112 @@
   border-color: var(--primary);
 }
 
-.imageContainer {
-  aspect-ratio: 16 / 9;
+/* Grid View Styles */
+.gridCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.gridImageContainer {
+  aspect-ratio: 2 / 3;
   overflow: hidden;
   background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.image {
+.gridImage {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
+/* List View Styles */
+.listCard {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 120px;
+}
+
+.listCard:hover {
+  transform: translateX(4px);
+}
+
+.listImageContainer {
+  width: 90px;
+  min-width: 90px;
+  overflow: hidden;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--border);
+}
+
+.listImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 8px;
+}
+
+.listPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--surface) 0%, var(--card) 100%);
+}
+
+.listPlaceholder span {
+  font-size: 1.5rem;
+  opacity: 0.5;
+}
+
+.listContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.listMainInfo {
+  flex: 1;
+  min-width: 200px;
+}
+
+.listMainInfo .title {
+  -webkit-line-clamp: 1;
+  margin-bottom: 0.25rem;
+}
+
+.listDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.listDetails .badges {
+  margin-bottom: 0;
+}
+
+.listBggStats {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Placeholder */
 .placeholder {
   width: 100%;
   height: 100%;
@@ -39,6 +133,7 @@
   opacity: 0.5;
 }
 
+/* Content */
 .content {
   padding: 1rem;
 }
@@ -59,6 +154,7 @@
   display: flex;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .badge {
@@ -224,4 +320,15 @@
 .compactContent .categories,
 .compactContent .bggStats {
   display: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
