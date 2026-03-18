@@ -228,6 +228,11 @@ export async function GET(request: Request) {
       'Referer': 'https://boardgamegeek.com/',
     };
     
+    if (bggToken) {
+      detailsHeaders['Authorization'] = `Bearer ${bggToken}`;
+      logs.push('Added Bearer token to details request');
+    }
+    
     const detailsResponse = await fetch(detailsUrl, { headers: detailsHeaders });
     logs.push(`Details response status: ${detailsResponse.status}`);
 
