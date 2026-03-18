@@ -24,6 +24,53 @@ const parser = new XMLParser({
   trimValues: true,
 });
 
+// Comprehensive HTML entity decoder
+function decodeHtmlEntities(text: string): string {
+  if (!text) return '';
+  
+  // Handle named entities
+  const namedEntities: Record<string, string> = {
+    '&quot;': '"', '&amp;': '&', '&lt;': '<', '&gt;': '>',
+    '&nbsp;': ' ', '&apos;': "'", '&ndash;': '–', '&mdash;': '—',
+    '&lsquo;': "'", '&rsquo;': "'", '&ldquo;': '"', '&rdquo;': '"',
+    '&hellip;': '…', '&bull;': '•', '&trade;': '™', '&copy;': '©',
+    '&reg;': '®', '&deg;': '°', '&euro;': '€', '&pound;': '£',
+    '&yen;': '¥', '&cent;': '¢', '&sect;': '§', '&para;': '¶',
+    '&middot;': '·', '&iexcl;': '¡', '&iquest;': '¿', '&laquo;': '«',
+    '&raquo;': '»', '&lsaquo;': '‹', '&rsaquo;': '›', '&dagger;': '†',
+    '&Dagger;': '‡', '&permil;': '‰', '&prime;': '′', '&Prime;': '″',
+    '&minus;': '−', '&times;': '×', '&divide;': '÷', '&frasl;': '⁄',
+    '&sup1;': '¹', '&sup2;': '²', '&sup3;': '³', '&frac14;': '¼',
+    '&frac12;': '½', '&frac34;': '¾', '&ordf;': 'ª', '&ordm;': 'º',
+  };
+  
+  // Replace named entities
+  let decoded = text;
+  for (const [entity, char] of Object.entries(namedEntities)) {
+    decoded = decoded.replace(new RegExp(entity, 'g'), char);
+  }
+  
+  // Handle decimal numeric entities (&#39; -> ')
+  decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
+    try {
+      return String.fromCharCode(parseInt(dec, 10));
+    } catch {
+      return match;
+    }
+  });
+  
+  // Handle hexadecimal numeric entities (&#x27; -> ')
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
+    try {
+      return String.fromCharCode(parseInt(hex, 16));
+    } catch {
+      return match;
+    }
+  });
+  
+  return decoded;
+}
+
 // Fetch with timeout
 async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
@@ -174,12 +221,12 @@ export async function GET(request: Request) {
     const results: BGGSearchResult[] = pageItems.map((item: any, index: number) => {
       const id = item['@_id'];
       
-      // Get primary name
+      // Get primary name and decode HTML entities
       let title = '';
       if (item.name) {
         const names = Array.isArray(item.name) ? item.name : [item.name];
         const primaryName = names.find((n: any) => n['@_type'] === 'primary');
-        title = primaryName?.['@_value'] || names[0]?.['@_value'] || '';
+        title = decodeHtmlEntities(primaryName?.['@_value'] || names[0]?.['@_value'] || '');
       }
       
       const yearPublished = parseInt(item.yearpublished?.['@_value'], 10) || undefined;

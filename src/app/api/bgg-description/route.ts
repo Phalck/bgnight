@@ -31,17 +31,54 @@ function parseDescriptionFromXML(xml: string): { description: string; errors: st
       return { description: '', errors };
     }
 
+    // Comprehensive HTML entity decoder
     const decodeHtml = (text: string): string => {
       if (!text) return '';
-      return text
-        .replace(/&quot;/g, '"')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&#10;/g, '\n')
-        .replace(/&#13;/g, '')
-        .replace(/&#39;/g, "'")
-        .replace(/&nbsp;/g, ' ');
+      
+      // Handle named entities
+      const namedEntities: Record<string, string> = {
+        '&quot;': '"', '&amp;': '&', '&lt;': '<', '&gt;': '>',
+        '&nbsp;': ' ', '&apos;': "'", '&ndash;': '–', '&mdash;': '—',
+        '&lsquo;': "'", '&rsquo;': "'", '&ldquo;': '"', '&rdquo;': '"',
+        '&hellip;': '…', '&bull;': '•', '&trade;': '™', '&copy;': '©',
+        '&reg;': '®', '&deg;': '°', '&euro;': '€', '&pound;': '£',
+        '&yen;': '¥', '&cent;': '¢', '&sect;': '§', '&para;': '¶',
+        '&middot;': '·', '&iexcl;': '¡', '&iquest;': '¿', '&laquo;': '«',
+        '&raquo;': '»', '&lsaquo;': '‹', '&rsaquo;': '›', '&dagger;': '†',
+        '&Dagger;': '‡', '&permil;': '‰', '&prime;': '′', '&Prime;': '″',
+        '&minus;': '−', '&times;': '×', '&divide;': '÷', '&frasl;': '⁄',
+        '&sup1;': '¹', '&sup2;': '²', '&sup3;': '³', '&frac14;': '¼',
+        '&frac12;': '½', '&frac34;': '¾', '&ordf;': 'ª', '&ordm;': 'º',
+      };
+      
+      // Replace named entities
+      let decoded = text;
+      for (const [entity, char] of Object.entries(namedEntities)) {
+        decoded = decoded.replace(new RegExp(entity, 'g'), char);
+      }
+      
+      // Handle decimal numeric entities (&#39; -> ')
+      decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
+        try {
+          return String.fromCharCode(parseInt(dec, 10));
+        } catch {
+          return match;
+        }
+      });
+      
+      // Handle hexadecimal numeric entities (&#x27; -> ')
+      decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
+        try {
+          return String.fromCharCode(parseInt(hex, 16));
+        } catch {
+          return match;
+        }
+      });
+      
+      // Handle common numeric line breaks
+      decoded = decoded.replace(/&#10;/g, '\n').replace(/&#13;/g, '');
+      
+      return decoded;
     };
 
     const description = decodeHtml(item.description || '');

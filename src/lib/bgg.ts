@@ -112,12 +112,59 @@ async function getGamesByIds(ids: number[]): Promise<BGGGame[]> {
   }
 }
 
+// Comprehensive HTML entity decoder
+function decodeHtmlEntities(text: string): string {
+  if (!text) return '';
+  
+  // Handle named entities
+  const namedEntities: Record<string, string> = {
+    '&quot;': '"', '&amp;': '&', '&lt;': '<', '&gt;': '>',
+    '&nbsp;': ' ', '&apos;': "'", '&ndash;': '–', '&mdash;': '—',
+    '&lsquo;': "'", '&rsquo;': "'", '&ldquo;': '"', '&rdquo;': '"',
+    '&hellip;': '…', '&bull;': '•', '&trade;': '™', '&copy;': '©',
+    '&reg;': '®', '&deg;': '°', '&euro;': '€', '&pound;': '£',
+    '&yen;': '¥', '&cent;': '¢', '&sect;': '§', '&para;': '¶',
+    '&middot;': '·', '&iexcl;': '¡', '&iquest;': '¿', '&laquo;': '«',
+    '&raquo;': '»', '&lsaquo;': '‹', '&rsaquo;': '›', '&dagger;': '†',
+    '&Dagger;': '‡', '&permil;': '‰', '&prime;': '′', '&Prime;': '″',
+    '&minus;': '−', '&times;': '×', '&divide;': '÷', '&frasl;': '⁄',
+    '&sup1;': '¹', '&sup2;': '²', '&sup3;': '³', '&frac14;': '¼',
+    '&frac12;': '½', '&frac34;': '¾', '&ordf;': 'ª', '&ordm;': 'º',
+  };
+  
+  // Replace named entities
+  let decoded = text;
+  for (const [entity, char] of Object.entries(namedEntities)) {
+    decoded = decoded.replace(new RegExp(entity, 'g'), char);
+  }
+  
+  // Handle decimal numeric entities (&#39; -> ')
+  decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
+    try {
+      return String.fromCharCode(parseInt(dec, 10));
+    } catch {
+      return match;
+    }
+  });
+  
+  // Handle hexadecimal numeric entities (&#x27; -> ')
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
+    try {
+      return String.fromCharCode(parseInt(hex, 16));
+    } catch {
+      return match;
+    }
+  });
+  
+  return decoded;
+}
+
 function parseGameItem(item: Element): BGGGame | null {
   const id = parseInt(item.getAttribute('id') || '0', 10);
   if (!id) return null;
 
   const nameEl = item.querySelector('name[type="primary"]');
-  const name = nameEl?.getAttribute('value') || 'Unknown';
+  const name = decodeHtmlEntities(nameEl?.getAttribute('value') || 'Unknown');
 
   const thumbnail = item.querySelector('thumbnail')?.textContent || undefined;
   const imageRaw = item.querySelector('image')?.textContent || undefined;
@@ -131,30 +178,30 @@ function parseGameItem(item: Element): BGGGame | null {
 
   const yearPublished = parseInt(item.querySelector('yearpublished')?.getAttribute('value') || '0', 10) || undefined;
 
-  const description = item.querySelector('description')?.textContent || undefined;
+  const description = decodeHtmlEntities(item.querySelector('description')?.textContent || '');
 
   const mechanics: string[] = [];
   item.querySelectorAll('link[type="boardgamemechanic"]').forEach(link => {
     const value = link.getAttribute('value');
-    if (value) mechanics.push(value);
+    if (value) mechanics.push(decodeHtmlEntities(value));
   });
 
   const categories: string[] = [];
   item.querySelectorAll('link[type="boardgamecategory"]').forEach(link => {
     const value = link.getAttribute('value');
-    if (value) categories.push(value);
+    if (value) categories.push(decodeHtmlEntities(value));
   });
 
   const designers: string[] = [];
   item.querySelectorAll('link[type="boardgamedesigner"]').forEach(link => {
     const value = link.getAttribute('value');
-    if (value) designers.push(value);
+    if (value) designers.push(decodeHtmlEntities(value));
   });
 
   const publishers: string[] = [];
   item.querySelectorAll('link[type="boardgamepublisher"]').forEach(link => {
     const value = link.getAttribute('value');
-    if (value) publishers.push(value);
+    if (value) publishers.push(decodeHtmlEntities(value));
   });
 
   return {
