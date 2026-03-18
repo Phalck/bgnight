@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
-import { SelectableGameCard } from '@/components/SelectableGameCard';
+import { GameCard } from '@/components/GameCard';
 import { VideoPickerModal } from '@/components/VideoPickerModal';
 import { SelectedGamesList } from '@/components/SelectedGamesList';
 import { EventDetailsForm } from '@/components/EventDetailsForm';
@@ -617,11 +617,12 @@ export default function PlanBGNPage() {
 
               <div className={styles.suggestionsGrid}>
                 {filteredSuggestions.map(game => (
-                  <SelectableGameCard
+                  <GameCard
                     key={game.id}
                     game={game}
                     selected={!!selectedGames.find(g => g.id === game.id)}
                     onToggle={() => toggleGameSelection(game)}
+                    showCheckbox={true}
                     showArtwork={showArtwork}
                   />
                 ))}

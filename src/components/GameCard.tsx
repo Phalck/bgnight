@@ -23,9 +23,20 @@ interface GameCardProps {
   playCount?: number;
   onPlayCountClick?: () => void;
   showArtwork?: boolean;
+  selected?: boolean;
+  onToggle?: () => void;
+  showCheckbox?: boolean;
 }
 
-export function GameCard({ game, playCount, onPlayCountClick, showArtwork = true }: GameCardProps) {
+export function GameCard({ 
+  game, 
+  playCount, 
+  onPlayCountClick, 
+  showArtwork = true,
+  selected = false,
+  onToggle,
+  showCheckbox = false
+}: GameCardProps) {
   const formatPlayTime = () => {
     if (!game.minPlayTime && !game.maxPlayTime) return null;
     const min = game.minPlayTime || 0;
@@ -46,8 +57,36 @@ export function GameCard({ game, playCount, onPlayCountClick, showArtwork = true
   // Use only thumbnail (not full-res image)
   const imageUrl = game.thumbnail;
 
+  const handleCardClick = () => {
+    if (onToggle) {
+      onToggle();
+    }
+  };
+
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onToggle) {
+      onToggle();
+    }
+  };
+
   return (
-    <div className={`${styles.card} ${!showArtwork ? styles.compactCard : ''}`}>
+    <div 
+      className={`${styles.card} ${!showArtwork ? styles.compactCard : ''} ${selected ? styles.selected : ''} ${onToggle ? styles.selectable : ''}`}
+      onClick={handleCardClick}
+    >
+      {/* Checkbox in upper right corner */}
+      {showCheckbox && (
+        <div className={styles.checkboxContainer} onClick={handleCheckboxClick}>
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => {}} // Handled by onClick
+            className={styles.checkbox}
+          />
+        </div>
+      )}
+
       {/* Row 1: Header with thumbnail and title */}
       <div className={styles.cardHeader}>
         {showArtwork && (
