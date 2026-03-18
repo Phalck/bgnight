@@ -70,6 +70,13 @@ interface BGGGameData {
   artists: string[];
 }
 
+interface BGGSearchResult {
+  id: string;
+  title: string;
+  yearPublished?: number;
+  thumbnail?: string;
+}
+
 export default function CollectionPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -112,6 +119,14 @@ export default function CollectionPage() {
   const [bggImportData, setBggImportData] = useState<BGGGameData | null>(null);
   const [bggImportError, setBggImportError] = useState('');
   const [showBGGConfirmModal, setShowBGGConfirmModal] = useState(false);
+  
+  // Multiple results selection state
+  const [searchResults, setSearchResults] = useState<BGGSearchResult[]>([]);
+  const [searchOffset, setSearchOffset] = useState(0);
+  const [hasMoreResults, setHasMoreResults] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const [showGameSelection, setShowGameSelection] = useState(false);
   
   // BGG Suggestions state
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -363,8 +378,70 @@ export default function CollectionPage() {
     if (hasExistingData()) {
       setShowBGGConfirmModal(true);
     } else {
-      setShowBGGImport(true);
-      handleFetchBGG();
+      setShowGameSelection(true);
+      setSearchOffset(0);
+      handleSearchBGG(0);
+    }
+  };
+
+  const handleSearchBGG = async (offset: number) => {
+    setSearchLoading(true);
+    setBggImportError('');
+    
+    try {
+      const response = await fetch(`/api/bgg-import/search?gameName=${encodeURIComponent(editingGame?.title || '')}&offset=${offset}`);
+      const data = await response.json();
+      
+      if (!data.success) {
+        setBggImportError(data.error || 'Failed to search BoardGameGeek');
+        setSearchResults([]);
+      } else {
+        setSearchResults(data.data || []);
+        setHasMoreResults(data.hasMore || false);
+        setSearchOffset(offset);
+      }
+    } catch (err) {
+      setBggImportError('Failed to connect to BoardGameGeek');
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleLoadMoreResults = () => {
+    const nextOffset = searchOffset + 3;
+    handleSearchBGG(nextOffset);
+  };
+
+  const handleSelectGame = async (gameId: string) => {
+    setSelectedGameId(gameId);
+    setShowGameSelection(false);
+    setShowBGGImport(true);
+    
+    // Fetch full details for selected game
+    setBggImportLoading(true);
+    setBggImportError('');
+    setBggImportData(null);
+    
+    try {
+      const response = await fetch(`/api/bgg-import?gameId=${encodeURIComponent(gameId)}`);
+      const data = await response.json();
+      
+      if (!data.success) {
+        if (data.comingSoon) {
+          setBggImportError('coming_soon');
+        } else if (data.notFound) {
+          setBggImportError('not_found');
+        } else {
+          setBggImportError(data.error || 'Failed to fetch from BGG');
+        }
+      } else {
+        setBggImportData(data.data);
+      }
+    } catch (err) {
+      setBggImportError('Failed to connect to BoardGameGeek');
+    } finally {
+      setBggImportLoading(false);
     }
   };
 
@@ -1025,11 +1102,102 @@ export default function CollectionPage() {
                 className={styles.saveBtn}
                 onClick={() => {
                   setShowBGGConfirmModal(false);
-                  setShowBGGImport(true);
-                  handleFetchBGG();
+                  setShowGameSelection(true);
+                  setSearchOffset(0);
+                  handleSearchBGG(0);
                 }}
               >
                 Continue to BGG Import
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Game Selection Modal */}
+      {showGameSelection && (
+        <div className={styles.modalOverlay} onClick={() => setShowGameSelection(false)}>
+          <div className={`${styles.modal} ${styles.bggImportModal}`} onClick={e => e.stopPropagation()}>
+            <h2 className={styles.modalTitle}>Select Game from BGG</h2>
+            <p className={styles.searchSubtitle}>Searching for &quot;{editingGame?.title}&quot;</p>
+            
+            {searchLoading && (
+              <div className={styles.bggLoadingState}>
+                <LoadingSpinner size="large" />
+                <p>Searching BoardGameGeek...</p>
+              </div>
+            )}
+
+            {bggImportError && !searchLoading && (
+              <div className={styles.bggError}>
+                <span className={styles.errorIcon}>⚠️</span>
+                <p>{bggImportError}</p>
+                <button 
+                  className={styles.retryBtn}
+                  onClick={() => handleSearchBGG(searchOffset)}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {!searchLoading && !bggImportError && searchResults.length === 0 && (
+              <div className={styles.bggNotFound}>
+                <span className={styles.notFoundIcon}>❌</span>
+                <h3>No games found</h3>
+                <p>Try searching with a different name or check the spelling.</p>
+              </div>
+            )}
+
+            {!searchLoading && !bggImportError && searchResults.length > 0 && (
+              <div className={styles.gameSelectionList}>
+                {searchResults.map((result) => (
+                  <div 
+                    key={result.id} 
+                    className={styles.gameSelectionItem}
+                    onClick={() => handleSelectGame(result.id)}
+                  >
+                    <div className={styles.gameSelectionThumbnail}>
+                      {result.thumbnail ? (
+                        <img src={result.thumbnail} alt={result.title} />
+                      ) : (
+                        <div className={styles.gameSelectionPlaceholder}>🎲</div>
+                      )}
+                    </div>
+                    <div className={styles.gameSelectionInfo}>
+                      <h3>{result.title}</h3>
+                      {result.yearPublished && (
+                        <span className={styles.gameSelectionYear}>({result.yearPublished})</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                
+                {hasMoreResults && (
+                  <button 
+                    className={styles.loadMoreBtn}
+                    onClick={handleLoadMoreResults}
+                    disabled={searchLoading}
+                  >
+                    {searchLoading ? (
+                      <>
+                        <LoadingSpinner size="small" />
+                        Loading...
+                      </>
+                    ) : (
+                      'Load 3 more'
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className={styles.modalActions}>
+              <button 
+                className={styles.cancelBtn}
+                onClick={() => setShowGameSelection(false)}
+              >
+                Cancel
               </button>
             </div>
           </div>
@@ -1044,7 +1212,7 @@ export default function CollectionPage() {
             {bggImportLoading && (
               <div className={styles.bggLoadingState}>
                 <LoadingSpinner size="large" />
-                <p>Searching BoardGameGeek...</p>
+                <p>Fetching game details...</p>
               </div>
             )}
 

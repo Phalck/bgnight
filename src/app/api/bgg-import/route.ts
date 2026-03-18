@@ -141,11 +141,12 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const gameName = searchParams.get('gameName');
+    const gameId = searchParams.get('gameId');
 
-    if (!gameName) {
+    if (!gameName && !gameId) {
       return NextResponse.json({
         success: false,
-        error: 'Game name is required',
+        error: 'Game name or game ID is required',
       }, { status: 400 });
     }
 
@@ -153,67 +154,72 @@ export async function GET(request: Request) {
     const bggToken = process.env.BGG_API_TOKEN;
     logs.push(`BGG Token configured: ${bggToken ? 'Yes' : 'No'}`);
 
-    // Step 1: Search for game on BGG
-    const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(gameName)}&type=boardgame`;
-    logs.push(`Search URL: ${searchUrl}`);
+    let finalGameId = gameId;
     
-    const searchHeaders: Record<string, string> = {
-      'User-Agent': 'BoardGameNight-App/1.0',
-    };
-    
-    if (bggToken) {
-      searchHeaders['Authorization'] = `Bearer ${bggToken}`;
+    // Step 1: Search for game on BGG (if gameId not provided)
+    if (!finalGameId && gameName) {
+      const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(gameName)}&type=boardgame`;
+      logs.push(`Search URL: ${searchUrl}`);
+      
+      const searchHeaders: Record<string, string> = {
+        'User-Agent': 'BoardGameNight-App/1.0',
+      };
+      
+      if (bggToken) {
+        searchHeaders['Authorization'] = `Bearer ${bggToken}`;
+      }
+      
+      const searchResponse = await fetch(searchUrl, { headers: searchHeaders });
+      logs.push(`Search response status: ${searchResponse.status}`);
+
+      if (!searchResponse.ok) {
+        const searchErrorText = await searchResponse.text();
+        logs.push(`Search error response: ${searchErrorText.substring(0, 500)}`);
+        throw new Error(`BGG search failed: ${searchResponse.status} - ${searchErrorText.substring(0, 200)}`);
+      }
+
+      const searchXml = await searchResponse.text();
+      logs.push(`Search XML length: ${searchXml.length} chars`);
+      logs.push(`Search XML preview: ${searchXml.substring(0, 300)}...`);
+      
+      // Parse search results to get game ID
+      const searchParsed = parser.parse(searchXml);
+      
+      if (!searchParsed.items || !searchParsed.items.item) {
+        logs.push('No items found in search results');
+        return NextResponse.json({
+          success: false,
+          notFound: true,
+          message: `Game "${gameName}" not found on BoardGameGeek.`,
+          logs,
+        });
+      }
+
+      const items = Array.isArray(searchParsed.items.item) 
+        ? searchParsed.items.item 
+        : [searchParsed.items.item];
+      
+      if (items.length === 0) {
+        logs.push('Items array is empty');
+        return NextResponse.json({
+          success: false,
+          notFound: true,
+          message: `Game "${gameName}" not found on BoardGameGeek.`,
+          logs,
+        });
+      }
+
+      finalGameId = items[0]['@_id'];
     }
     
-    const searchResponse = await fetch(searchUrl, { headers: searchHeaders });
-    logs.push(`Search response status: ${searchResponse.status}`);
-
-    if (!searchResponse.ok) {
-      const searchErrorText = await searchResponse.text();
-      logs.push(`Search error response: ${searchErrorText.substring(0, 500)}`);
-      throw new Error(`BGG search failed: ${searchResponse.status} - ${searchErrorText.substring(0, 200)}`);
-    }
-
-    const searchXml = await searchResponse.text();
-    logs.push(`Search XML length: ${searchXml.length} chars`);
-    logs.push(`Search XML preview: ${searchXml.substring(0, 300)}...`);
-    
-    // Parse search results to get game ID
-    const searchParsed = parser.parse(searchXml);
-    
-    if (!searchParsed.items || !searchParsed.items.item) {
-      logs.push('No items found in search results');
-      return NextResponse.json({
-        success: false,
-        notFound: true,
-        message: `Game "${gameName}" not found on BoardGameGeek.`,
-        logs,
-      });
-    }
-
-    const items = Array.isArray(searchParsed.items.item) 
-      ? searchParsed.items.item 
-      : [searchParsed.items.item];
-    
-    if (items.length === 0) {
-      logs.push('Items array is empty');
-      return NextResponse.json({
-        success: false,
-        notFound: true,
-        message: `Game "${gameName}" not found on BoardGameGeek.`,
-        logs,
-      });
-    }
-
-    const gameId = items[0]['@_id'];
-    logs.push(`Found game ID: ${gameId}`);
+    logs.push(`Found game ID: ${finalGameId}`);
 
     // Step 2: Get detailed game info
     // Wait 5 seconds to respect BGG rate limits
     logs.push('Waiting 5 seconds for rate limit...');
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1`;
+    const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${finalGameId}&stats=1`;
     logs.push(`Details URL: ${detailsUrl}`);
     
     const detailsHeaders: Record<string, string> = {
