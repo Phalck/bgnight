@@ -74,7 +74,6 @@ interface BGGSearchResult {
   id: string;
   title: string;
   yearPublished?: number;
-  thumbnail?: string;
 }
 
 export default function CollectionPage() {
@@ -1157,13 +1156,6 @@ export default function CollectionPage() {
                     className={styles.gameSelectionItem}
                     onClick={() => handleSelectGame(result.id)}
                   >
-                    <div className={styles.gameSelectionThumbnail}>
-                      {result.thumbnail ? (
-                        <img src={result.thumbnail} alt={result.title} />
-                      ) : (
-                        <div className={styles.gameSelectionPlaceholder}>🎲</div>
-                      )}
-                    </div>
                     <div className={styles.gameSelectionInfo}>
                       <h3>{result.title}</h3>
                       {result.yearPublished && (

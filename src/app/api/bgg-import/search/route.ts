@@ -5,7 +5,6 @@ interface BGGSearchResult {
   id: string;
   title: string;
   yearPublished?: number;
-  thumbnail?: string;
 }
 
 interface BGGSearchResponse {
@@ -14,6 +13,7 @@ interface BGGSearchResponse {
   hasMore?: boolean;
   total?: number;
   error?: string;
+  logs?: string[];
 }
 
 // Configure XML parser
@@ -24,87 +24,95 @@ const parser = new XMLParser({
   trimValues: true,
 });
 
-// Fetch thumbnail for a game (BGG search doesn't return thumbnails, so we fetch them separately)
-async function fetchThumbnails(gameIds: string[]): Promise<Record<string, string>> {
-  if (gameIds.length === 0) return {};
+// Fetch with timeout
+async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   
   try {
-    // Wait 2 seconds to respect BGG rate limits
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const idsParam = gameIds.join(',');
-    const url = `https://boardgamegeek.com/xmlapi2/thing?id=${idsParam}`;
-    
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'BoardGameNight-App/1.0',
       },
+      signal: controller.signal,
     });
-    
-    if (!response.ok) return {};
-    
-    const xml = await response.text();
-    const parsed = parser.parse(xml);
-    
-    const thumbnails: Record<string, string> = {};
-    
-    if (parsed.items && parsed.items.item) {
-      const items = Array.isArray(parsed.items.item) 
-        ? parsed.items.item 
-        : [parsed.items.item];
-      
-      items.forEach((item: any) => {
-        const id = item['@_id'];
-        const thumbnail = item.thumbnail;
-        if (id && thumbnail) {
-          thumbnails[id] = thumbnail;
-        }
-      });
-    }
-    
-    return thumbnails;
+    clearTimeout(timeoutId);
+    return response;
   } catch (error) {
-    console.error('Error fetching thumbnails:', error);
-    return {};
+    clearTimeout(timeoutId);
+    throw error;
   }
 }
 
 export async function GET(request: Request) {
+  const logs: string[] = [];
+  const startTime = Date.now();
+  
   try {
     const { searchParams } = new URL(request.url);
     const gameName = searchParams.get('gameName');
     const offset = parseInt(searchParams.get('offset') || '0', 10);
     
+    logs.push(`[BGG Search] Starting search for: "${gameName}"`);
+    logs.push(`[BGG Search] Offset: ${offset}`);
+    
     if (!gameName) {
+      logs.push('[BGG Search] Error: Game name is required');
       return NextResponse.json({
         success: false,
         error: 'Game name is required',
+        logs,
       }, { status: 400 });
     }
     
     // BGG Search API
     const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(gameName)}&type=boardgame`;
+    logs.push(`[BGG Search] Request URL: ${searchUrl}`);
+    logs.push(`[BGG Search] Timeout: 10s`);
     
-    const searchResponse = await fetch(searchUrl, {
-      headers: {
-        'User-Agent': 'BoardGameNight-App/1.0',
-      },
-    });
+    let searchResponse;
+    try {
+      searchResponse = await fetchWithTimeout(searchUrl, 10000);
+      logs.push(`[BGG Search] Response received: ${searchResponse.status} ${searchResponse.statusText}`);
+    } catch (fetchError: any) {
+      if (fetchError.name === 'AbortError') {
+        logs.push('[BGG Search] Error: Request timed out after 10s');
+        throw new Error('Request timed out after 10 seconds');
+      }
+      logs.push(`[BGG Search] Error: Fetch failed - ${fetchError.message}`);
+      throw fetchError;
+    }
     
     if (!searchResponse.ok) {
       const errorText = await searchResponse.text();
-      throw new Error(`BGG search failed: ${searchResponse.status} - ${errorText.substring(0, 200)}`);
+      logs.push(`[BGG Search] Error: HTTP ${searchResponse.status} - ${errorText.substring(0, 200)}`);
+      throw new Error(`BGG search failed: ${searchResponse.status}`);
     }
     
     const searchXml = await searchResponse.text();
-    const searchParsed = parser.parse(searchXml);
+    logs.push(`[BGG Search] XML received: ${searchXml.length} characters`);
+    logs.push(`[BGG Search] XML preview: ${searchXml.substring(0, 300)}...`);
+    
+    let searchParsed;
+    try {
+      searchParsed = parser.parse(searchXml);
+      logs.push('[BGG Search] XML parsed successfully');
+    } catch (parseError: any) {
+      logs.push(`[BGG Search] Error: XML parsing failed - ${parseError.message}`);
+      throw parseError;
+    }
     
     if (!searchParsed.items || !searchParsed.items.item) {
+      logs.push('[BGG Search] No items found in search results');
+      const duration = Date.now() - startTime;
+      logs.push(`[BGG Search] Total time: ${duration}ms`);
+      
       return NextResponse.json({
         success: true,
         data: [],
         hasMore: false,
         total: 0,
+        logs,
       });
     }
     
@@ -112,12 +120,18 @@ export async function GET(request: Request) {
       ? searchParsed.items.item 
       : [searchParsed.items.item];
     
+    logs.push(`[BGG Search] Found ${allItems.length} total items`);
+    
     if (allItems.length === 0) {
+      const duration = Date.now() - startTime;
+      logs.push(`[BGG Search] Total time: ${duration}ms`);
+      
       return NextResponse.json({
         success: true,
         data: [],
         hasMore: false,
         total: 0,
+        logs,
       });
     }
     
@@ -126,8 +140,10 @@ export async function GET(request: Request) {
     const pageItems = allItems.slice(offset, offset + pageSize);
     const hasMore = offset + pageSize < allItems.length;
     
-    // Parse basic info from search results
-    const results: BGGSearchResult[] = pageItems.map((item: any) => {
+    logs.push(`[BGG Search] Returning items ${offset + 1} to ${offset + pageItems.length}`);
+    
+    // Parse basic info from search results (no thumbnails)
+    const results: BGGSearchResult[] = pageItems.map((item: any, index: number) => {
       const id = item['@_id'];
       
       // Get primary name
@@ -140,6 +156,8 @@ export async function GET(request: Request) {
       
       const yearPublished = parseInt(item.yearpublished?.['@_value'], 10) || undefined;
       
+      logs.push(`[BGG Search] Item ${index + 1}: ID=${id}, Title="${title}", Year=${yearPublished || 'N/A'}`);
+      
       return {
         id,
         title,
@@ -147,29 +165,28 @@ export async function GET(request: Request) {
       };
     }).filter((r: BGGSearchResult) => r.title); // Filter out entries without titles
     
-    // Fetch thumbnails for these games
-    const gameIds = results.map(r => r.id);
-    const thumbnails = await fetchThumbnails(gameIds);
-    
-    // Add thumbnails to results
-    const resultsWithThumbnails = results.map(r => ({
-      ...r,
-      thumbnail: thumbnails[r.id],
-    }));
+    const duration = Date.now() - startTime;
+    logs.push(`[BGG Search] Total time: ${duration}ms`);
+    logs.push(`[BGG Search] Success: Returning ${results.length} results`);
     
     return NextResponse.json({
       success: true,
-      data: resultsWithThumbnails,
+      data: results,
       hasMore,
       total: allItems.length,
+      logs,
     });
     
   } catch (error: any) {
-    console.error('BGG search error:', error);
+    const duration = Date.now() - startTime;
+    logs.push(`[BGG Search] Error after ${duration}ms: ${error.message}`);
+    console.error('[BGG Search] Full error:', error);
+    
     return NextResponse.json({
       success: false,
-      error: 'Failed to search BoardGameGeek',
+      error: 'Failed to search Board game geek',
       details: error.message,
+      logs,
     }, { status: 500 });
   }
 }
