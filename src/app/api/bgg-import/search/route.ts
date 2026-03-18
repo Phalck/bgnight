@@ -68,14 +68,39 @@ export async function GET(request: Request) {
       }, { status: 400 });
     }
     
+    // Get BGG API token from environment
+    const bggToken = process.env.BGG_API_TOKEN;
+    logs.push(`[BGG Search] API Token configured: ${bggToken ? 'Yes' : 'No'}`);
+    
     // BGG Search API
     const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(gameName)}&type=boardgame`;
     logs.push(`[BGG Search] Request URL: ${searchUrl}`);
     logs.push(`[BGG Search] Timeout: 10s`);
     
+    // Build headers with authentication
+    const headers: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'application/xml, text/xml, */*',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Referer': 'https://boardgamegeek.com/',
+    };
+    
+    if (bggToken) {
+      headers['Authorization'] = `Bearer ${bggToken}`;
+      logs.push('[BGG Search] Added Bearer token to request');
+    }
+    
     let searchResponse;
     try {
-      searchResponse = await fetchWithTimeout(searchUrl, 10000);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      searchResponse = await fetch(searchUrl, {
+        headers,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
       logs.push(`[BGG Search] Response received: ${searchResponse.status} ${searchResponse.statusText}`);
     } catch (fetchError: any) {
       if (fetchError.name === 'AbortError') {
