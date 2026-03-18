@@ -126,6 +126,11 @@ export async function GET(request: Request) {
       'Accept-Language': 'en-US,en;q=0.9',
       'Referer': 'https://boardgamegeek.com/',
     };
+    
+    if (bggToken) {
+      headers['Authorization'] = `Bearer ${bggToken}`;
+      logs.push('Added Bearer token to request');
+    }
 
     const response = await fetch(url, { headers });
     logs.push(`Response status: ${response.status}`);
