@@ -48,37 +48,38 @@ export function GameCard({ game, playCount, onPlayCountClick, showArtwork = true
 
   return (
     <div className={`${styles.card} ${!showArtwork ? styles.compactCard : ''}`}>
-      {showArtwork && (
-        <div className={styles.imageContainer}>
-          {imageUrl ? (
-            <img 
-              src={imageUrl} 
-              alt={game.title} 
-              className={styles.image}
-              loading="lazy"
-            />
-          ) : (
-            <div className={styles.placeholder}>
-              <span>🎲</span>
-            </div>
+      {/* Row 1: Header with thumbnail and title */}
+      <div className={styles.cardHeader}>
+        {showArtwork && (
+          <div className={styles.imageContainer}>
+            {imageUrl ? (
+              <img 
+                src={imageUrl} 
+                alt={game.title} 
+                className={styles.image}
+                loading="lazy"
+              />
+            ) : (
+              <div className={styles.placeholder}>
+                <span>🎲</span>
+              </div>
+            )}
+          </div>
+        )}
+        <div className={styles.titleArea}>
+          <h3 className={styles.title}>{game.title}</h3>
+          {game.designers && (
+            (Array.isArray(game.designers) ? game.designers.length > 0 : game.designers.trim().length > 0) && (
+              <p className={styles.designer}>
+                {Array.isArray(game.designers) ? game.designers[0] : game.designers.split(',')[0].trim()}
+              </p>
+            )
           )}
         </div>
-      )}
-      <div className={`${styles.content} ${!showArtwork ? styles.compactContent : ''}`}>
-        {/* Title */}
-        <div className={styles.mainInfo}>
-          <h3 className={styles.title}>{game.title}</h3>
-        </div>
+      </div>
 
-        {/* Designer */}
-        {game.designers && (
-          (Array.isArray(game.designers) ? game.designers.length > 0 : game.designers.trim().length > 0) && (
-            <p className={styles.designer}>
-              {Array.isArray(game.designers) ? game.designers[0] : game.designers.split(',')[0].trim()}
-            </p>
-          )
-        )}
-
+      {/* Row 2: Game stats */}
+      <div className={styles.cardBody}>
         {/* Badges (Players, Time, Play Count) */}
         <div className={styles.badges}>
           <span className={styles.badge}>{formatPlayers()}</span>
@@ -132,7 +133,7 @@ export function GameCard({ game, playCount, onPlayCountClick, showArtwork = true
           </div>
         )}
 
-        {/* BGG Stats (at the bottom) */}
+        {/* BGG Stats */}
         {(game.bggRating || game.complexity || game.bggRank) && (
           <div className={styles.bggStats}>
             {game.bggRating && game.bggRating > 0 && (
