@@ -8,7 +8,10 @@ async function getBGGImages(query: string): Promise<string[]> {
       `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame`,
       {
         headers: {
-          'User-Agent': 'BoardGameNight-App/1.0',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/xml, text/xml, */*',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Referer': 'https://boardgamegeek.com/',
         },
       }
     );
@@ -38,7 +41,10 @@ async function getBGGImages(query: string): Promise<string[]> {
           `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}`,
           {
             headers: {
-              'User-Agent': 'BoardGameNight-App/1.0',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Accept': 'application/xml, text/xml, */*',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'Referer': 'https://boardgamegeek.com/',
             },
           }
         );

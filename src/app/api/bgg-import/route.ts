@@ -162,12 +162,11 @@ export async function GET(request: Request) {
       logs.push(`Search URL: ${searchUrl}`);
       
       const searchHeaders: Record<string, string> = {
-        'User-Agent': 'BoardGameNight-App/1.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/xml, text/xml, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://boardgamegeek.com/',
       };
-      
-      if (bggToken) {
-        searchHeaders['Authorization'] = `Bearer ${bggToken}`;
-      }
       
       const searchResponse = await fetch(searchUrl, { headers: searchHeaders });
       logs.push(`Search response status: ${searchResponse.status}`);
@@ -223,12 +222,11 @@ export async function GET(request: Request) {
     logs.push(`Details URL: ${detailsUrl}`);
     
     const detailsHeaders: Record<string, string> = {
-      'User-Agent': 'BoardGameNight-App/1.0',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'application/xml, text/xml, */*',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Referer': 'https://boardgamegeek.com/',
     };
-    
-    if (bggToken) {
-      detailsHeaders['Authorization'] = `Bearer ${bggToken}`;
-    }
     
     const detailsResponse = await fetch(detailsUrl, { headers: detailsHeaders });
     logs.push(`Details response status: ${detailsResponse.status}`);
