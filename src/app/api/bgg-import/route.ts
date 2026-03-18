@@ -22,53 +22,83 @@ interface BGGGameData {
   artists: string[];
 }
 
-// Parse XML text to extract data
+// Parse XML text to extract data using DOM parsing
 function parseXML(xml: string): BGGGameData | null {
   try {
-    // Helper to extract text between tags
-    const getText = (tag: string): string => {
-      const match = xml.match(new RegExp(`<${tag}>([^<]+)<\\/${tag}>`));
-      return match ? match[1] : '';
+    // Use DOMParser for proper XML parsing
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    
+    // Get the first item element
+    const item = doc.querySelector('item');
+    if (!item) {
+      console.error('No item element found in XML');
+      return null;
+    }
+
+    // Get primary name (type="primary")
+    const nameEl = item.querySelector('name[type="primary"]');
+    const title = nameEl?.getAttribute('value') || '';
+    if (!title) {
+      console.error('No title found in XML');
+      return null;
+    }
+
+    // Helper to get attribute value from element
+    const getAttr = (selector: string, attr: string): string => {
+      const el = item.querySelector(selector);
+      return el?.getAttribute(attr) || '';
     };
 
-    // Helper to get attribute value
-    const getAttr = (tag: string, attr: string): string => {
-      const match = xml.match(new RegExp(`<${tag}[^>]*${attr}="([^"]+)"`));
-      return match ? match[1] : '';
+    // Helper to get text content
+    const getText = (selector: string): string => {
+      const el = item.querySelector(selector);
+      return el?.textContent || '';
     };
 
     // Helper to get all link values of a specific type
     const getLinks = (type: string): string[] => {
-      const matches = xml.match(new RegExp(`<link type="${type}"[^>]*value="([^"]+)"`, 'g'));
-      return matches ? matches.map(m => {
-        const valMatch = m.match(/value="([^"]+)"/);
-        return valMatch ? valMatch[1] : '';
-      }).filter(Boolean) : [];
+      const links = item.querySelectorAll(`link[type="${type}"]`);
+      const values: string[] = [];
+      links.forEach(link => {
+        const value = link.getAttribute('value');
+        if (value) values.push(value);
+      });
+      return values;
     };
 
-    const title = getText('name');
-    if (!title) return null;
+    // Get rank from ratings/ranks/rank element with name="boardgame"
+    let bggRank = 0;
+    const rankEl = item.querySelector('rank[name="boardgame"]');
+    if (rankEl) {
+      const rankValue = rankEl.getAttribute('value');
+      if (rankValue && rankValue !== 'Not Ranked') {
+        bggRank = parseInt(rankValue, 10) || 0;
+      }
+    }
 
     const description = getText('description')
       .replace(/&quot;/g, '"')
       .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
-      .replace(/&#10;/g, '\n');
+      .replace(/&#10;/g, '\n')
+      .replace(/&#13;/g, '')
+      .replace(/&nbsp;/g, ' ');
 
     return {
       title,
       description,
-      yearPublished: parseInt(getAttr('yearpublished', 'value')) || 0,
-      minPlayers: parseInt(getAttr('minplayers', 'value')) || 1,
-      maxPlayers: parseInt(getAttr('maxplayers', 'value')) || 1,
-      minPlayTime: parseInt(getAttr('minplaytime', 'value')) || 0,
-      maxPlayTime: parseInt(getAttr('maxplaytime', 'value')) || 0,
-      minAge: parseInt(getAttr('minage', 'value')) || 0,
+      yearPublished: parseInt(getAttr('yearpublished', 'value'), 10) || 0,
+      minPlayers: parseInt(getAttr('minplayers', 'value'), 10) || 1,
+      maxPlayers: parseInt(getAttr('maxplayers', 'value'), 10) || 1,
+      minPlayTime: parseInt(getAttr('minplaytime', 'value'), 10) || 0,
+      maxPlayTime: parseInt(getAttr('maxplaytime', 'value'), 10) || 0,
+      minAge: parseInt(getAttr('minage', 'value'), 10) || 0,
       complexity: parseFloat(getText('averageweight')) || 0,
       bggRating: parseFloat(getText('average')) || 0,
-      bggRatingsCount: parseInt(getText('usersrated')) || 0,
-      bggRank: parseInt(getAttr('rank', 'value')) || 0,
+      bggRatingsCount: parseInt(getText('usersrated'), 10) || 0,
+      bggRank,
       thumbnail: getText('thumbnail'),
       image: getText('image'),
       categories: getLinks('boardgamecategory'),
@@ -95,23 +125,15 @@ export async function GET(request: Request) {
       }, { status: 400 });
     }
 
-    // Check if BGG token is configured
-    const bggToken = process.env.BGG_API_TOKEN;
-
-    if (!bggToken) {
-      return NextResponse.json({
-        success: false,
-        comingSoon: true,
-        message: 'BGG integration coming soon! Please add your BGG API token to enable automatic game data import.',
-      });
-    }
+    // Check if BGG token is configured (optional for now)
+    // const bggToken = process.env.BGG_API_TOKEN;
+    // Note: Authorization header not currently used but kept for future use
 
     // Step 1: Search for game on BGG
     const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(gameName)}&type=boardgame`;
     
     const searchResponse = await fetch(searchUrl, {
       headers: {
-        'Authorization': `Bearer ${bggToken}`,
         'User-Agent': 'BoardGameNight-App/1.0',
       },
     });
@@ -135,14 +157,13 @@ export async function GET(request: Request) {
     const gameId = idMatch[1];
 
     // Step 2: Get detailed game info
-    // Wait 1 second to respect BGG rate limits
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait 2 seconds to respect BGG rate limits (5 seconds is recommended between requests)
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1`;
     
     const detailsResponse = await fetch(detailsUrl, {
       headers: {
-        'Authorization': `Bearer ${bggToken}`,
         'User-Agent': 'BoardGameNight-App/1.0',
       },
     });

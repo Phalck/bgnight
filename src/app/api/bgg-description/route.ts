@@ -3,21 +3,29 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-// Parse XML to extract description
+// Parse XML to extract description using DOM parsing
 function parseDescriptionFromXML(xml: string): string {
-  const match = xml.match(/<description>([^<]*)<\/description>/);
-  if (!match) return '';
-  
-  // Decode HTML entities
-  return match[1]
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&#10;/g, '\n')
-    .replace(/&#13;/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .trim();
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    
+    const descriptionEl = doc.querySelector('description');
+    if (!descriptionEl) return '';
+    
+    // Decode HTML entities
+    return (descriptionEl.textContent || '')
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&#10;/g, '\n')
+      .replace(/&#13;/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+  } catch (error) {
+    console.error('Error parsing description XML:', error);
+    return '';
+  }
 }
 
 export async function GET(request: Request) {
@@ -67,24 +75,14 @@ export async function GET(request: Request) {
       gameBggId = parseInt(bggId!, 10);
     }
 
-    // Check if BGG token is configured
-    const bggToken = process.env.BGG_API_TOKEN;
-
-    if (!bggToken) {
-      return NextResponse.json({ 
-        error: 'BGG API not configured',
-        comingSoon: true 
-      });
-    }
-
     // Fetch from BGG API with rate limiting
-    await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+    // Wait 2 seconds to respect BGG rate limits (5 seconds is recommended between requests)
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     const response = await fetch(
       `https://boardgamegeek.com/xmlapi2/thing?id=${gameBggId}`,
       {
         headers: {
-          'Authorization': `Bearer ${bggToken}`,
           'User-Agent': 'BoardGameNight-App/1.0',
         },
       }
