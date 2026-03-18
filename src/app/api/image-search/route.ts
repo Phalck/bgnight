@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// BoardGameGeek image proxy
+// Board game geek image proxy
 async function getBGGImages(query: string): Promise<string[]> {
   try {
     // Search BGG for the game
@@ -86,7 +86,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
 
-    // Try to get images from BoardGameGeek
+    // Try to get images from Board game geek
     const bggImages = await getBGGImages(query);
     
     if (bggImages.length > 0) {

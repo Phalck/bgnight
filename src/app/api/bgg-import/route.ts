@@ -190,7 +190,7 @@ export async function GET(request: Request) {
         return NextResponse.json({
           success: false,
           notFound: true,
-          message: `Game "${gameName}" not found on BoardGameGeek.`,
+          message: `Game "${gameName}" not found on Board game geek.`,
           logs,
         });
       }
@@ -204,7 +204,7 @@ export async function GET(request: Request) {
         return NextResponse.json({
           success: false,
           notFound: true,
-          message: `Game "${gameName}" not found on BoardGameGeek.`,
+          message: `Game "${gameName}" not found on Board game geek.`,
           logs,
         });
       }
@@ -269,7 +269,7 @@ export async function GET(request: Request) {
     console.error('BGG import error:', error);
     return NextResponse.json({
       success: false,
-      error: 'Failed to fetch from BoardGameGeek',
+      error: 'Failed to fetch from Board game geek',
       details: errorMessage,
       logs,
     }, { status: 500 });
