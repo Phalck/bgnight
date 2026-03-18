@@ -1,5 +1,12 @@
 const BGG_API_BASE = 'https://www.boardgamegeek.com/xmlapi2';
 
+// Transform BGG image URL to get high-resolution version
+function getHighResImageUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  // Replace /med/ with /original/ to get full resolution image
+  return url.replace('/med/', '/original/');
+}
+
 export interface BGGGame {
   id: number;
   name: string;
@@ -113,7 +120,8 @@ function parseGameItem(item: Element): BGGGame | null {
   const name = nameEl?.getAttribute('value') || 'Unknown';
 
   const thumbnail = item.querySelector('thumbnail')?.textContent || undefined;
-  const image = item.querySelector('image')?.textContent || undefined;
+  const imageRaw = item.querySelector('image')?.textContent || undefined;
+  const image = getHighResImageUrl(imageRaw);
 
   const minPlayers = parseInt(item.querySelector('minplayers')?.getAttribute('value') || '1', 10);
   const maxPlayers = parseInt(item.querySelector('maxplayers')?.getAttribute('value') || '1', 10);

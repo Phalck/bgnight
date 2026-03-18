@@ -31,6 +31,13 @@ const parser = new XMLParser({
   trimValues: true,
 });
 
+// Transform BGG image URL to get high-resolution version
+function getHighResImageUrl(url: string | undefined): string {
+  if (!url) return '';
+  // Replace /med/ with /original/ to get full resolution image
+  return url.replace('/med/', '/original/');
+}
+
 // Parse XML to extract game data
 function parseXML(xml: string): { gameData: BGGGameData | null; errors: string[] } {
   const errors: string[] = [];
@@ -113,7 +120,7 @@ function parseXML(xml: string): { gameData: BGGGameData | null; errors: string[]
       bggRatingsCount: parseInt(item.statistics?.ratings?.usersrated?.['@_value'], 10) || 0,
       bggRank,
       thumbnail: item.thumbnail || '',
-      image: item.image || '',
+      image: getHighResImageUrl(item.image),
       categories: getLinks('boardgamecategory'),
       mechanics: getLinks('boardgamemechanic'),
       designers: getLinks('boardgamedesigner'),
