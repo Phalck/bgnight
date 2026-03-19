@@ -132,6 +132,9 @@ export default function AddPage() {
         bggRating: gameData.bggRating
       });
 
+      // Visual alert to confirm what's being sent
+      alert(`About to save game:\nTitle: ${gameData.title}\nComplexity: ${gameData.complexity}\nBggRating: ${gameData.bggRating}\n\nIf these are null, the BGG data wasn't applied properly.`);
+
       await api.post('/api/games/manual', gameData);
       
       addToast(`"${game.title}" added to your collection!`, 'success');
@@ -332,6 +335,9 @@ export default function AddPage() {
       complexity: newGameState.complexity,
       bggRating: newGameState.bggRating
     });
+
+    // Visual alert to confirm BGG data was received
+    alert(`BGG Data received:\nTitle: ${bggImportData.title}\nComplexity: ${bggImportData.complexity}\nBggRating: ${bggImportData.bggRating}\n\nSetting game state with these values.`);
     
     setGame(newGameState);
     
