@@ -22,6 +22,8 @@ export interface BGGGame {
   categories: string[];
   designers: string[];
   publishers: string[];
+  complexity?: number;
+  bggRating?: number;
 }
 
 async function fetchXML(url: string): Promise<string> {
@@ -180,6 +182,13 @@ function parseGameItem(item: Element): BGGGame | null {
 
   const description = decodeHtmlEntities(item.querySelector('description')?.textContent || '');
 
+  // Parse statistics (complexity/weight and rating)
+  const averageweight = item.querySelector('averageweight');
+  const complexity = averageweight ? parseFloat(averageweight.getAttribute('value') || '0') || undefined : undefined;
+
+  const average = item.querySelector('average');
+  const bggRating = average ? parseFloat(average.getAttribute('value') || '0') || undefined : undefined;
+
   const mechanics: string[] = [];
   item.querySelectorAll('link[type="boardgamemechanic"]').forEach(link => {
     const value = link.getAttribute('value');
@@ -219,5 +228,7 @@ function parseGameItem(item: Element): BGGGame | null {
     categories,
     designers,
     publishers,
+    complexity,
+    bggRating,
   };
 }

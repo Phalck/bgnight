@@ -83,6 +83,8 @@ export async function POST(request: Request) {
       where: { bggId: Number(bggId) },
       update: {
         userId: session.user.id,
+        complexity: bggGame.complexity,
+        bggRating: bggGame.bggRating,
       },
       create: {
         bggId: Number(bggId),
@@ -99,6 +101,8 @@ export async function POST(request: Request) {
         categories: JSON.stringify(bggGame.categories),
         designers: JSON.stringify(bggGame.designers),
         publishers: JSON.stringify(bggGame.publishers),
+        complexity: bggGame.complexity,
+        bggRating: bggGame.bggRating,
         userId: session.user.id,
       },
     });
@@ -109,6 +113,8 @@ export async function POST(request: Request) {
       categories: bggGame.categories,
       designers: bggGame.designers,
       publishers: bggGame.publishers,
+      complexity: bggGame.complexity,
+      bggRating: bggGame.bggRating,
     });
   } catch (error) {
     console.error('Add game error:', error);
