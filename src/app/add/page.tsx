@@ -24,6 +24,8 @@ interface GameInput {
   categories: string[];
   designers: string;
   publishers: string;
+  complexity: number | null;
+  bggRating: number | null;
 }
 
 interface BGGGameData {
@@ -82,6 +84,8 @@ export default function AddPage() {
     categories: [],
     designers: '',
     publishers: '',
+    complexity: null,
+    bggRating: null,
   });
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [showBGGImport, setShowBGGImport] = useState(false);
@@ -138,6 +142,8 @@ export default function AddPage() {
         categories: [],
         designers: '',
         publishers: '',
+        complexity: null,
+        bggRating: null,
       });
     } catch (err) {
       const message = api.getErrorMessage(err);
@@ -295,6 +301,8 @@ export default function AddPage() {
       categories: bggImportData.categories || game.categories,
       designers: bggImportData.designers?.join(', ') || game.designers,
       publishers: bggImportData.publishers?.join(', ') || game.publishers,
+      complexity: bggImportData.complexity || game.complexity,
+      bggRating: bggImportData.bggRating || game.bggRating,
     });
     
     setShowBGGImport(false);

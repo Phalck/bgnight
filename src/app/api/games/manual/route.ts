@@ -24,6 +24,8 @@ export async function POST(request: Request) {
       categories,
       designers,
       publishers,
+      complexity,
+      bggRating,
     } = await request.json();
 
     if (!title) {
@@ -46,6 +48,8 @@ export async function POST(request: Request) {
         categories: JSON.stringify(categories ? categories.split(',').map((c: string) => c.trim()).filter(Boolean) : []),
         designers: JSON.stringify(designers ? designers.split(',').map((d: string) => d.trim()).filter(Boolean) : []),
         publishers: JSON.stringify(publishers ? publishers.split(',').map((p: string) => p.trim()).filter(Boolean) : []),
+        complexity: complexity || null,
+        bggRating: bggRating || null,
         userId: session.user.id,
       },
     });
