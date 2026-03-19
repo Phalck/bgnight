@@ -1115,6 +1115,13 @@
   cursor: not-allowed;
 }
 
+.paginationButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
 /* Confirmation Modal */
 .confirmModal {
   max-width: 500px;

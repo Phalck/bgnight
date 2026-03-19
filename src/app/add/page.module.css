@@ -600,6 +600,13 @@
   cursor: not-allowed;
 }
 
+.paginationButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
 /* BGG Import Preview */
 .bggImportPreview {
   padding: 1rem 0;

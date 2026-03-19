@@ -11,6 +11,7 @@ interface BGGSearchResponse {
   success: boolean;
   data?: BGGSearchResult[];
   hasMore?: boolean;
+  hasPrevious?: boolean;
   total?: number;
   error?: string;
   logs?: string[];
@@ -191,7 +192,7 @@ export async function GET(request: Request) {
       });
     }
     
-    const allItems = Array.isArray(searchParsed.items.item) 
+    let allItems = Array.isArray(searchParsed.items.item) 
       ? searchParsed.items.item 
       : [searchParsed.items.item];
     
@@ -210,15 +211,8 @@ export async function GET(request: Request) {
       });
     }
     
-    // Get the 3 results for this page
-    const pageSize = 3;
-    const pageItems = allItems.slice(offset, offset + pageSize);
-    const hasMore = offset + pageSize < allItems.length;
-    
-    logs.push(`[BGG Search] Returning items ${offset + 1} to ${offset + pageItems.length}`);
-    
-    // Parse basic info from search results (no thumbnails)
-    const results: BGGSearchResult[] = pageItems.map((item: any, index: number) => {
+    // Parse all items first for sorting
+    const parsedItems: Array<{ item: any; title: string; yearPublished?: number }> = allItems.map((item: any) => {
       const id = item['@_id'];
       
       // Get primary name and decode HTML entities
@@ -231,14 +225,55 @@ export async function GET(request: Request) {
       
       const yearPublished = parseInt(item.yearpublished?.['@_value'], 10) || undefined;
       
-      logs.push(`[BGG Search] Item ${index + 1}: ID=${id}, Title="${title}", Year=${yearPublished || 'N/A'}`);
+      return { item, title, yearPublished };
+    }).filter((r: any) => r.title); // Filter out entries without titles
+    
+    // Sort by relevance: exact match > starts with > contains > other
+    const searchLower = gameName.toLowerCase().trim();
+    const scoredItems = parsedItems.map((parsed: any) => {
+      const titleLower = parsed.title.toLowerCase();
+      let score = 0;
+      
+      if (titleLower === searchLower) {
+        score = 3; // Exact match
+      } else if (titleLower.startsWith(searchLower)) {
+        score = 2; // Starts with search term
+      } else if (titleLower.includes(searchLower)) {
+        score = 1; // Contains search term
+      }
+      
+      return { ...parsed, score };
+    });
+    
+    // Sort by score (descending), then by year (newest first) for ties
+    scoredItems.sort((a: any, b: any) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+      // If same score, prefer newer games
+      return (b.yearPublished || 0) - (a.yearPublished || 0);
+    });
+    
+    logs.push(`[BGG Search] Sorted ${scoredItems.length} items by relevance`);
+    
+    // Get the 3 results for this page
+    const pageSize = 3;
+    const pageItems = scoredItems.slice(offset, offset + pageSize);
+    const hasMore = offset + pageSize < scoredItems.length;
+    const hasPrevious = offset > 0;
+    
+    logs.push(`[BGG Search] Returning items ${offset + 1} to ${offset + pageItems.length}`);
+    
+    // Map to final results
+    const results: BGGSearchResult[] = pageItems.map((parsed: any, index: number) => {
+      logs.push(`[BGG Search] Item ${index + 1}: ID=${parsed.item['@_id']}, Title="${parsed.title}", Year=${parsed.yearPublished || 'N/A'}, Score=${parsed.score}`);
       
       return {
-        id,
-        title,
-        yearPublished,
+        id: parsed.item['@_id'],
+        title: parsed.title,
+        yearPublished: parsed.yearPublished,
       };
-    }).filter((r: BGGSearchResult) => r.title); // Filter out entries without titles
+    });
     
     const duration = Date.now() - startTime;
     logs.push(`[BGG Search] Total time: ${duration}ms`);
@@ -248,7 +283,8 @@ export async function GET(request: Request) {
       success: true,
       data: results,
       hasMore,
-      total: allItems.length,
+      hasPrevious,
+      total: scoredItems.length,
       logs,
     });
     

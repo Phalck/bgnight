@@ -94,6 +94,7 @@ export default function AddPage() {
   const [searchResults, setSearchResults] = useState<BGGSearchResult[]>([]);
   const [searchOffset, setSearchOffset] = useState(0);
   const [hasMoreResults, setHasMoreResults] = useState(false);
+  const [hasPreviousResults, setHasPreviousResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [showGameSelection, setShowGameSelection] = useState(false);
@@ -198,6 +199,7 @@ export default function AddPage() {
       } else {
         setSearchResults(data.data || []);
         setHasMoreResults(data.hasMore || false);
+        setHasPreviousResults(data.hasPrevious || false);
         setSearchOffset(offset);
       }
     } catch (err) {
@@ -211,6 +213,11 @@ export default function AddPage() {
   const handleLoadMoreResults = () => {
     const nextOffset = searchOffset + 3;
     handleSearchBGG(nextOffset);
+  };
+
+  const handleLoadPreviousResults = () => {
+    const previousOffset = Math.max(0, searchOffset - 3);
+    handleSearchBGG(previousOffset);
   };
 
   const handleSelectGame = async (gameId: string) => {
@@ -602,22 +609,40 @@ export default function AddPage() {
                   </div>
                 ))}
                 
-                {hasMoreResults && (
-                  <button 
-                    className={styles.loadMoreBtn}
-                    onClick={handleLoadMoreResults}
-                    disabled={searchLoading}
-                  >
-                    {searchLoading ? (
-                      <>
-                        <LoadingSpinner size="small" />
-                        Loading...
-                      </>
-                    ) : (
-                      'Load 3 more'
-                    )}
-                  </button>
-                )}
+                <div className={styles.paginationButtons}>
+                  {hasPreviousResults && (
+                    <button 
+                      className={styles.loadMoreBtn}
+                      onClick={handleLoadPreviousResults}
+                      disabled={searchLoading}
+                    >
+                      {searchLoading ? (
+                        <>
+                          <LoadingSpinner size="small" />
+                          Loading...
+                        </>
+                      ) : (
+                        '← Previous 3'
+                      )}
+                    </button>
+                  )}
+                  {hasMoreResults && (
+                    <button 
+                      className={styles.loadMoreBtn}
+                      onClick={handleLoadMoreResults}
+                      disabled={searchLoading}
+                    >
+                      {searchLoading ? (
+                        <>
+                          <LoadingSpinner size="small" />
+                          Loading...
+                        </>
+                      ) : (
+                        'Next 3 →'
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
