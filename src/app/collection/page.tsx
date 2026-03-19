@@ -207,6 +207,20 @@ export default function CollectionPage() {
     }
   }, []);
 
+  // Debug function to check database values
+  const checkDatabaseValues = async (gameId: string) => {
+    try {
+      console.log('[Debug] Checking database for game:', gameId);
+      const response = await fetch(`/api/debug/game?gameId=${gameId}`);
+      const data = await response.json();
+      console.log('[Debug] Database response:', data);
+      alert(`Database values for "${data.title}":\nComplexity: ${data.complexity}\nBggRating: ${data.bggRating}\nRaw Complexity: ${data.rawComplexity}\nRaw BggRating: ${data.rawBggRating}`);
+    } catch (err) {
+      console.error('[Debug] Failed to check database:', err);
+      alert('Failed to check database values');
+    }
+  };
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -769,6 +783,16 @@ export default function CollectionPage() {
               >
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
               </button>
+
+              {games.length > 0 && (
+                <button
+                  className={styles.filterToggle}
+                  onClick={() => checkDatabaseValues(games[0].id)}
+                  title="Debug: Check database values for first game"
+                >
+                  🐛 Debug
+                </button>
+              )}
             </div>
           </div>
 
