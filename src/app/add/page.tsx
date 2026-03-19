@@ -126,6 +126,12 @@ export default function AddPage() {
         categories: game.categories.join(', '),
       };
 
+      console.log('[Manual Submit] Sending gameData:', {
+        title: gameData.title,
+        complexity: gameData.complexity,
+        bggRating: gameData.bggRating
+      });
+
       await api.post('/api/games/manual', gameData);
       
       addToast(`"${game.title}" added to your collection!`, 'success');
@@ -249,6 +255,11 @@ export default function AddPage() {
           setBggImportError(data.error || 'Failed to fetch from BGG');
         }
       } else {
+        console.log('[Frontend Select] Received BGG data:', { 
+          title: data.data.title, 
+          complexity: data.data.complexity, 
+          bggRating: data.data.bggRating 
+        });
         setBggImportData(data.data);
       }
     } catch (err) {
@@ -288,7 +299,18 @@ export default function AddPage() {
   const handleApplyBGGData = () => {
     if (!bggImportData) return;
     
-    setGame({
+    console.log('[Apply BGG Data] bggImportData:', {
+      title: bggImportData.title,
+      complexity: bggImportData.complexity,
+      bggRating: bggImportData.bggRating
+    });
+    console.log('[Apply BGG Data] Current game state:', {
+      title: game.title,
+      complexity: game.complexity,
+      bggRating: game.bggRating
+    });
+    
+    const newGameState = {
       ...game,
       title: bggImportData.title || game.title,
       thumbnail: bggImportData.thumbnail || bggImportData.image || game.thumbnail,
@@ -303,7 +325,15 @@ export default function AddPage() {
       publishers: bggImportData.publishers?.join(', ') || game.publishers,
       complexity: bggImportData.complexity || game.complexity,
       bggRating: bggImportData.bggRating || game.bggRating,
+    };
+    
+    console.log('[Apply BGG Data] Setting new game state:', {
+      title: newGameState.title,
+      complexity: newGameState.complexity,
+      bggRating: newGameState.bggRating
     });
+    
+    setGame(newGameState);
     
     setShowBGGImport(false);
     setBggImportData(null);
