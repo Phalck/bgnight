@@ -38,7 +38,7 @@ export default function Home() {
             <div className={styles.feature}>
               <span className={styles.featureIcon}>📚</span>
               <h3>Track Your Collection</h3>
-              <p>Import games from Board game geek and keep track of your growing library</p>
+              <p>Import games from BoardGameGeek and keep track of your growing library</p>
             </div>
             <div className={styles.feature}>
               <span className={styles.featureIcon}>🔍</span>
@@ -70,11 +70,11 @@ export default function Home() {
             href="https://boardgamegeek.com" 
             target="_blank" 
             rel="noopener noreferrer"
-            title="Visit Board game geek"
+            title="Visit BoardGameGeek"
           >
             <img 
               src="/pic7779581.webp" 
-              alt="Board game geek" 
+              alt="BoardGameGeek" 
               className={styles.bggLogo}
             />
           </a>

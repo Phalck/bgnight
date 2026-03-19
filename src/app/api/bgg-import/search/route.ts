@@ -259,7 +259,7 @@ export async function GET(request: Request) {
     
     return NextResponse.json({
       success: false,
-      error: 'Failed to search Board game geek',
+      error: 'Failed to search BoardGameGeek',
       details: error.message,
       logs,
     }, { status: 500 });

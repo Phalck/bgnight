@@ -392,7 +392,7 @@ export default function CollectionPage() {
       const data = await response.json();
       
       if (!data.success) {
-        setBggImportError(data.error || 'Failed to search Board game geek');
+        setBggImportError(data.error || 'Failed to search BoardGameGeek');
         setSearchResults([]);
       } else {
         setSearchResults(data.data || []);
@@ -400,7 +400,7 @@ export default function CollectionPage() {
         setSearchOffset(offset);
       }
     } catch (err) {
-      setBggImportError('Failed to connect to Board game geek');
+      setBggImportError('Failed to connect to BGG');
       setSearchResults([]);
     } finally {
       setSearchLoading(false);
@@ -438,7 +438,7 @@ export default function CollectionPage() {
         setBggImportData(data.data);
       }
     } catch (err) {
-      setBggImportError('Failed to connect to Board game geek');
+      setBggImportError('Failed to connect to BGG');
     } finally {
       setBggImportLoading(false);
     }
@@ -467,7 +467,7 @@ export default function CollectionPage() {
         setBggImportData(data.data);
       }
     } catch (err) {
-      setBggImportError('Failed to connect to Board game geek');
+      setBggImportError('Failed to connect to BGG');
     } finally {
       setBggImportLoading(false);
     }
@@ -495,7 +495,7 @@ export default function CollectionPage() {
     setShowBGGImport(false);
     setShowBGGConfirmModal(false);
     setBggImportData(null);
-    addToast('Game data imported from Board game geek!', 'success');
+    addToast('Game data imported from BGG!', 'success');
   };
 
   // Toggle expandable section
@@ -857,7 +857,7 @@ export default function CollectionPage() {
                 <>
                   <span className={styles.emptyIcon}>🎲</span>
                   <h2>Your collection is empty</h2>
-                  <p>Start adding games from Board game geek!</p>
+                  <p>Start adding games from BGG!</p>
                   <a href="/add" className={styles.addBtn}>Add Your First Game</a>
                 </>
               ) : (
@@ -1079,7 +1079,7 @@ export default function CollectionPage() {
       {showBGGConfirmModal && (
         <div className={styles.modalOverlay} onClick={() => setShowBGGConfirmModal(false)}>
           <div className={`${styles.modal} ${styles.confirmModal}`} onClick={e => e.stopPropagation()}>
-            <h2 className={styles.modalTitle}>Import from Board game geek</h2>
+            <h2 className={styles.modalTitle}>Import from BGG</h2>
             
             <div className={styles.confirmModalWarning}>
               <span className={styles.warningIcon}>⚠️</span>
@@ -1123,7 +1123,7 @@ export default function CollectionPage() {
             {searchLoading && (
               <div className={styles.bggLoadingState}>
                 <LoadingSpinner size="large" />
-                <p>Searching Board game geek...</p>
+                <p>Searching BGG...</p>
               </div>
             )}
 
@@ -1199,7 +1199,7 @@ export default function CollectionPage() {
       {showBGGImport && (
         <div className={styles.modalOverlay} onClick={() => setShowBGGImport(false)}>
           <div className={`${styles.modal} ${styles.bggImportModal}`} onClick={e => e.stopPropagation()}>
-            <h2 className={styles.modalTitle}>Import from Board game geek</h2>
+            <h2 className={styles.modalTitle}>Import from BGG</h2>
             
             {bggImportLoading && (
               <div className={styles.bggLoadingState}>
@@ -1387,12 +1387,12 @@ export default function CollectionPage() {
       {showSuggestions && (
         <div className={styles.modalOverlay} onClick={() => setShowSuggestions(false)}>
           <div className={`${styles.modal} ${styles.suggestionsModal}`} onClick={e => e.stopPropagation()}>
-            <h2 className={styles.modalTitle}>✨ Suggestions from Board game geek</h2>
+            <h2 className={styles.modalTitle}>✨ Suggestions from BGG</h2>
             
             {loadingSuggestions && (
               <div className={styles.searchingIndicator}>
                 <LoadingSpinner size="large" />
-                <p>Searching Board game geek...</p>
+                <p>Searching BGG...</p>
               </div>
             )}
 

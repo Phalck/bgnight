@@ -193,7 +193,7 @@ export default function AddPage() {
       const data = await response.json();
       
       if (!data.success) {
-        setBggImportError(data.error || 'Failed to search Board game geek');
+        setBggImportError(data.error || 'Failed to search BoardGameGeek');
         setSearchResults([]);
       } else {
         setSearchResults(data.data || []);
@@ -201,7 +201,7 @@ export default function AddPage() {
         setSearchOffset(offset);
       }
     } catch (err) {
-      setBggImportError('Failed to connect to Board game geek');
+      setBggImportError('Failed to connect to BGG');
       setSearchResults([]);
     } finally {
       setSearchLoading(false);
@@ -239,7 +239,7 @@ export default function AddPage() {
         setBggImportData(data.data);
       }
     } catch (err) {
-      setBggImportError('Failed to connect to Board game geek');
+      setBggImportError('Failed to connect to BGG');
     } finally {
       setBggImportLoading(false);
     }
@@ -266,7 +266,7 @@ export default function AddPage() {
         setBggImportData(data.data);
       }
     } catch (err) {
-      setBggImportError('Failed to connect to Board game geek');
+      setBggImportError('Failed to connect to BGG');
     } finally {
       setBggImportLoading(false);
     }
@@ -292,7 +292,7 @@ export default function AddPage() {
     
     setShowBGGImport(false);
     setBggImportData(null);
-    addToast('Game data imported from Board game geek!', 'success');
+    addToast('Game data imported from BoardGameGeek!', 'success');
   };
 
   const handleApplyManualImage = () => {
@@ -362,7 +362,7 @@ export default function AddPage() {
                   📥 Import from BGG
                 </button>
                 <p className={styles.bggImportHint}>
-                  Automatically fill all game details from Board game geek
+                  Automatically fill all game details from BGG
                 </p>
               </div>
 
@@ -529,14 +529,14 @@ export default function AddPage() {
                     <>
                       <span className={styles.uploadIcon}>📁</span>
                       <span>Click to upload CSV file</span>
-                      <span className={styles.uploadHint}>Export your collection from Board game geek</span>
+                      <span className={styles.uploadHint}>Export your collection from BGG</span>
                     </>
                   )}
                 </label>
               </div>
 
               <div className={styles.instructions}>
-                <h3>How to import from Board game geek:</h3>
+                <h3>How to import from BGG:</h3>
                 <ol>
                   <li>Go to your BGG collection page</li>
                   <li>Click &quot;Export&quot; button</li>
@@ -560,7 +560,7 @@ export default function AddPage() {
             {searchLoading && (
               <div className={styles.bggLoadingState}>
                 <LoadingSpinner size="large" />
-                <p>Searching Board game geek...</p>
+                <p>Searching BGG...</p>
               </div>
             )}
 
@@ -636,7 +636,7 @@ export default function AddPage() {
       {showBGGImport && (
         <div className={styles.modalOverlay} onClick={() => setShowBGGImport(false)}>
           <div className={`${styles.modal} ${styles.bggImportModal}`} onClick={e => e.stopPropagation()}>
-            <h2 className={styles.modalTitle}>Import from Board game geek</h2>
+            <h2 className={styles.modalTitle}>Import from BGG</h2>
             
             {bggImportLoading && (
               <div className={styles.bggLoadingState}>
