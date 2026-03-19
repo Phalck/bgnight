@@ -117,6 +117,20 @@
   overflow: hidden;
 }
 
+.quickStats {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+  margin-top: 0.25rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.statDivider {
+  opacity: 0.5;
+}
+
 /* Row 2: Game stats */
 .cardBody {
   display: flex;

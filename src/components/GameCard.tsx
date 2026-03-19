@@ -114,6 +114,19 @@ export function GameCard({
               </p>
             )
           )}
+          {(game.complexity || game.bggRating) && (
+            <p className={styles.quickStats}>
+              {game.complexity && game.complexity > 0 && (
+                <span>⚖️ {game.complexity.toFixed(1)}/5</span>
+              )}
+              {game.complexity && game.complexity > 0 && game.bggRating && game.bggRating > 0 && (
+                <span className={styles.statDivider}> | </span>
+              )}
+              {game.bggRating && game.bggRating > 0 && (
+                <span>⭐ {game.bggRating.toFixed(1)}/10</span>
+              )}
+            </p>
+          )}
         </div>
       </div>
 
