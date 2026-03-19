@@ -57,15 +57,6 @@ export function GameCard({
   // Use only thumbnail (not full-res image)
   const imageUrl = game.thumbnail;
 
-  // Debug logging
-  console.log('[GameCard] Rendering:', {
-    title: game.title,
-    complexity: game.complexity,
-    bggRating: game.bggRating,
-    hasComplexity: game.complexity && game.complexity > 0,
-    hasBggRating: game.bggRating && game.bggRating > 0
-  });
-
   const handleCardClick = () => {
     if (onToggle) {
       onToggle();
@@ -123,15 +114,7 @@ export function GameCard({
               </p>
             )
           )}
-          {(() => {
-            const shouldShow = game.complexity || game.bggRating;
-            console.log('[GameCard] quickStats condition:', {
-              shouldShow,
-              complexity: game.complexity,
-              bggRating: game.bggRating
-            });
-            return shouldShow;
-          })() && (
+          {(game.complexity || game.bggRating) && (
             <p className={styles.quickStats}>
               {game.complexity && game.complexity > 0 && (
                 <span>⚖️ {game.complexity.toFixed(1)}/5</span>

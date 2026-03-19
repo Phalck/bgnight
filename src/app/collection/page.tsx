@@ -108,6 +108,8 @@ export default function CollectionPage() {
     categories: [] as string[],
     designers: '',
     publishers: '',
+    complexity: null as number | null,
+    bggRating: null as number | null,
   });
   const [saving, setSaving] = useState(false);
   const [manualImageUrl, setManualImageUrl] = useState('');
@@ -208,18 +210,7 @@ export default function CollectionPage() {
   }, []);
 
   // Debug function to check database values
-  const checkDatabaseValues = async (gameId: string) => {
-    try {
-      console.log('[Debug] Checking database for game:', gameId);
-      const response = await fetch(`/api/debug/game?gameId=${gameId}`);
-      const data = await response.json();
-      console.log('[Debug] Database response:', data);
-      alert(`Database values for "${data.title}":\nComplexity: ${data.complexity}\nBggRating: ${data.bggRating}\nRaw Complexity: ${data.rawComplexity}\nRaw BggRating: ${data.rawBggRating}`);
-    } catch (err) {
-      console.error('[Debug] Failed to check database:', err);
-      alert('Failed to check database values');
-    }
-  };
+
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -345,6 +336,8 @@ export default function CollectionPage() {
       categories: game.categories || [],
       designers: game.designers?.join(', ') || '',
       publishers: game.publishers?.join(', ') || '',
+      complexity: game.complexity || null,
+      bggRating: game.bggRating || null,
     });
   };
 
@@ -365,6 +358,8 @@ export default function CollectionPage() {
         categories: editForm.categories,
         designers: editForm.designers.split(',').map(d => d.trim()).filter(Boolean),
         publishers: editForm.publishers.split(',').map(p => p.trim()).filter(Boolean),
+        complexity: editForm.complexity,
+        bggRating: editForm.bggRating,
       });
 
       setGames(games.map(g => g.id === editingGame.id ? updated : g));
@@ -511,6 +506,8 @@ export default function CollectionPage() {
       categories: bggImportData.categories || editForm.categories,
       designers: bggImportData.designers?.join(', ') || editForm.designers,
       publishers: bggImportData.publishers?.join(', ') || editForm.publishers,
+      complexity: bggImportData.complexity || editForm.complexity,
+      bggRating: bggImportData.bggRating || editForm.bggRating,
     });
     
     setShowBGGImport(false);
@@ -784,15 +781,6 @@ export default function CollectionPage() {
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
               </button>
 
-              {games.length > 0 && (
-                <button
-                  className={styles.filterToggle}
-                  onClick={() => checkDatabaseValues(games[0].id)}
-                  title="Debug: Check database values for first game"
-                >
-                  🐛 Debug
-                </button>
-              )}
             </div>
           </div>
 

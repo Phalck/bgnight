@@ -126,15 +126,6 @@ export default function AddPage() {
         categories: game.categories.join(', '),
       };
 
-      console.log('[Manual Submit] Sending gameData:', {
-        title: gameData.title,
-        complexity: gameData.complexity,
-        bggRating: gameData.bggRating
-      });
-
-      // Visual alert to confirm what's being sent
-      alert(`About to save game:\nTitle: ${gameData.title}\nComplexity: ${gameData.complexity}\nBggRating: ${gameData.bggRating}\n\nIf these are null, the BGG data wasn't applied properly.`);
-
       await api.post('/api/games/manual', gameData);
       
       addToast(`"${game.title}" added to your collection!`, 'success');
@@ -258,11 +249,6 @@ export default function AddPage() {
           setBggImportError(data.error || 'Failed to fetch from BGG');
         }
       } else {
-        console.log('[Frontend Select] Received BGG data:', { 
-          title: data.data.title, 
-          complexity: data.data.complexity, 
-          bggRating: data.data.bggRating 
-        });
         setBggImportData(data.data);
       }
     } catch (err) {
@@ -302,17 +288,6 @@ export default function AddPage() {
   const handleApplyBGGData = () => {
     if (!bggImportData) return;
     
-    console.log('[Apply BGG Data] bggImportData:', {
-      title: bggImportData.title,
-      complexity: bggImportData.complexity,
-      bggRating: bggImportData.bggRating
-    });
-    console.log('[Apply BGG Data] Current game state:', {
-      title: game.title,
-      complexity: game.complexity,
-      bggRating: game.bggRating
-    });
-    
     const newGameState = {
       ...game,
       title: bggImportData.title || game.title,
@@ -329,16 +304,7 @@ export default function AddPage() {
       complexity: bggImportData.complexity || game.complexity,
       bggRating: bggImportData.bggRating || game.bggRating,
     };
-    
-    console.log('[Apply BGG Data] Setting new game state:', {
-      title: newGameState.title,
-      complexity: newGameState.complexity,
-      bggRating: newGameState.bggRating
-    });
 
-    // Visual alert to confirm BGG data was received
-    alert(`BGG Data received:\nTitle: ${bggImportData.title}\nComplexity: ${bggImportData.complexity}\nBggRating: ${bggImportData.bggRating}\n\nSetting game state with these values.`);
-    
     setGame(newGameState);
     
     setShowBGGImport(false);
@@ -813,7 +779,7 @@ export default function AddPage() {
                   </div>
                 </div>
 
-                <div className={styles.bggImportFields}>
+                 <div className={styles.bggImportFields}>
                   <h4>This will populate:</h4>
                   <ul>
                     <li>✓ Title & Description</li>

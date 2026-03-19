@@ -17,24 +17,13 @@ export async function GET() {
       orderBy: { title: 'asc' },
     });
 
-    const gamesWithParsedArrays = games.map(game => ({
+    return NextResponse.json(games.map(game => ({
       ...game,
       mechanics: JSON.parse(game.mechanics || '[]'),
       categories: JSON.parse(game.categories || '[]'),
       designers: JSON.parse(game.designers || '[]'),
       publishers: JSON.parse(game.publishers || '[]'),
-    }));
-
-    console.log('[Games GET] Returning games count:', gamesWithParsedArrays.length);
-    if (gamesWithParsedArrays.length > 0) {
-      console.log('[Games GET] First game sample:', {
-        title: gamesWithParsedArrays[0].title,
-        complexity: gamesWithParsedArrays[0].complexity,
-        bggRating: gamesWithParsedArrays[0].bggRating
-      });
-    }
-
-    return NextResponse.json(gamesWithParsedArrays);
+    })));
   } catch (error) {
     console.error('Get games error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

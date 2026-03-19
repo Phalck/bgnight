@@ -144,13 +144,6 @@ function parseXML(xml: string): { gameData: BGGGameData | null; errors: string[]
 
     const complexity = parseFloat(item.statistics?.ratings?.averageweight?.['@_value']) || 0;
     const bggRating = parseFloat(item.statistics?.ratings?.average?.['@_value']) || 0;
-    
-    console.log('[BGG Import] Extracted stats:', {
-      complexity: item.statistics?.ratings?.averageweight?.['@_value'],
-      bggRating: item.statistics?.ratings?.average?.['@_value'],
-      parsedComplexity: complexity,
-      parsedBggRating: bggRating
-    });
 
     const gameData: BGGGameData = {
       title,
@@ -173,8 +166,6 @@ function parseXML(xml: string): { gameData: BGGGameData | null; errors: string[]
       publishers: getLinks('boardgamepublisher'),
       artists: getLinks('boardgameartist'),
     };
-
-    console.log('[BGG Import] gameData ready:', { title: gameData.title, complexity: gameData.complexity, bggRating: gameData.bggRating });
 
     return { gameData, errors };
   } catch (error: any) {
@@ -308,12 +299,6 @@ export async function GET(request: Request) {
         rawXml: detailsXml.substring(0, 2000), // Include first 2000 chars of XML for debugging
       }, { status: 500 });
     }
-
-    console.log('[BGG Import API] Returning gameData:', { 
-      title: gameData.title, 
-      complexity: gameData.complexity, 
-      bggRating: gameData.bggRating 
-    });
 
     return NextResponse.json({
       success: true,

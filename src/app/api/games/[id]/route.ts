@@ -39,6 +39,8 @@ export async function PUT(
         categories: data.categories ? JSON.stringify(data.categories) : game.categories,
         designers: data.designers ? JSON.stringify(data.designers) : game.designers,
         publishers: data.publishers ? JSON.stringify(data.publishers) : game.publishers,
+        complexity: data.complexity ?? game.complexity,
+        bggRating: data.bggRating ?? game.bggRating,
       },
     });
 

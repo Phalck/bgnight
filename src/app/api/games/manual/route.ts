@@ -11,13 +11,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    console.log('[Manual API] Request body:', {
-      title: body.title,
-      complexity: body.complexity,
-      bggRating: body.bggRating
-    });
-
     const {
       title,
       thumbnail,
@@ -33,13 +26,11 @@ export async function POST(request: Request) {
       publishers,
       complexity,
       bggRating,
-    } = body;
+    } = await request.json();
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
-
-    console.log('[Manual API] Extracted values:', { complexity, bggRating });
 
     const game = await prisma.game.create({
       data: {
@@ -61,13 +52,6 @@ export async function POST(request: Request) {
         bggRating: bggRating || null,
         userId: session.user.id,
       },
-    });
-
-    console.log('[Manual API] Saved game to database:', {
-      id: game.id,
-      title: game.title,
-      complexity: game.complexity,
-      bggRating: game.bggRating
     });
 
     return NextResponse.json({
