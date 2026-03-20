@@ -29,8 +29,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    const beforeData = JSON.parse(bulkSession.beforeData || '{}');
-    const afterData = JSON.parse(bulkSession.afterData || '{}');
+    const beforeData = bulkSession.beforeData && bulkSession.beforeData !== '' ? JSON.parse(bulkSession.beforeData) : {};
+    const afterData = bulkSession.afterData && bulkSession.afterData !== '' ? JSON.parse(bulkSession.afterData) : {};
     
     // Calculate all changes
     const allChanges: Record<string, any> = {};
@@ -55,8 +55,8 @@ export async function GET(request: Request) {
         skipped: bulkSession.skipped,
         failed: bulkSession.failed
       },
-      skippedGames: JSON.parse(bulkSession.skippedGames || '[]'),
-      failedGames: JSON.parse(bulkSession.failedGames || '[]'),
+      skippedGames: bulkSession.skippedGames && bulkSession.skippedGames !== '' ? JSON.parse(bulkSession.skippedGames) : [],
+      failedGames: bulkSession.failedGames && bulkSession.failedGames !== '' ? JSON.parse(bulkSession.failedGames) : [],
       changes: allChanges
     };
 

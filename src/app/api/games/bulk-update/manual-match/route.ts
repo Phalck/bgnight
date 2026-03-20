@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     if (!bggId) {
       // User chose to skip
-      const skipped = JSON.parse(bulkSession.skippedGames || '[]');
+      const skipped = bulkSession.skippedGames && bulkSession.skippedGames !== '' ? JSON.parse(bulkSession.skippedGames) : [];
       skipped.push({
         gameId: game.id,
         title: game.title,
@@ -75,10 +75,10 @@ export async function POST(request: Request) {
       minPlayTime: game.minPlayTime,
       maxPlayTime: game.maxPlayTime,
       yearPublished: game.yearPublished,
-      mechanics: JSON.parse(game.mechanics || '[]'),
-      categories: JSON.parse(game.categories || '[]'),
-      designers: JSON.parse(game.designers || '[]'),
-      publishers: JSON.parse(game.publishers || '[]'),
+      mechanics: game.mechanics && game.mechanics !== '' ? JSON.parse(game.mechanics) : [],
+      categories: game.categories && game.categories !== '' ? JSON.parse(game.categories) : [],
+      designers: game.designers && game.designers !== '' ? JSON.parse(game.designers) : [],
+      publishers: game.publishers && game.publishers !== '' ? JSON.parse(game.publishers) : [],
       complexity: game.complexity,
       bggRating: game.bggRating
     };
@@ -114,10 +114,10 @@ export async function POST(request: Request) {
       minPlayTime: updated.minPlayTime,
       maxPlayTime: updated.maxPlayTime,
       yearPublished: updated.yearPublished,
-      mechanics: JSON.parse(updated.mechanics || '[]'),
-      categories: JSON.parse(updated.categories || '[]'),
-      designers: JSON.parse(updated.designers || '[]'),
-      publishers: JSON.parse(updated.publishers || '[]'),
+      mechanics: updated.mechanics && updated.mechanics !== '' ? JSON.parse(updated.mechanics) : [],
+      categories: updated.categories && updated.categories !== '' ? JSON.parse(updated.categories) : [],
+      designers: updated.designers && updated.designers !== '' ? JSON.parse(updated.designers) : [],
+      publishers: updated.publishers && updated.publishers !== '' ? JSON.parse(updated.publishers) : [],
       complexity: updated.complexity,
       bggRating: updated.bggRating
     };
@@ -126,8 +126,8 @@ export async function POST(request: Request) {
     await clearManualEditTracking(game.id);
 
     // Update session
-    const existingBefore = JSON.parse(bulkSession.beforeData || '{}');
-    const existingAfter = JSON.parse(bulkSession.afterData || '{}');
+    const existingBefore = bulkSession.beforeData && bulkSession.beforeData !== '' ? JSON.parse(bulkSession.beforeData) : {};
+    const existingAfter = bulkSession.afterData && bulkSession.afterData !== '' ? JSON.parse(bulkSession.afterData) : {};
     
     existingBefore[game.id] = beforeData;
     existingAfter[game.id] = afterData;

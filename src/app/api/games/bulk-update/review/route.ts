@@ -29,8 +29,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    const beforeData = JSON.parse(bulkSession.beforeData || '{}');
-    const afterData = JSON.parse(bulkSession.afterData || '{}');
+    const beforeData = bulkSession.beforeData && bulkSession.beforeData !== '' ? JSON.parse(bulkSession.beforeData) : {};
+    const afterData = bulkSession.afterData && bulkSession.afterData !== '' ? JSON.parse(bulkSession.afterData) : {};
     
     const changes = Object.keys(afterData).map(gameId => {
       const before = beforeData[gameId];

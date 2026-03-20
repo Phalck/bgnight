@@ -27,9 +27,9 @@ export async function POST(request: Request) {
     }
 
     // Get unprocessed games
-    const processedIds = JSON.parse(bulkSession.afterData || '{}');
-    const skippedIds = JSON.parse(bulkSession.skippedGames || '[]').map((s: any) => s.gameId);
-    const failedIds = JSON.parse(bulkSession.failedGames || '[]').map((f: any) => f.gameId);
+    const processedIds = bulkSession.afterData && bulkSession.afterData !== '' ? JSON.parse(bulkSession.afterData) : {};
+    const skippedIds = (bulkSession.skippedGames && bulkSession.skippedGames !== '' ? JSON.parse(bulkSession.skippedGames) : []).map((s: any) => s.gameId);
+    const failedIds = (bulkSession.failedGames && bulkSession.failedGames !== '' ? JSON.parse(bulkSession.failedGames) : []).map((f: any) => f.gameId);
     
     const games = await prisma.game.findMany({
       where: { 
@@ -73,11 +73,11 @@ export async function POST(request: Request) {
         where: { gameId: game.id }
       });
 
-      const approvedEdits = JSON.parse(bulkSession.manualEditGames || '[]');
+      const approvedEdits = bulkSession.manualEditGames && bulkSession.manualEditGames !== '' ? JSON.parse(bulkSession.manualEditGames) : [];
       
       if (manualEdit && !bulkSession.overwriteManual && !approvedEdits.includes(game.id)) {
         // Skip this game
-        const skipped = JSON.parse(bulkSession.skippedGames || '[]');
+        const skipped = bulkSession.skippedGames && bulkSession.skippedGames !== '' ? JSON.parse(bulkSession.skippedGames) : [];
         skipped.push({
           gameId: game.id,
           title: game.title,
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
           });
         } else {
           // No matches
-          const skipped = JSON.parse(bulkSession.skippedGames || '[]');
+          const skipped = bulkSession.skippedGames && bulkSession.skippedGames !== '' ? JSON.parse(bulkSession.skippedGames) : [];
           skipped.push({
             gameId: game.id,
             title: game.title,
@@ -179,10 +179,10 @@ export async function POST(request: Request) {
         minPlayTime: game.minPlayTime,
         maxPlayTime: game.maxPlayTime,
         yearPublished: game.yearPublished,
-        mechanics: JSON.parse(game.mechanics || '[]'),
-        categories: JSON.parse(game.categories || '[]'),
-        designers: JSON.parse(game.designers || '[]'),
-        publishers: JSON.parse(game.publishers || '[]'),
+        mechanics: game.mechanics && game.mechanics !== '' ? JSON.parse(game.mechanics) : [],
+        categories: game.categories && game.categories !== '' ? JSON.parse(game.categories) : [],
+        designers: game.designers && game.designers !== '' ? JSON.parse(game.designers) : [],
+        publishers: game.publishers && game.publishers !== '' ? JSON.parse(game.publishers) : [],
         complexity: game.complexity,
         bggRating: game.bggRating
       };
@@ -218,10 +218,10 @@ export async function POST(request: Request) {
         minPlayTime: updated.minPlayTime,
         maxPlayTime: updated.maxPlayTime,
         yearPublished: updated.yearPublished,
-        mechanics: JSON.parse(updated.mechanics || '[]'),
-        categories: JSON.parse(updated.categories || '[]'),
-        designers: JSON.parse(updated.designers || '[]'),
-        publishers: JSON.parse(updated.publishers || '[]'),
+        mechanics: updated.mechanics && updated.mechanics !== '' ? JSON.parse(updated.mechanics) : [],
+        categories: updated.categories && updated.categories !== '' ? JSON.parse(updated.categories) : [],
+        designers: updated.designers && updated.designers !== '' ? JSON.parse(updated.designers) : [],
+        publishers: updated.publishers && updated.publishers !== '' ? JSON.parse(updated.publishers) : [],
         complexity: updated.complexity,
         bggRating: updated.bggRating
       };
@@ -230,8 +230,8 @@ export async function POST(request: Request) {
       await clearManualEditTracking(game.id);
 
       // Update session
-      const existingBefore = JSON.parse(bulkSession.beforeData || '{}');
-      const existingAfter = JSON.parse(bulkSession.afterData || '{}');
+      const existingBefore = bulkSession.beforeData && bulkSession.beforeData !== '' ? JSON.parse(bulkSession.beforeData) : {};
+      const existingAfter = bulkSession.afterData && bulkSession.afterData !== '' ? JSON.parse(bulkSession.afterData) : {};
       
       existingBefore[game.id] = beforeData;
       existingAfter[game.id] = afterData;
@@ -258,7 +258,7 @@ export async function POST(request: Request) {
 
     } catch (error) {
       // Handle failure
-      const failed = JSON.parse(bulkSession.failedGames || '[]');
+      const failed = bulkSession.failedGames && bulkSession.failedGames !== '' ? JSON.parse(bulkSession.failedGames) : [];
       const existingFailed = failed.find((f: any) => f.gameId === game.id);
       
       if (existingFailed) {
