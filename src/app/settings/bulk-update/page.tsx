@@ -309,6 +309,19 @@ export default function BulkUpdatePage() {
           
           setState(prev => ({ ...prev, data: status }));
           
+          // Check if processing is complete (status says completed OR processed >= total)
+          const isComplete = status.status === 'completed' || 
+            (status.progress && status.progress.processed >= status.progress.total);
+          
+          if (isComplete && state.status !== 'completed') {
+            console.log('Bulk update complete! Processed:', status.progress?.processed, 'of', status.progress?.total);
+            showBrowserNotification('Bulk Update Complete', 
+              `Updated ${status.progress?.processed || 0} games`);
+            setState(prev => ({ ...prev, status: 'completed' }));
+            clearInterval(interval);
+            return;
+          }
+          
           // Check if a game just finished processing and we should continue
           if (status.status === 'running' && status.progress) {
             const currentProcessed = status.progress.processed;
@@ -334,6 +347,7 @@ export default function BulkUpdatePage() {
             }
           }
           
+          // Keep the original check as backup
           if (status.status === 'completed') {
             showBrowserNotification('Bulk Update Complete', 
               `Updated ${status.progress.processed} games`);
@@ -398,8 +412,10 @@ export default function BulkUpdatePage() {
             }}
             onPause={handlePause}
             onCancel={handleCancel}
-            onResume={handleResume}
             onStop={handleStopAfterCurrent}
+            onViewResults={state.data.progress!.processed >= state.data.progress!.total ? () => {
+              setState(prev => ({ ...prev, status: 'completed' }));
+            } : undefined}
           />
         )}
         

@@ -19,11 +19,11 @@ interface ProgressViewProps {
   };
   onPause: () => void;
   onCancel: () => void;
-  onResume?: () => void;
   onStop?: () => void;
+  onViewResults?: () => void;
 }
 
-export function ProgressView({ data, onPause, onCancel, onResume, onStop }: ProgressViewProps) {
+export function ProgressView({ data, onPause, onCancel, onStop, onViewResults }: ProgressViewProps) {
   const { progress } = data;
   const isRateLimited = data.pauseReason === 'rate_limit';
   
@@ -58,29 +58,13 @@ export function ProgressView({ data, onPause, onCancel, onResume, onStop }: Prog
           marginBottom: '1.5rem'
         }}>
           <h3 style={{ margin: '0 0 0.5rem 0', color: '#856404' }}>⏳ Rate Limited by BoardGameGeek</h3>
-          <p style={{ margin: '0 0 0.5rem 0', color: '#856404' }}>
-            BGG imposes a 1 request per 5 second rate limit.
+          <p style={{ margin: '0', color: '#856404' }}>
+            Resuming automatically in {data.secondsLeft || 10} seconds...
           </p>
-          <p style={{ margin: '0 0 1rem 0', color: '#856404', fontWeight: 'bold' }}>
-            Resuming automatically in {data.secondsLeft} seconds...
-          </p>
-          {onResume && (
-            <button 
-              className={styles.button}
-              onClick={onResume}
-              disabled={data.secondsLeft ? data.secondsLeft > 0 : false}
-              style={{ 
-                opacity: data.secondsLeft && data.secondsLeft > 0 ? 0.5 : 1,
-                cursor: data.secondsLeft && data.secondsLeft > 0 ? 'not-allowed' : 'pointer'
-              }}
-            >
-              Resume Now
-            </button>
-          )}
         </div>
       )}
       
-      {data.consecutiveFailures && data.consecutiveFailures > 0 && (
+      {data.consecutiveFailures && data.consecutiveFailures > 0 && !isRateLimited && (
         <div className={styles.warningBanner} style={{ 
           backgroundColor: '#fff3cd', 
           border: '1px solid #ffc107', 
@@ -100,12 +84,12 @@ export function ProgressView({ data, onPause, onCancel, onResume, onStop }: Prog
       <div className={styles.progressBar}>
         <div 
           className={styles.progressFill}
-          style={{ width: `${progress.percentComplete}%` }}
+          style={{ width: `${Math.min(progress.percentComplete, 100)}%` }}
         />
       </div>
       
       <p className={styles.progressText}>
-        {progress.processed} of {progress.total} games ({progress.percentComplete}%)
+        {Math.min(progress.percentComplete, 100)}% complete
       </p>
       
       {data.currentGameId && !isRateLimited && (
@@ -138,30 +122,42 @@ export function ProgressView({ data, onPause, onCancel, onResume, onStop }: Prog
         </div>
       </div>
       
-      <div className={styles.actions}>
-        <button 
-          className={`${styles.button} ${styles.buttonSecondary}`}
-          onClick={onPause}
-          disabled={isRateLimited}
-        >
-          Pause
-        </button>
-        {onStop && !isRateLimited && (
+      {progress.processed >= progress.total && onViewResults ? (
+        <div className={styles.actions}>
           <button 
-            className={`${styles.button} ${styles.buttonWarning}`}
-            onClick={onStop}
-            title="Stop after current game completes"
+            className={`${styles.button} ${styles.buttonPrimary}`}
+            onClick={onViewResults}
+            style={{ fontSize: '1.1rem', padding: '0.75rem 2rem' }}
           >
-            Stop After Current
+            View Results
           </button>
-        )}
-        <button 
-          className={`${styles.button} ${styles.buttonDanger}`}
-          onClick={onCancel}
-        >
-          Cancel
-        </button>
-      </div>
+        </div>
+      ) : (
+        <div className={styles.actions}>
+          <button 
+            className={`${styles.button} ${styles.buttonSecondary}`}
+            onClick={onPause}
+            disabled={isRateLimited}
+          >
+            Pause
+          </button>
+          {onStop && !isRateLimited && (
+            <button 
+              className={`${styles.button} ${styles.buttonWarning}`}
+              onClick={onStop}
+              title="Stop after current game completes"
+            >
+              Stop After Current
+            </button>
+          )}
+          <button 
+            className={`${styles.button} ${styles.buttonDanger}`}
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
       
       <p className={styles.hint}>
         You can leave this page. You&apos;ll get a browser notification when complete.
