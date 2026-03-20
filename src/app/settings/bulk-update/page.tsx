@@ -1,0 +1,330 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { Header } from '@/components/Header';
+import { PreviewView } from './PreviewView';
+import { ApprovalView } from './ApprovalView';
+import { ProgressView } from './ProgressView';
+import { ResultsView } from './ResultsView';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import styles from './page.module.css';
+
+interface BulkUpdateState {
+  sessionId: string | null;
+  status: 'loading' | 'preview' | 'approval' | 'running' | 'completed' | 'error';
+  data: {
+    preview?: {
+      totalGames: number;
+      gamesWithBggId: number;
+      gamesNeedingSearch: number;
+      gamesWithManualEdits: number;
+      manualEditGames: Array<{
+        gameId: string;
+        title: string;
+        editedFields: string[];
+        editedAt: Date;
+      }>;
+    };
+    existingSession?: {
+      id: string;
+      status: string;
+      canResume: boolean;
+      progress: {
+        total: number;
+        processed: number;
+        percentComplete: number;
+      };
+    };
+    games?: Array<{
+      gameId: string;
+      title: string;
+      editedFields: string[];
+      editedAt: Date;
+    }>;
+    progress?: {
+      total: number;
+      processed: number;
+      percentComplete: number;
+      autoMatched: number;
+      manualApproved: number;
+      skipped: number;
+      failed: number;
+    };
+    currentGameId?: string;
+    skippedGames?: Array<{
+      gameId: string;
+      title: string;
+      reason: string;
+    }>;
+    failedGames?: Array<{
+      gameId: string;
+      title: string;
+      error: string;
+    }>;
+    error?: string;
+  } | null;
+}
+
+export default function BulkUpdatePage() {
+  const router = useRouter();
+  const [state, setState] = useState<BulkUpdateState>({
+    sessionId: null,
+    status: 'loading',
+    data: null
+  });
+
+  // Define functions first before they're used in effects
+  const requestNotificationPermission = useCallback(async () => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  }, []);
+
+  const showBrowserNotification = useCallback((title: string, body: string) => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body,
+        icon: '/favicon.ico'
+      });
+    }
+  }, []);
+
+  const fetchStatus = useCallback(async (sessionId: string) => {
+    const response = await fetch(`/api/games/bulk-update/status?sessionId=${sessionId}`);
+    return response.json();
+  }, []);
+
+  const checkExistingSession = useCallback(async () => {
+    try {
+      const response = await fetch('/api/games/bulk-update/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ overwriteManual: false })
+      });
+      
+      const data = await response.json();
+      
+      if (!data.canStart && data.existingSession) {
+        setState({
+          sessionId: data.existingSession.id,
+          status: data.existingSession.canResume ? 'running' : 'completed',
+          data: data.existingSession
+        });
+      } else {
+        setState({
+          sessionId: null,
+          status: 'preview',
+          data: data
+        });
+      }
+    } catch (_error) {
+      setState({
+        sessionId: null,
+        status: 'error',
+        data: { error: 'Failed to load' }
+      });
+    }
+  }, []);
+
+  const processNext = useCallback(async (sessionId: string) => {
+    try {
+      await fetch('/api/games/bulk-update/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      });
+    } catch (error) {
+      console.error('Process error:', error);
+    }
+  }, []);
+
+  const handleStart = useCallback(async (overwriteManual: boolean, retryStrategy: string, approvedGameIds?: string[]) => {
+    try {
+      const response = await fetch('/api/games/bulk-update/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          overwriteManual,
+          retryStrategy,
+          approvedManualEditGameIds: approvedGameIds
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.status === 'needs-approval') {
+        setState({
+          sessionId: null,
+          status: 'approval',
+          data: result.needsApproval
+        });
+      } else {
+        setState({
+          sessionId: result.sessionId,
+          status: 'running',
+          data: result
+        });
+        
+        processNext(result.sessionId);
+      }
+    } catch (error) {
+      console.error('Start error:', error);
+    }
+  }, [processNext]);
+
+  const handleApprove = useCallback(async (approvedGameIds: string[]) => {
+    await handleStart(false, 'skip', approvedGameIds);
+  }, [handleStart]);
+
+  const handlePause = useCallback(async () => {
+    if (!state.sessionId) return;
+    
+    await fetch('/api/games/bulk-update/pause', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: state.sessionId })
+    });
+    
+    const status = await fetchStatus(state.sessionId);
+    setState(prev => ({ ...prev, data: status }));
+  }, [state.sessionId, fetchStatus]);
+
+  const handleResume = useCallback(async () => {
+    if (!state.sessionId) return;
+    
+    await fetch('/api/games/bulk-update/resume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: state.sessionId })
+    });
+    
+    setState(prev => ({ ...prev, status: 'running' }));
+    processNext(state.sessionId);
+  }, [state.sessionId, processNext]);
+
+  const handleCancel = useCallback(async () => {
+    if (!state.sessionId) {
+      router.push('/settings');
+      return;
+    }
+    
+    await fetch('/api/games/bulk-update/cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: state.sessionId })
+    });
+    
+    router.push('/settings');
+  }, [state.sessionId, router]);
+
+  const handleRetryFailed = useCallback(async (gameIds: string[]) => {
+    console.log('Retrying:', gameIds);
+  }, []);
+
+  const handleExport = useCallback(async () => {
+    if (!state.sessionId) return;
+    
+    const response = await fetch(`/api/games/bulk-update/export?sessionId=${state.sessionId}`);
+    const report = await response.json();
+    
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bgnight-bulk-update-report-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [state.sessionId]);
+
+  // Initial load effect - now functions are defined above
+  useEffect(() => {
+    checkExistingSession();
+    requestNotificationPermission();
+  }, [checkExistingSession, requestNotificationPermission]);
+
+  // Polling effect for running status
+  useEffect(() => {
+    if (state.status === 'running' && state.sessionId) {
+      const interval = setInterval(async () => {
+        const status = await fetchStatus(state.sessionId!);
+        setState(prev => ({ ...prev, data: status }));
+        
+        if (status.status === 'completed') {
+          showBrowserNotification('Bulk Update Complete', 
+            `Updated ${status.progress.processed} games`);
+          setState(prev => ({ ...prev, status: 'completed' }));
+          clearInterval(interval);
+        }
+      }, 3000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [state.status, state.sessionId, fetchStatus, showBrowserNotification]);
+
+  return (
+    <div className={styles.page}>
+      <Header />
+      
+      <main className={styles.main}>
+        <h1 className={styles.title}>Bulk Update from BoardGameGeek</h1>
+        
+        {state.status === 'loading' && (
+          <div className={styles.loading}>
+            <LoadingSpinner size="large" />
+            <p>Loading...</p>
+          </div>
+        )}
+        
+        {state.status === 'preview' && state.data && (
+          <PreviewView 
+            data={state.data}
+            onStart={handleStart}
+            onResume={handleResume}
+          />
+        )}
+        
+        {state.status === 'approval' && (
+          <ApprovalView 
+            games={state.data?.games || []}
+            onApprove={handleApprove}
+            onCancel={() => setState({ sessionId: null, status: 'preview', data: null })}
+          />
+        )}
+        
+        {state.status === 'running' && state.data && (
+          <ProgressView 
+            data={{
+              progress: state.data.progress!,
+              currentGameId: state.data.currentGameId
+            }}
+            onPause={handlePause}
+            onCancel={handleCancel}
+          />
+        )}
+        
+        {state.status === 'completed' && state.data && (
+          <ResultsView 
+            data={{
+              progress: state.data.progress!,
+              skippedGames: state.data.skippedGames,
+              failedGames: state.data.failedGames
+            }}
+            onRetryFailed={handleRetryFailed}
+            onExport={handleExport}
+            onClose={() => router.push('/settings')}
+          />
+        )}
+        
+        {state.status === 'error' && (
+          <div className={styles.error}>
+            <p>Error: {state.data?.error}</p>
+            <button onClick={() => router.push('/settings')}>
+              Back to Settings
+            </button>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

@@ -103,7 +103,7 @@ export async function POST(request: Request) {
                 userId: session.user.id,
                 OR: [
                   { bggId: game.bggId },
-                  { title: { equals: game.title, mode: 'insensitive' } },
+                  { title: game.title },
                 ],
               },
             });

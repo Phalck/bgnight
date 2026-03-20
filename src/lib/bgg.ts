@@ -26,6 +26,14 @@ export interface BGGGame {
   bggRating?: number;
 }
 
+// Simplified search result for caching
+export interface BGGSearchResult {
+  id: number;
+  name: string;
+  thumbnail?: string;
+  yearPublished?: number;
+}
+
 async function fetchXML(url: string): Promise<string> {
   const response = await fetch(url, {
     headers: {

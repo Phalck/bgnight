@@ -342,10 +342,35 @@ export default function CollectionPage() {
   };
 
   const handleSaveEdit = async () => {
-    if (!editingGame) return;
+    if (!editingGame || !session?.user?.id) return;
     
     setSaving(true);
     try {
+      // Track which fields were manually edited
+      const editedFields: string[] = [];
+      
+      if (editForm.title !== editingGame.title) editedFields.push('title');
+      if (editForm.minPlayers !== editingGame.minPlayers) editedFields.push('minPlayers');
+      if (editForm.maxPlayers !== editingGame.maxPlayers) editedFields.push('maxPlayers');
+      if (editForm.minPlayTime !== editingGame.minPlayTime) editedFields.push('minPlayTime');
+      if (editForm.maxPlayTime !== editingGame.maxPlayTime) editedFields.push('maxPlayTime');
+      if (JSON.stringify(editForm.mechanics) !== JSON.stringify(editingGame.mechanics || [])) editedFields.push('mechanics');
+      if (JSON.stringify(editForm.categories) !== JSON.stringify(editingGame.categories || [])) editedFields.push('categories');
+      
+      const originalDesigners = (editingGame.designers || []).join(', ');
+      if (editForm.designers !== originalDesigners) editedFields.push('designers');
+      
+      const originalPublishers = (editingGame.publishers || []).join(', ');
+      if (editForm.publishers !== originalPublishers) editedFields.push('publishers');
+      
+      // Track manual edits if any fields changed
+      if (editedFields.length > 0) {
+        await api.post('/api/games/track-edit', {
+          gameId: editingGame.id,
+          fields: editedFields
+        });
+      }
+      
       const updated = await api.put<Game>(`/api/games/${editingGame.id}`, {
         title: editForm.title,
         thumbnail: editForm.thumbnail || null,
@@ -490,8 +515,8 @@ export default function CollectionPage() {
   };
 
   // Apply BGG data to form
-  const handleApplyBGGData = () => {
-    if (!bggImportData) return;
+  const handleApplyBGGData = async () => {
+    if (!bggImportData || !editingGame) return;
     
     setEditForm({
       ...editForm,
@@ -509,6 +534,15 @@ export default function CollectionPage() {
       complexity: bggImportData.complexity || editForm.complexity,
       bggRating: bggImportData.bggRating || editForm.bggRating,
     });
+    
+    // Clear manual edit tracking when importing from BGG
+    try {
+      await api.post('/api/games/clear-manual-edits', {
+        gameId: editingGame.id
+      });
+    } catch (err) {
+      console.error('Failed to clear manual edit tracking:', err);
+    }
     
     setShowBGGImport(false);
     setShowBGGConfirmModal(false);

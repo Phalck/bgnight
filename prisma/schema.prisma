@@ -3,13 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
-}
-
-enum UserRole {
-  USER
-  ADMIN
 }
 
 model User {
@@ -17,7 +12,7 @@ model User {
   email              String   @unique
   name               String?
   password           String
-  role               UserRole @default(USER)
+  role               String   @default("USER")
   isActive           Boolean  @default(true)
   mustChangePassword Boolean  @default(false)
   games              Game[]
@@ -143,4 +138,46 @@ model PlannedGame {
   
   @@index([plannedNightId])
   @@index([gameId])
+}
+
+model ManualEditTracking {
+  id           String   @id @default(cuid())
+  gameId       String   @unique
+  userId       String
+  editedFields String   // JSON array of field names
+  editedAt     DateTime @default(now())
+  
+  @@index([userId])
+  @@index([gameId])
+}
+
+model BulkUpdateSession {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  status          String   // 'preview', 'running', 'paused', 'completed', 'failed', 'cancelled'
+  
+  totalGames      Int
+  processed       Int      @default(0)
+  autoMatched     Int      @default(0)
+  manualApproved  Int      @default(0)
+  skipped         Int      @default(0)
+  failed          Int      @default(0)
+  
+  overwriteManual Boolean
+  retryStrategy   String   @default("skip") // 'retry' or 'skip'
+  currentGameId   String?
+  
+  beforeData      String?  // JSON
+  afterData       String?  // JSON
+  manualEditGames String?  // JSON
+  skippedGames    String?  // JSON
+  failedGames     String?  // JSON
+  
+  createdAt       DateTime @default(now())
+  startedAt       DateTime?
+  completedAt     DateTime?
+  lastActivityAt  DateTime @default(now())
+  
+  @@index([userId])
+  @@index([status])
 }

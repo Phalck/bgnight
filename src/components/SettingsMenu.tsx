@@ -171,6 +171,21 @@ export function SettingsMenu() {
             <div className={styles.divider} />
 
             <div className={styles.section}>
+              <h4 className={styles.sectionTitle}>Collection Tools</h4>
+              <button
+                className={styles.menuItem}
+                onClick={() => {
+                  router.push('/settings/bulk-update');
+                  setIsOpen(false);
+                }}
+              >
+                🔄 Bulk Update from BGG
+              </button>
+            </div>
+
+            <div className={styles.divider} />
+
+            <div className={styles.section}>
               <h4 className={styles.sectionTitle}>Danger Zone</h4>
               <button 
                 className={`${styles.menuItem} ${styles.danger}`}

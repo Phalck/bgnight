@@ -12,8 +12,10 @@ Board Game Night is your all-in-one companion for organizing tabletop gaming ses
 
 ### 🎮 Game Collection Management
 - **Import from BoardGameGeek** - Sync your BGG collection automatically
+- **Bulk Update from BGG** - Refresh all games with latest BGG data (weight, rating, descriptions)
 - **Manual entry** - Add games with custom details
-- **Game details** - Store images, descriptions, player counts, play times, and more
+- **Game details** - Store images, descriptions, player counts, play times, weight, BGG rating, and more
+- **Visual indicators** - See game weight (⚖️) and BGG rating (⭐) on game cards
 - **Search & filter** - Quickly find games in your collection
 
 ### 📅 Game Night Planning
@@ -74,9 +76,9 @@ The first user to register automatically becomes an admin and gains access to th
 3. Choose your import method:
 
 **Option A: Search & Import from BGG (requires API key)**
-- Enter your BGG username to search your collection
-- Select games to import
-- Optionally enrich with descriptions and images
+- Enter game title to search BGG
+- Select from matching results with preview
+- Automatically imports: title, description, player count, play time, weight, rating, mechanics, categories
 - **Note:** Requires a Board Game Geek XML API key (see Environment Variables)
 
 **Option B: Upload BGG CSV Export (no API key needed)**
@@ -85,9 +87,40 @@ The first user to register automatically becomes an admin and gains access to th
 - Games are imported automatically
 
 **Option C: Manual Entry**
-- Enter game details (title, players, duration, etc.)
+- Enter game details (title, players, duration, weight, rating, etc.)
 - Upload or search for cover images
 - Save to your collection
+
+#### Bulk Update from BGG
+Keep your entire collection up-to-date with the latest BoardGameGeek data:
+
+1. Go to **Settings** → **Bulk Update from BGG**
+2. Review the preview showing how many games will be updated
+3. Choose handling for manually-edited games:
+   - **Overwrite all** - Update everything without prompts
+   - **Ask for approval** - Pause and confirm for games you've manually edited
+4. Choose retry strategy for failed updates:
+   - **Retry automatically** - Wait 30 seconds and retry (up to 3 times)
+   - **Skip and list** - Skip failed games and show list at end
+5. If manual approval required, select which games to update
+6. Monitor progress - you can leave the page and get notified when done
+7. Review changes with visual diff (strikethrough old values, highlighted new)
+8. Retry any failed games immediately or export a JSON report
+
+**Features:**
+- **Smart matching** - Games with BGG IDs auto-match; others are searched
+- **Progress persistence** - Resume if you close the browser
+- **Visual comparison** - See exactly what changed for each game
+- **Rate limiting** - Respects BGG API limits with built-in delays
+- **One session per user** - Prevents duplicate updates
+
+### Game Card Display
+Game cards show at-a-glance information:
+- **Top row:** Thumbnail, Title, Designer
+- **Badges row:** Players | Play Time | Weight ⚖️ | Rating ⭐ | Log Play
+- **Details:** Mechanics, Categories, Rank (if available)
+
+The **weight** (complexity) and **BGG rating** are imported from BoardGameGeek and displayed as compact badges on the game card.
 
 ### Planning a Game Night
 1. Go to **Plan BGN**
