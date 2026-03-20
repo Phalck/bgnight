@@ -84,12 +84,16 @@ export async function POST(request: Request) {
       }
     });
 
-    // Initialize debug info outside try block so it's available in catch
+    // Initialize debug info and retry tracking outside try block so they're available in catch
     let bggDebugInfo: any = {
       initialized: false,
       title: game.title,
       timestamp: new Date().toISOString()
     };
+    
+    // Check if this game was previously failed (i.e., it's a retry)
+    const failedGames = bulkSession.failedGames && bulkSession.failedGames !== '' ? JSON.parse(bulkSession.failedGames) : [];
+    const wasPreviouslyFailed = failedGames.some((f: any) => f.gameId === game.id);
 
     try {
       // Check if game has manual edits
@@ -133,7 +137,8 @@ export async function POST(request: Request) {
         bggId: game.bggId || null,
         title: game.title,
         timestamp: new Date().toISOString(),
-        method: 'api/bgg-import'
+        method: 'api/bgg-import',
+        isRetry: wasPreviouslyFailed
       };
       
       try {
@@ -176,19 +181,26 @@ export async function POST(request: Request) {
             reason: 'No BGG ID assigned'
           });
           
+          // Build skip update data - don't increment processed if this is a retry
+          const skipUpdateData: any = {
+            skippedGames: JSON.stringify(skipped),
+            skipped: { increment: 1 }
+          };
+          
+          if (!wasPreviouslyFailed) {
+            skipUpdateData.processed = { increment: 1 };
+          }
+          
           await prisma.bulkUpdateSession.update({
             where: { id: sessionId },
-            data: { 
-              skippedGames: JSON.stringify(skipped),
-              skipped: { increment: 1 },
-              processed: { increment: 1 }
-            }
+            data: skipUpdateData
           });
           
           return NextResponse.json({ 
             status: 'running',
-            processed: 1,
-            skipped: 1
+            processed: wasPreviouslyFailed ? 0 : 1,
+            skipped: 1,
+            isRetry: wasPreviouslyFailed
           });
         }
 
@@ -270,24 +282,33 @@ export async function POST(request: Request) {
 
       const isAutoMatched = game.bggId && game.bggId > 0;
       
+      // Build update data - don't increment processed if this is a retry
+      const updateData: any = {
+        autoMatched: isAutoMatched ? { increment: 1 } : undefined,
+        manualApproved: !isAutoMatched ? { increment: 1 } : undefined,
+        beforeData: JSON.stringify(existingBefore),
+        afterData: JSON.stringify(existingAfter),
+        consecutiveFailures: 0 // Reset on success
+      };
+      
+      // Only increment processed if this is NOT a retry
+      // (retried games were already counted in the first attempt)
+      if (!wasPreviouslyFailed) {
+        updateData.processed = { increment: 1 };
+      }
+      
       await prisma.bulkUpdateSession.update({
         where: { id: sessionId },
-        data: {
-          processed: { increment: 1 },
-          autoMatched: isAutoMatched ? { increment: 1 } : undefined,
-          manualApproved: !isAutoMatched ? { increment: 1 } : undefined,
-          beforeData: JSON.stringify(existingBefore),
-          afterData: JSON.stringify(existingAfter),
-          consecutiveFailures: 0 // Reset on success
-        }
+        data: updateData
       });
 
       return NextResponse.json({ 
         status: 'running',
-        processed: 1,
+        processed: wasPreviouslyFailed ? 0 : 1,
         autoMatched: isAutoMatched ? 1 : 0,
         manualApproved: !isAutoMatched ? 1 : 0,
-        consecutiveFailures: 0
+        consecutiveFailures: 0,
+        isRetry: wasPreviouslyFailed
       });
 
     } catch (error) {
@@ -353,21 +374,29 @@ export async function POST(request: Request) {
         });
       }
       
+      // Build failure update data - don't increment processed if this is a retry
+      const failureUpdateData: any = {
+        failedGames: JSON.stringify(failed),
+        failed: { increment: 1 },
+        consecutiveFailures: newConsecutiveFailures
+      };
+      
+      // Only increment processed if this is NOT a retry
+      if (!wasPreviouslyFailed) {
+        failureUpdateData.processed = { increment: 1 };
+      }
+      
       await prisma.bulkUpdateSession.update({
         where: { id: sessionId },
-        data: { 
-          failedGames: JSON.stringify(failed),
-          failed: { increment: 1 },
-          processed: { increment: 1 },
-          consecutiveFailures: newConsecutiveFailures
-        }
+        data: failureUpdateData
       });
       
       return NextResponse.json({ 
         status: 'running',
-        processed: 1,
+        processed: wasPreviouslyFailed ? 0 : 1,
         failed: 1,
-        consecutiveFailures: newConsecutiveFailures
+        consecutiveFailures: newConsecutiveFailures,
+        isRetry: wasPreviouslyFailed
       });
     }
 
