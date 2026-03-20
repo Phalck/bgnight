@@ -1235,6 +1235,9 @@ export default function CollectionPage() {
                       {result.yearPublished && (
                         <span className={styles.gameSelectionYear}>({result.yearPublished})</span>
                       )}
+                      <small style={{ display: 'block', color: '#666', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                        BGG ID: {result.id}
+                      </small>
                     </div>
                   </div>
                 ))}
