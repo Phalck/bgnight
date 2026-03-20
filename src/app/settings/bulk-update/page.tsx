@@ -413,7 +413,7 @@ export default function BulkUpdatePage() {
             onPause={handlePause}
             onCancel={handleCancel}
             onStop={handleStopAfterCurrent}
-            onViewResults={state.data.progress!.processed >= state.data.progress!.total ? () => {
+            onViewResults={state.data.progress && state.data.progress.processed >= state.data.progress.total ? () => {
               setState(prev => ({ ...prev, status: 'completed' }));
             } : undefined}
           />
