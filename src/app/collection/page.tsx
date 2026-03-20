@@ -998,6 +998,20 @@ export default function CollectionPage() {
               </div>
 
               <div className={styles.field}>
+                <label>BGG ID</label>
+                <input
+                  type="text"
+                  value={editingGame.bggId || 'Not assigned'}
+                  disabled
+                  readOnly
+                  style={{ backgroundColor: '#f5f5f5', color: '#666', cursor: 'not-allowed' }}
+                />
+                <small style={{ color: '#666', fontSize: '0.75rem' }}>
+                  BoardGameGeek ID (read-only)
+                </small>
+              </div>
+
+              <div className={styles.field}>
                 <label>Image URL</label>
                 <input
                   type="url"
