@@ -114,29 +114,23 @@ export function GameCard({
               </p>
             )
           )}
-          {(game.complexity || game.bggRating) && (
-            <p className={styles.quickStats}>
-              {game.complexity && game.complexity > 0 && (
-                <span>⚖️ {game.complexity.toFixed(1)}/5</span>
-              )}
-              {game.complexity && game.complexity > 0 && game.bggRating && game.bggRating > 0 && (
-                <span className={styles.statDivider}> | </span>
-              )}
-              {game.bggRating && game.bggRating > 0 && (
-                <span>⭐ {game.bggRating.toFixed(1)}/10</span>
-              )}
-            </p>
-          )}
+
         </div>
       </div>
 
       {/* Row 2: Game stats */}
       <div className={styles.cardBody}>
-        {/* Badges (Players, Time, Play Count) */}
+        {/* Badges (Players, Time, Weight, Rating, Play Count) */}
         <div className={styles.badges}>
           <span className={styles.badge}>{formatPlayers()}</span>
           {formatPlayTime() && (
             <span className={styles.badge}>{formatPlayTime()}</span>
+          )}
+          {game.complexity && game.complexity > 0 && (
+            <span className={styles.weightBadge}>⚖️ {game.complexity.toFixed(1)}</span>
+          )}
+          {game.bggRating && game.bggRating > 0 && (
+            <span className={styles.ratingBadge}>⭐ {game.bggRating.toFixed(1)}</span>
           )}
           {typeof playCount === 'number' && playCount > 0 ? (
             <span 

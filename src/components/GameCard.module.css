@@ -117,20 +117,6 @@
   overflow: hidden;
 }
 
-.quickStats {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin: 0;
-  margin-top: 0.25rem;
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.statDivider {
-  opacity: 0.5;
-}
-
 /* Row 2: Game stats */
 .cardBody {
   display: flex;
@@ -149,6 +135,24 @@
 .badge {
   background: var(--surface);
   color: var(--text-secondary);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.weightBadge {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.ratingBadge {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
   font-size: 0.7rem;
