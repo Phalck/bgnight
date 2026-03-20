@@ -2,9 +2,48 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { getGameById, searchBGG } from '@/lib/bgg';
 import { clearManualEditTracking } from '@/lib/manual-edit-tracker';
-import { getCachedSearchResults, cacheSearchResults } from '@/lib/bgg-search-cache';
+
+// Helper function to call the working BGG import API
+async function fetchBggGameData(gameId: number, gameName: string) {
+  try {
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : process.env.NEXT_PUBLIC_APP_URL 
+        ? process.env.NEXT_PUBLIC_APP_URL 
+        : 'http://localhost:3000';
+    
+    console.log('[Bulk Update] Calling BGG import API for game:', gameName, 'ID:', gameId);
+    
+    // Use the working /api/bgg-import endpoint
+    const response = await fetch(`${baseUrl}/api/bgg-import?gameId=${gameId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    console.log('[Bulk Update] BGG import API response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Bulk Update] BGG import API error:', response.status, errorText);
+      throw new Error(`BGG import failed: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('[Bulk Update] BGG import API success:', data.success);
+    
+    if (!data.success || !data.gameData) {
+      throw new Error('BGG import returned no game data');
+    }
+    
+    return data.gameData;
+  } catch (error) {
+    console.error('[Bulk Update] Error fetching BGG data:', error);
+    throw error;
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -125,7 +164,7 @@ export async function POST(request: Request) {
         });
       }
 
-      // Get BGG data with detailed debugging
+      // Get BGG data using the working /api/bgg-import endpoint
       let bggData: any = null;
       
       // Update debug info
@@ -133,82 +172,64 @@ export async function POST(request: Request) {
         hasBggId: !!(game.bggId && game.bggId > 0),
         bggId: game.bggId || null,
         title: game.title,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        method: 'api/bgg-import'
       };
       
       try {
         if (game.bggId && game.bggId > 0) {
-          // Auto-match with existing BGG ID
-          bggDebugInfo.method = 'getGameById';
-          bggData = await getGameById(game.bggId);
-          bggDebugInfo.result = bggData ? 'found' : 'not_found';
+          // Use existing BGG ID with the working API endpoint
+          console.log('[Bulk Update] Fetching game with BGG ID:', game.bggId);
+          const gameData = await fetchBggGameData(game.bggId, game.title);
+          
+          if (gameData) {
+            bggData = {
+              id: game.bggId,
+              name: gameData.title,
+              description: gameData.description,
+              minPlayers: gameData.minPlayers,
+              maxPlayers: gameData.maxPlayers,
+              minPlayTime: gameData.minPlayTime,
+              maxPlayTime: gameData.maxPlayTime,
+              yearPublished: gameData.yearPublished,
+              thumbnail: gameData.thumbnail,
+              image: gameData.image,
+              mechanics: gameData.mechanics,
+              categories: gameData.categories,
+              designers: gameData.designers,
+              publishers: gameData.publishers,
+              complexity: gameData.complexity,
+              bggRating: gameData.bggRating
+            };
+            bggDebugInfo.result = 'found';
+          } else {
+            bggDebugInfo.result = 'not_found';
+            throw new Error('BGG API returned no data');
+          }
         } else {
-          // Search BGG with cache
-          bggDebugInfo.method = 'searchBGG';
-          let searchResults = getCachedSearchResults(game.title);
+          // No BGG ID - skip this game for now (would need search)
+          bggDebugInfo.result = 'no_bggid';
+          const skipped = bulkSession.skippedGames && bulkSession.skippedGames !== '' ? JSON.parse(bulkSession.skippedGames) : [];
+          skipped.push({
+            gameId: game.id,
+            title: game.title,
+            reason: 'No BGG ID assigned'
+          });
           
-          if (!searchResults) {
-            bggDebugInfo.usedCache = false;
-            searchResults = await searchBGG(game.title);
-            cacheSearchResults(game.title, searchResults);
-          } else {
-            bggDebugInfo.usedCache = true;
-          }
+          await prisma.bulkUpdateSession.update({
+            where: { id: sessionId },
+            data: { 
+              skippedGames: JSON.stringify(skipped),
+              skipped: { increment: 1 },
+              processed: { increment: 1 }
+            }
+          });
           
-          bggDebugInfo.searchResultsCount = searchResults.length;
-          
-          if (searchResults.length === 1) {
-            bggData = searchResults[0];
-            bggDebugInfo.result = 'single_match';
-          } else if (searchResults.length > 1) {
-            // Multiple matches - needs manual selection
-            bggDebugInfo.result = 'multiple_matches';
-            await prisma.bulkUpdateSession.update({
-              where: { id: sessionId },
-              data: { 
-                status: 'paused',
-                currentGameId: game.id
-              }
-            });
-            
-            return NextResponse.json({
-              status: 'manual-match-needed',
-              game: {
-                id: game.id,
-                title: game.title
-              },
-              candidates: searchResults.map(r => ({
-                id: r.id,
-                title: r.name,
-                year: r.yearPublished
-              }))
-            });
-          } else {
-            // No matches
-            bggDebugInfo.result = 'no_matches';
-            const skipped = bulkSession.skippedGames && bulkSession.skippedGames !== '' ? JSON.parse(bulkSession.skippedGames) : [];
-            skipped.push({
-              gameId: game.id,
-              title: game.title,
-              reason: 'No BGG match found',
-              debug: bggDebugInfo
-            });
-            
-            await prisma.bulkUpdateSession.update({
-              where: { id: sessionId },
-              data: { 
-                skippedGames: JSON.stringify(skipped),
-                skipped: { increment: 1 },
-                processed: { increment: 1 }
-              }
-            });
-            
-            return NextResponse.json({ 
-              status: 'running',
-              processed: 1,
-              skipped: 1
-            });
-          }
+          return NextResponse.json({ 
+            status: 'running',
+            processed: 1,
+            skipped: 1
+          });
         }
 
         if (!bggData) {
