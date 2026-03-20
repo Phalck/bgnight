@@ -43,7 +43,7 @@ async function fetchXML(url: string): Promise<string> {
   };
 
   // Add authentication token if available
-  const bggToken = process.env.BGG_API_TOKEN;
+  const bggToken = process.env.BGG_API_TOKEN?.trim();
   if (bggToken) {
     headers['Authorization'] = `Bearer ${bggToken}`;
     console.log('[BGG] Using authentication token');
