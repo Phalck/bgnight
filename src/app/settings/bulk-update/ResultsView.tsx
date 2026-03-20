@@ -27,9 +27,10 @@ interface ResultsViewProps {
   onRetryFailed: (gameIds: string[]) => void;
   onExport: () => void;
   onClose: () => void;
+  onReset?: () => void;
 }
 
-export function ResultsView({ data, onRetryFailed, onExport, onClose }: ResultsViewProps) {
+export function ResultsView({ data, onRetryFailed, onExport, onClose, onReset }: ResultsViewProps) {
   const { progress, skippedGames = [], failedGames = [] } = data;
   
   const [selectedFailed, setSelectedFailed] = useState<string[]>([]);
@@ -117,6 +118,14 @@ export function ResultsView({ data, onRetryFailed, onExport, onClose }: ResultsV
       )}
       
       <div className={styles.actions} style={{ marginTop: '2rem' }}>
+        {onReset && (
+          <button
+            className={`${styles.button} ${styles.buttonPrimary}`}
+            onClick={onReset}
+          >
+            Start New Bulk Update
+          </button>
+        )}
         <button 
           className={`${styles.button} ${styles.buttonSecondary}`}
           onClick={onExport}
@@ -124,7 +133,7 @@ export function ResultsView({ data, onRetryFailed, onExport, onClose }: ResultsV
           Export Report (JSON)
         </button>
         <button 
-          className={`${styles.button} ${styles.buttonPrimary}`}
+          className={`${styles.button} ${styles.buttonSecondary}`}
           onClick={onClose}
         >
           Close
