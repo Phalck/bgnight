@@ -234,9 +234,54 @@ export default function BulkUpdatePage() {
     stopRequestedRef.current = true;
   }, []);
 
+  const [isRetrying, setIsRetrying] = useState(false);
+
   const handleRetryFailed = useCallback(async (gameIds: string[]) => {
-    console.log('Retrying:', gameIds);
-  }, []);
+    if (!state.sessionId || gameIds.length === 0) return;
+    
+    setIsRetrying(true);
+    console.log('Retrying failed games:', gameIds);
+    
+    try {
+      const response = await fetch('/api/games/bulk-update/retry-failed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: state.sessionId, gameIds })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to retry games');
+      }
+      
+      const result = await response.json();
+      console.log('Retry initiated:', result);
+      
+      // Reset the processed counter to trigger processing
+      prevProcessedRef.current = 0;
+      
+      // Switch to running state to show progress
+      setState(prev => ({ 
+        ...prev, 
+        status: 'running',
+        data: prev.data ? {
+          ...prev.data,
+          progress: prev.data.progress ? {
+            ...prev.data.progress,
+            failed: Math.max(0, prev.data.progress.failed - gameIds.length)
+          } : undefined
+        } : null
+      }));
+      
+      // Start processing
+      processNext(state.sessionId);
+      
+    } catch (error) {
+      console.error('Retry failed:', error);
+      alert('Failed to retry games. Please try again.');
+    } finally {
+      setIsRetrying(false);
+    }
+  }, [state.sessionId, processNext]);
 
   const handleExport = useCallback(async () => {
     if (!state.sessionId) return;
@@ -446,6 +491,7 @@ export default function BulkUpdatePage() {
               });
               checkExistingSession();
             }}
+            isRetrying={isRetrying}
           />
         )}
         

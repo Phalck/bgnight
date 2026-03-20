@@ -28,9 +28,10 @@ interface ResultsViewProps {
   onExport: () => void;
   onClose: () => void;
   onReset?: () => void;
+  isRetrying?: boolean;
 }
 
-export function ResultsView({ data, onRetryFailed, onExport, onClose, onReset }: ResultsViewProps) {
+export function ResultsView({ data, onRetryFailed, onExport, onClose, onReset, isRetrying }: ResultsViewProps) {
   const { progress, skippedGames = [], failedGames = [] } = data;
   
   const [selectedFailed, setSelectedFailed] = useState<string[]>([]);
@@ -96,6 +97,7 @@ export function ResultsView({ data, onRetryFailed, onExport, onClose, onReset }:
                   type="checkbox"
                   checked={selectedFailed.includes(game.gameId)}
                   onChange={() => toggleFailedSelection(game.gameId)}
+                  disabled={isRetrying}
                 />
                 <div className={styles.gameInfo}>
                   <div className={styles.gameTitle}>{game.title}</div>
@@ -106,13 +108,25 @@ export function ResultsView({ data, onRetryFailed, onExport, onClose, onReset }:
           </div>
           
           <div className={styles.actions}>
-            <button
-              className={`${styles.button} ${styles.buttonPrimary}`}
-              onClick={() => onRetryFailed(selectedFailed)}
-              disabled={selectedFailed.length === 0}
-            >
-              Retry Selected ({selectedFailed.length})
-            </button>
+            {isRetrying ? (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem',
+                color: '#666',
+                fontSize: '0.875rem'
+              }}>
+                <span>⏳ Retrying selected games...</span>
+              </div>
+            ) : (
+              <button
+                className={`${styles.button} ${styles.buttonPrimary}`}
+                onClick={() => onRetryFailed(selectedFailed)}
+                disabled={selectedFailed.length === 0}
+              >
+                Retry Selected ({selectedFailed.length})
+              </button>
+            )}
           </div>
         </div>
       )}
