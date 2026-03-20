@@ -34,6 +34,14 @@ export interface BGGSearchResult {
   yearPublished?: number;
 }
 
+// Immediate logging when library loads
+console.log('[BGG Library] ============================================');
+console.log('[BGG Library] Module loaded at:', new Date().toISOString());
+console.log('[BGG Library] BGG_API_TOKEN exists:', !!process.env.BGG_API_TOKEN);
+console.log('[BGG Library] BGG_API_TOKEN length:', process.env.BGG_API_TOKEN?.length || 0);
+console.log('[BGG Library] All BGG env vars:', Object.keys(process.env).filter(k => k.includes('BGG')));
+console.log('[BGG Library] ============================================');
+
 async function fetchXML(url: string): Promise<string> {
   const headers: Record<string, string> = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -44,18 +52,27 @@ async function fetchXML(url: string): Promise<string> {
 
   // Add authentication token if available
   const bggToken = process.env.BGG_API_TOKEN?.trim();
+  
+  console.log('[BGG fetchXML] ============================================');
+  console.log('[BGG fetchXML] URL:', url);
+  console.log('[BGG fetchXML] Token available:', !!bggToken);
+  console.log('[BGG fetchXML] Token length:', bggToken?.length || 0);
+  console.log('[BGG fetchXML] Token preview:', bggToken ? bggToken.substring(0, 20) + '...' : 'N/A');
+  
   if (bggToken) {
     headers['Authorization'] = `Bearer ${bggToken}`;
-    console.log('[BGG] Using authentication token');
+    console.log('[BGG fetchXML] Added Authorization header');
   } else {
-    console.log('[BGG] No authentication token available');
+    console.log('[BGG fetchXML] WARNING: No authentication token!');
   }
+  
+  console.log('[BGG fetchXML] Headers:', Object.keys(headers));
+  console.log('[BGG fetchXML] ============================================');
 
-  console.log('[BGG] Fetching URL:', url);
   const response = await fetch(url, { headers });
   
-  console.log('[BGG] Response status:', response.status, response.statusText);
-  console.log('[BGG] Response headers:', Object.fromEntries(response.headers.entries()));
+  console.log('[BGG fetchXML] Response status:', response.status, response.statusText);
+  console.log('[BGG fetchXML] Response headers:', Object.fromEntries(response.headers.entries()));
   
   if (!response.ok) {
     const errorText = await response.text();

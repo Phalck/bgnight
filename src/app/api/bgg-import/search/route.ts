@@ -120,6 +120,14 @@ export async function GET(request: Request) {
     const bggToken = process.env.BGG_API_TOKEN;
     logs.push(`[BGG Search] API Token configured: ${bggToken ? 'Yes' : 'No'}`);
     
+    // Debug logging for comparison with bulk update
+    console.log('[BGG Import Search] ============================================');
+    console.log('[BGG Import Search] BGG_API_TOKEN exists:', !!process.env.BGG_API_TOKEN);
+    console.log('[BGG Import Search] BGG_API_TOKEN length:', process.env.BGG_API_TOKEN?.length || 0);
+    console.log('[BGG Import Search] Token preview:', bggToken ? bggToken.substring(0, 20) + '...' : 'N/A');
+    console.log('[BGG Import Search] All env vars:', Object.keys(process.env).filter(k => k.includes('BGG')));
+    console.log('[BGG Import Search] ============================================');
+    
     // BGG Search API
     const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(gameName)}&type=boardgame`;
     logs.push(`[BGG Search] Request URL: ${searchUrl}`);
