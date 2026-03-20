@@ -25,6 +25,24 @@ export function ProgressView({ data, onPause, onCancel, onResume }: ProgressView
   const { progress } = data;
   const isRateLimited = data.pauseReason === 'rate_limit';
   
+  // Handle missing progress data gracefully
+  if (!progress) {
+    return (
+      <div className={styles.viewContainer}>
+        <h2 className={styles.viewTitle}>Updating Games from BGG</h2>
+        <p>Loading progress...</p>
+        <div className={styles.actions}>
+          <button 
+            className={`${styles.button} ${styles.buttonDanger}`}
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className={styles.viewContainer}>
       <h2 className={styles.viewTitle}>Updating Games from BGG</h2>
