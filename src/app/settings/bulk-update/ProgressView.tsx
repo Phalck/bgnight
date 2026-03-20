@@ -12,6 +12,7 @@ interface ProgressViewProps {
       failed: number;
     };
     currentGameId?: string;
+    currentGameTitle?: string;
     pauseReason?: string;
     secondsLeft?: number;
     consecutiveFailures?: number;
@@ -19,9 +20,10 @@ interface ProgressViewProps {
   onPause: () => void;
   onCancel: () => void;
   onResume?: () => void;
+  onStop?: () => void;
 }
 
-export function ProgressView({ data, onPause, onCancel, onResume }: ProgressViewProps) {
+export function ProgressView({ data, onPause, onCancel, onResume, onStop }: ProgressViewProps) {
   const { progress } = data;
   const isRateLimited = data.pauseReason === 'rate_limit';
   
@@ -108,7 +110,12 @@ export function ProgressView({ data, onPause, onCancel, onResume }: ProgressView
       
       {data.currentGameId && !isRateLimited && (
         <div className={styles.section}>
-          <p>Currently processing game ID: {data.currentGameId}</p>
+          <p>
+            Currently processing: <strong>{data.currentGameTitle || 'Unknown'}</strong>
+            <span style={{ color: '#666', fontSize: '0.875rem', marginLeft: '0.5rem' }}>
+              (ID: {data.currentGameId})
+            </span>
+          </p>
         </div>
       )}
       
@@ -139,6 +146,15 @@ export function ProgressView({ data, onPause, onCancel, onResume }: ProgressView
         >
           Pause
         </button>
+        {onStop && !isRateLimited && (
+          <button 
+            className={`${styles.button} ${styles.buttonWarning}`}
+            onClick={onStop}
+            title="Stop after current game completes"
+          >
+            Stop After Current
+          </button>
+        )}
         <button 
           className={`${styles.button} ${styles.buttonDanger}`}
           onClick={onCancel}

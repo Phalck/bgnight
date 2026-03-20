@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { PreviewView } from './PreviewView';
@@ -52,6 +52,7 @@ interface BulkUpdateState {
       failed: number;
     };
     currentGameId?: string;
+    currentGameTitle?: string;
     skippedGames?: Array<{
       gameId: string;
       title: string;
@@ -76,6 +77,10 @@ export default function BulkUpdatePage() {
     status: 'loading',
     data: null
   });
+
+  // Refs for tracking
+  const prevProcessedRef = useRef<number>(0);
+  const stopRequestedRef = useRef<boolean>(false);
 
   // Define functions first before they're used in effects
   const requestNotificationPermission = useCallback(async () => {
@@ -144,6 +149,10 @@ export default function BulkUpdatePage() {
 
   const handleStart = useCallback(async (overwriteManual: boolean, retryStrategy: string, approvedGameIds?: string[]) => {
     try {
+      // Reset refs when starting new session
+      prevProcessedRef.current = 0;
+      stopRequestedRef.current = false;
+      
       const response = await fetch('/api/games/bulk-update/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -221,6 +230,10 @@ export default function BulkUpdatePage() {
     router.push('/collection');
   }, [state.sessionId, router]);
 
+  const handleStopAfterCurrent = useCallback(() => {
+    stopRequestedRef.current = true;
+  }, []);
+
   const handleRetryFailed = useCallback(async (gameIds: string[]) => {
     console.log('Retrying:', gameIds);
   }, []);
@@ -249,6 +262,11 @@ export default function BulkUpdatePage() {
   // Polling effect for running status
   useEffect(() => {
     if ((state.status === 'running' || state.status === 'paused') && state.sessionId) {
+      // Initialize prevProcessedRef if not set
+      if (prevProcessedRef.current === 0 && state.data?.progress?.processed) {
+        prevProcessedRef.current = state.data.progress.processed;
+      }
+      
       const interval = setInterval(async () => {
         try {
           const status = await fetchStatus(state.sessionId!);
@@ -291,6 +309,31 @@ export default function BulkUpdatePage() {
           
           setState(prev => ({ ...prev, data: status }));
           
+          // Check if a game just finished processing and we should continue
+          if (status.status === 'running' && status.progress) {
+            const currentProcessed = status.progress.processed;
+            
+            if (currentProcessed > prevProcessedRef.current) {
+              prevProcessedRef.current = currentProcessed;
+              
+              // Check if stop was requested
+              if (stopRequestedRef.current) {
+                console.log('Stop requested after current game');
+                stopRequestedRef.current = false;
+                await handlePause();
+                return;
+              }
+              
+              // Check if not completed yet
+              if (currentProcessed < status.progress.total) {
+                // Wait 100ms then process next game
+                setTimeout(() => {
+                  processNext(state.sessionId!);
+                }, 100);
+              }
+            }
+          }
+          
           if (status.status === 'completed') {
             showBrowserNotification('Bulk Update Complete', 
               `Updated ${status.progress.processed} games`);
@@ -311,7 +354,7 @@ export default function BulkUpdatePage() {
       
       return () => clearInterval(interval);
     }
-  }, [state.status, state.sessionId, fetchStatus, showBrowserNotification, handleResume]);
+  }, [state.status, state.sessionId, fetchStatus, showBrowserNotification, handleResume, handlePause, processNext]);
 
   return (
     <div className={styles.page}>
@@ -348,6 +391,7 @@ export default function BulkUpdatePage() {
             data={{
               progress: state.data.progress!,
               currentGameId: state.data.currentGameId,
+              currentGameTitle: state.data.currentGameTitle,
               pauseReason: state.data.pauseReason,
               secondsLeft: state.data.secondsLeft,
               consecutiveFailures: state.data.consecutiveFailures
@@ -355,6 +399,7 @@ export default function BulkUpdatePage() {
             onPause={handlePause}
             onCancel={handleCancel}
             onResume={handleResume}
+            onStop={handleStopAfterCurrent}
           />
         )}
         

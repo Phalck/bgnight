@@ -44,6 +44,7 @@ export async function GET(request: Request) {
         percentComplete: Math.round((bulkSession.processed / bulkSession.totalGames) * 100)
       },
       currentGameId: bulkSession.currentGameId,
+      currentGameTitle: bulkSession.currentGameTitle,
       skippedGames: bulkSession.skippedGames ? JSON.parse(bulkSession.skippedGames) : [],
       failedGames: bulkSession.failedGames ? JSON.parse(bulkSession.failedGames) : []
     });

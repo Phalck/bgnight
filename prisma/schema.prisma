@@ -166,6 +166,7 @@ model BulkUpdateSession {
   overwriteManual Boolean
   retryStrategy   String   @default("skip") // 'retry' or 'skip'
   currentGameId   String?
+  currentGameTitle String?
   
   beforeData      String?  // JSON
   afterData       String?  // JSON

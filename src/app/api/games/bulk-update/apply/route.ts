@@ -80,6 +80,7 @@ export async function POST(request: Request) {
       where: { id: sessionId },
       data: { 
         currentGameId: game.id,
+        currentGameTitle: game.title,
         lastActivityAt: new Date()
       }
     });
