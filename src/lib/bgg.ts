@@ -35,18 +35,29 @@ export interface BGGSearchResult {
 }
 
 async function fetchXML(url: string): Promise<string> {
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'application/xml, text/xml, */*',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Referer': 'https://boardgamegeek.com/',
-    },
-  });
+  const headers: Record<string, string> = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/xml, text/xml, */*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Referer': 'https://boardgamegeek.com/',
+  };
+
+  // Add authentication token if available
+  const bggToken = process.env.BGG_API_TOKEN;
+  if (bggToken) {
+    headers['Authorization'] = `Bearer ${bggToken}`;
+  }
+
+  const response = await fetch(url, { headers });
   if (!response.ok) {
     throw new Error(`Request failed with ${response.status}`);
   }
   return response.text();
+}
+
+// Delay function for rate limiting
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function parseXML(xml: string): Document {
@@ -57,6 +68,10 @@ function parseXML(xml: string): Document {
 export async function searchBGG(query: string): Promise<BGGGame[]> {
   try {
     console.log('Searching BGG for:', query);
+    
+    // Wait 5 seconds to respect BGG rate limit (1 request per 5 seconds)
+    await delay(5000);
+    
     const searchUrl = `${BGG_API_BASE}/search?query=${encodeURIComponent(query)}`;
     console.log('Search URL:', searchUrl);
     const xml = await fetchXML(searchUrl);
@@ -102,6 +117,9 @@ async function getGamesByIds(ids: number[]): Promise<BGGGame[]> {
   if (ids.length === 0) return [];
 
   try {
+    // Wait 5 seconds to respect BGG rate limit (1 request per 5 seconds)
+    await delay(5000);
+    
     const idsParam = ids.join(',');
     const thingUrl = `${BGG_API_BASE}/thing?id=${idsParam}&stats=1`;
     const xml = await fetchXML(thingUrl);
