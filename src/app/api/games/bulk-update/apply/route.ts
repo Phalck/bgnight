@@ -278,6 +278,9 @@ export async function POST(request: Request) {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
+      // Log the error for debugging
+      console.error(`Error processing game ${game?.id} (${game?.title}):`, errorMessage);
+      
       // Check for rate limit error
       if (errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
         const resumeAt = new Date(Date.now() + 10000); // 10 seconds from now

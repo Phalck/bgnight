@@ -250,38 +250,62 @@ export default function BulkUpdatePage() {
   useEffect(() => {
     if ((state.status === 'running' || state.status === 'paused') && state.sessionId) {
       const interval = setInterval(async () => {
-        const status = await fetchStatus(state.sessionId!);
-        
-        // Handle rate limit pause
-        if (status.status === 'paused' && status.pauseReason === 'rate_limit') {
-          const resumeTime = new Date(status.rateLimitExpiry).getTime();
-          const now = Date.now();
-          const secondsLeft = Math.max(0, Math.ceil((resumeTime - now) / 1000));
+        try {
+          const status = await fetchStatus(state.sessionId!);
           
-          if (secondsLeft <= 0) {
-            // Auto-resume
-            await handleResume();
-          } else {
+          // Check if the response contains an error
+          if (status.error) {
+            console.error('Bulk update API error:', status.error);
             setState(prev => ({ 
               ...prev, 
-              status: 'paused',
               data: { 
-                ...status, 
-                pauseReason: 'rate_limit',
-                secondsLeft 
+                ...prev.data, 
+                apiError: status.error 
               } 
             }));
+            return;
           }
-          return;
-        }
-        
-        setState(prev => ({ ...prev, data: status }));
-        
-        if (status.status === 'completed') {
-          showBrowserNotification('Bulk Update Complete', 
-            `Updated ${status.progress.processed} games`);
-          setState(prev => ({ ...prev, status: 'completed' }));
-          clearInterval(interval);
+          
+          // Handle rate limit pause
+          if (status.status === 'paused' && status.pauseReason === 'rate_limit') {
+            const resumeTime = new Date(status.rateLimitExpiry).getTime();
+            const now = Date.now();
+            const secondsLeft = Math.max(0, Math.ceil((resumeTime - now) / 1000));
+            
+            if (secondsLeft <= 0) {
+              // Auto-resume
+              await handleResume();
+            } else {
+              setState(prev => ({ 
+                ...prev, 
+                status: 'paused',
+                data: { 
+                  ...status, 
+                  pauseReason: 'rate_limit',
+                  secondsLeft 
+                } 
+              }));
+            }
+            return;
+          }
+          
+          setState(prev => ({ ...prev, data: status }));
+          
+          if (status.status === 'completed') {
+            showBrowserNotification('Bulk Update Complete', 
+              `Updated ${status.progress.processed} games`);
+            setState(prev => ({ ...prev, status: 'completed' }));
+            clearInterval(interval);
+          }
+        } catch (error) {
+          console.error('Error fetching status:', error);
+          setState(prev => ({ 
+            ...prev, 
+            data: { 
+              ...prev.data, 
+              apiError: 'Failed to fetch update status' 
+            } 
+          }));
         }
       }, 1000); // Poll every second for accurate countdown
       
