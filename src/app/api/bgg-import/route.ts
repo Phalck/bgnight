@@ -1,178 +1,14 @@
 import { NextResponse } from 'next/server';
+import { fetchBGGGameById, BGGGameData } from '@/lib/bgg-import-client';
 import { XMLParser } from 'fast-xml-parser';
 
-interface BGGGameData {
-  title: string;
-  description: string;
-  yearPublished: number;
-  minPlayers: number;
-  maxPlayers: number;
-  minPlayTime: number;
-  maxPlayTime: number;
-  minAge: number;
-  complexity: number;
-  bggRating: number;
-  bggRatingsCount: number;
-  bggRank: number;
-  thumbnail: string;
-  image: string;
-  categories: string[];
-  mechanics: string[];
-  designers: string[];
-  publishers: string[];
-  artists: string[];
-}
-
-// Configure XML parser
+// Configure XML parser for search results
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
   parseAttributeValue: true,
   trimValues: true,
 });
-
-// Transform BGG image URL to get high-resolution version
-function getHighResImageUrl(url: string | undefined): string {
-  if (!url) return '';
-  // Replace /med/ with /original/ to get full resolution image
-  return url.replace('/med/', '/original/');
-}
-
-// Parse XML to extract game data
-function parseXML(xml: string): { gameData: BGGGameData | null; errors: string[] } {
-  const errors: string[] = [];
-  
-  try {
-    const parsed = parser.parse(xml);
-    
-    if (!parsed.items || !parsed.items.item) {
-      errors.push('No items found in XML response');
-      return { gameData: null, errors };
-    }
-
-    // Handle single item or array of items
-    const item = Array.isArray(parsed.items.item) ? parsed.items.item[0] : parsed.items.item;
-    
-    if (!item) {
-      errors.push('Could not extract item from parsed XML');
-      return { gameData: null, errors };
-    }
-
-    // Get primary name
-    let title = '';
-    if (item.name) {
-      const names = Array.isArray(item.name) ? item.name : [item.name];
-      const primaryName = names.find((n: any) => n['@_type'] === 'primary');
-      title = primaryName?.['@_value'] || names[0]?.['@_value'] || '';
-    }
-    
-    if (!title) {
-      errors.push('No title found in game data');
-    }
-
-    // Get rank from ratings/ranks/rank
-    let bggRank = 0;
-    if (item.statistics?.ratings?.ranks?.rank) {
-      const ranks = Array.isArray(item.statistics.ratings.ranks.rank) 
-        ? item.statistics.ratings.ranks.rank 
-        : [item.statistics.ratings.ranks.rank];
-      const boardgameRank = ranks.find((r: any) => r['@_name'] === 'boardgame');
-      if (boardgameRank && boardgameRank['@_value'] !== 'Not Ranked') {
-        bggRank = parseInt(boardgameRank['@_value'], 10) || 0;
-      }
-    }
-
-    // Get links (categories, mechanics, designers, etc.)
-    const getLinks = (type: string): string[] => {
-      if (!item.link) return [];
-      const links = Array.isArray(item.link) ? item.link : [item.link];
-      return links
-        .filter((l: any) => l['@_type'] === type)
-        .map((l: any) => l['@_value'])
-        .filter(Boolean);
-    };
-
-    // Comprehensive HTML entity decoder
-    const decodeHtml = (text: string): string => {
-      if (!text) return '';
-      
-      // Handle named entities
-      const namedEntities: Record<string, string> = {
-        '&quot;': '"', '&amp;': '&', '&lt;': '<', '&gt;': '>',
-        '&nbsp;': ' ', '&apos;': "'", '&ndash;': '–', '&mdash;': '—',
-        '&lsquo;': "'", '&rsquo;': "'", '&ldquo;': '"', '&rdquo;': '"',
-        '&hellip;': '…', '&bull;': '•', '&trade;': '™', '&copy;': '©',
-        '&reg;': '®', '&deg;': '°', '&euro;': '€', '&pound;': '£',
-        '&yen;': '¥', '&cent;': '¢', '&sect;': '§', '&para;': '¶',
-        '&middot;': '·', '&iexcl;': '¡', '&iquest;': '¿', '&laquo;': '«',
-        '&raquo;': '»', '&lsaquo;': '‹', '&rsaquo;': '›', '&dagger;': '†',
-        '&Dagger;': '‡', '&permil;': '‰', '&prime;': '′', '&Prime;': '″',
-        '&minus;': '−', '&times;': '×', '&divide;': '÷', '&frasl;': '⁄',
-        '&sup1;': '¹', '&sup2;': '²', '&sup3;': '³', '&frac14;': '¼',
-        '&frac12;': '½', '&frac34;': '¾', '&ordf;': 'ª', '&ordm;': 'º',
-      };
-      
-      // Replace named entities
-      let decoded = text;
-      for (const [entity, char] of Object.entries(namedEntities)) {
-        decoded = decoded.replace(new RegExp(entity, 'g'), char);
-      }
-      
-      // Handle decimal numeric entities (&#39; -> ')
-      decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
-        try {
-          return String.fromCharCode(parseInt(dec, 10));
-        } catch {
-          return match;
-        }
-      });
-      
-      // Handle hexadecimal numeric entities (&#x27; -> ')
-      decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
-        try {
-          return String.fromCharCode(parseInt(hex, 16));
-        } catch {
-          return match;
-        }
-      });
-      
-      // Handle common numeric line breaks
-      decoded = decoded.replace(/&#10;/g, '\n').replace(/&#13;/g, '');
-      
-      return decoded;
-    };
-
-    const complexity = parseFloat(item.statistics?.ratings?.averageweight?.['@_value']) || 0;
-    const bggRating = parseFloat(item.statistics?.ratings?.average?.['@_value']) || 0;
-
-    const gameData: BGGGameData = {
-      title,
-      description: decodeHtml(item.description),
-      yearPublished: parseInt(item.yearpublished?.['@_value'], 10) || 0,
-      minPlayers: parseInt(item.minplayers?.['@_value'], 10) || 1,
-      maxPlayers: parseInt(item.maxplayers?.['@_value'], 10) || 1,
-      minPlayTime: parseInt(item.minplaytime?.['@_value'], 10) || 0,
-      maxPlayTime: parseInt(item.maxplaytime?.['@_value'], 10) || 0,
-      minAge: parseInt(item.minage?.['@_value'], 10) || 0,
-      complexity,
-      bggRating,
-      bggRatingsCount: parseInt(item.statistics?.ratings?.usersrated?.['@_value'], 10) || 0,
-      bggRank,
-      thumbnail: item.thumbnail || '',
-      image: getHighResImageUrl(item.image),
-      categories: getLinks('boardgamecategory'),
-      mechanics: getLinks('boardgamemechanic'),
-      designers: getLinks('boardgamedesigner'),
-      publishers: getLinks('boardgamepublisher'),
-      artists: getLinks('boardgameartist'),
-    };
-
-    return { gameData, errors };
-  } catch (error: any) {
-    errors.push(`XML parsing error: ${error.message}`);
-    return { gameData: null, errors };
-  }
-}
 
 export async function GET(request: Request) {
   const logs: string[] = [];
@@ -250,53 +86,25 @@ export async function GET(request: Request) {
       finalGameId = items[0]['@_id'];
     }
     
+    if (!finalGameId) {
+      return NextResponse.json({
+        success: false,
+        error: 'No game ID found',
+        logs,
+      }, { status: 400 });
+    }
+
     logs.push(`Found game ID: ${finalGameId}`);
 
-    // Step 2: Get detailed game info
-    // Wait 5 seconds to respect BGG rate limits
-    logs.push('Waiting 5 seconds for rate limit...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
-
-    const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${finalGameId}&stats=1`;
-    logs.push(`Details URL: ${detailsUrl}`);
+    // Step 2: Get detailed game info using shared library
+    logs.push('Fetching game details via shared library...');
+    const gameData = await fetchBGGGameById(parseInt(finalGameId, 10));
     
-    const detailsHeaders: Record<string, string> = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'application/xml, text/xml, */*',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Referer': 'https://boardgamegeek.com/',
-    };
-    
-    if (bggToken) {
-      detailsHeaders['Authorization'] = `Bearer ${bggToken}`;
-      logs.push('Added Bearer token to details request');
-    }
-    
-    const detailsResponse = await fetch(detailsUrl, { headers: detailsHeaders });
-    logs.push(`Details response status: ${detailsResponse.status}`);
-
-    if (!detailsResponse.ok) {
-      const detailsErrorText = await detailsResponse.text();
-      logs.push(`Details error response: ${detailsErrorText.substring(0, 500)}`);
-      throw new Error(`BGG details fetch failed: ${detailsResponse.status} - ${detailsErrorText.substring(0, 200)}`);
-    }
-
-    const detailsXml = await detailsResponse.text();
-    logs.push(`Details XML length: ${detailsXml.length} chars`);
-    logs.push(`Details XML preview: ${detailsXml.substring(0, 300)}...`);
-    
-    const { gameData, errors } = parseXML(detailsXml);
-    
-    if (errors.length > 0) {
-      logs.push(...errors.map(e => `Parse error: ${e}`));
-    }
-
     if (!gameData) {
       return NextResponse.json({
         success: false,
-        error: 'Failed to parse game data from BGG',
+        error: 'Failed to fetch game data from BGG',
         logs,
-        rawXml: detailsXml.substring(0, 2000), // Include first 2000 chars of XML for debugging
       }, { status: 500 });
     }
 

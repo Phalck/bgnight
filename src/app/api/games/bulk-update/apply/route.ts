@@ -3,47 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { clearManualEditTracking } from '@/lib/manual-edit-tracker';
-
-// Helper function to call the working BGG import API
-async function fetchBggGameData(gameId: number, gameName: string) {
-  try {
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : process.env.NEXT_PUBLIC_APP_URL 
-        ? process.env.NEXT_PUBLIC_APP_URL 
-        : 'http://localhost:3000';
-    
-    console.log('[Bulk Update] Calling BGG import API for game:', gameName, 'ID:', gameId);
-    
-    // Use the working /api/bgg-import endpoint
-    const response = await fetch(`${baseUrl}/api/bgg-import?gameId=${gameId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    console.log('[Bulk Update] BGG import API response status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Bulk Update] BGG import API error:', response.status, errorText);
-      throw new Error(`BGG import failed: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log('[Bulk Update] BGG import API success:', data.success);
-    
-    if (!data.success || !data.gameData) {
-      throw new Error('BGG import returned no game data');
-    }
-    
-    return data.gameData;
-  } catch (error) {
-    console.error('[Bulk Update] Error fetching BGG data:', error);
-    throw error;
-  }
-}
+import { fetchBGGGameById } from '@/lib/bgg-import-client';
 
 export async function POST(request: Request) {
   try {
@@ -180,7 +140,7 @@ export async function POST(request: Request) {
         if (game.bggId && game.bggId > 0) {
           // Use existing BGG ID with the working API endpoint
           console.log('[Bulk Update] Fetching game with BGG ID:', game.bggId);
-          const gameData = await fetchBggGameData(game.bggId, game.title);
+          const gameData = await fetchBGGGameById(game.bggId);
           
           if (gameData) {
             bggData = {
