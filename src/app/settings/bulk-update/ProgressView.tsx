@@ -25,7 +25,9 @@ interface ProgressViewProps {
 
 export function ProgressView({ data, onPause, onCancel, onStop, onViewResults }: ProgressViewProps) {
   const { progress } = data;
-  const isRateLimited = data.pauseReason === 'rate_limit';
+  // Only show rate limit banner when actually paused
+  // onViewResults is only defined when processing is complete
+  const isRateLimited = data.pauseReason === 'rate_limit' && !onViewResults;
   
   // Handle missing progress data gracefully
   if (!progress) {
