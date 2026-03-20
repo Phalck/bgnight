@@ -14,6 +14,15 @@ export async function POST(request: Request) {
 
     const { overwriteManual, retryStrategy = 'skip', approvedManualEditGameIds = [] } = await request.json();
 
+    // Delete any old completed or cancelled sessions for this user
+    // This prevents the unique constraint violation on userId
+    await prisma.bulkUpdateSession.deleteMany({
+      where: {
+        userId: session.user.id,
+        status: { in: ['completed', 'cancelled'] }
+      }
+    });
+
     // Get all games
     const games = await prisma.game.findMany({
       where: { userId: session.user.id }
