@@ -85,6 +85,13 @@ export async function POST(request: Request) {
       }
     });
 
+    // Initialize debug info outside try block so it's available in catch
+    let bggDebugInfo: any = {
+      initialized: false,
+      title: game.title,
+      timestamp: new Date().toISOString()
+    };
+
     try {
       // Check if game has manual edits
       const manualEdit = await prisma.manualEditTracking.findUnique({
@@ -118,74 +125,100 @@ export async function POST(request: Request) {
         });
       }
 
-      // Get BGG data
+      // Get BGG data with detailed debugging
       let bggData: any = null;
       
-      if (game.bggId && game.bggId > 0) {
-        // Auto-match with existing BGG ID
-        bggData = await getGameById(game.bggId);
-      } else {
-        // Search BGG with cache
-        let searchResults = getCachedSearchResults(game.title);
-        
-        if (!searchResults) {
-          searchResults = await searchBGG(game.title);
-          cacheSearchResults(game.title, searchResults);
-        }
-        
-        if (searchResults.length === 1) {
-          bggData = searchResults[0];
-        } else if (searchResults.length > 1) {
-          // Multiple matches - needs manual selection
-          // Pause and return
-          await prisma.bulkUpdateSession.update({
-            where: { id: sessionId },
-            data: { 
-              status: 'paused',
-              currentGameId: game.id
-            }
-          });
-          
-          return NextResponse.json({
-            status: 'manual-match-needed',
-            game: {
-              id: game.id,
-              title: game.title
-            },
-            candidates: searchResults.map(r => ({
-              id: r.id,
-              title: r.name,
-              year: r.yearPublished
-            }))
-          });
+      // Update debug info
+      bggDebugInfo = {
+        hasBggId: !!(game.bggId && game.bggId > 0),
+        bggId: game.bggId || null,
+        title: game.title,
+        timestamp: new Date().toISOString()
+      };
+      
+      try {
+        if (game.bggId && game.bggId > 0) {
+          // Auto-match with existing BGG ID
+          bggDebugInfo.method = 'getGameById';
+          bggData = await getGameById(game.bggId);
+          bggDebugInfo.result = bggData ? 'found' : 'not_found';
         } else {
-          // No matches
-          const skipped = bulkSession.skippedGames && bulkSession.skippedGames !== '' ? JSON.parse(bulkSession.skippedGames) : [];
-          skipped.push({
-            gameId: game.id,
-            title: game.title,
-            reason: 'No BGG match found'
-          });
+          // Search BGG with cache
+          bggDebugInfo.method = 'searchBGG';
+          let searchResults = getCachedSearchResults(game.title);
           
-          await prisma.bulkUpdateSession.update({
-            where: { id: sessionId },
-            data: { 
-              skippedGames: JSON.stringify(skipped),
-              skipped: { increment: 1 },
-              processed: { increment: 1 }
-            }
-          });
+          if (!searchResults) {
+            bggDebugInfo.usedCache = false;
+            searchResults = await searchBGG(game.title);
+            cacheSearchResults(game.title, searchResults);
+          } else {
+            bggDebugInfo.usedCache = true;
+          }
           
-          return NextResponse.json({ 
-            status: 'running',
-            processed: 1,
-            skipped: 1
-          });
+          bggDebugInfo.searchResultsCount = searchResults.length;
+          
+          if (searchResults.length === 1) {
+            bggData = searchResults[0];
+            bggDebugInfo.result = 'single_match';
+          } else if (searchResults.length > 1) {
+            // Multiple matches - needs manual selection
+            bggDebugInfo.result = 'multiple_matches';
+            await prisma.bulkUpdateSession.update({
+              where: { id: sessionId },
+              data: { 
+                status: 'paused',
+                currentGameId: game.id
+              }
+            });
+            
+            return NextResponse.json({
+              status: 'manual-match-needed',
+              game: {
+                id: game.id,
+                title: game.title
+              },
+              candidates: searchResults.map(r => ({
+                id: r.id,
+                title: r.name,
+                year: r.yearPublished
+              }))
+            });
+          } else {
+            // No matches
+            bggDebugInfo.result = 'no_matches';
+            const skipped = bulkSession.skippedGames && bulkSession.skippedGames !== '' ? JSON.parse(bulkSession.skippedGames) : [];
+            skipped.push({
+              gameId: game.id,
+              title: game.title,
+              reason: 'No BGG match found',
+              debug: bggDebugInfo
+            });
+            
+            await prisma.bulkUpdateSession.update({
+              where: { id: sessionId },
+              data: { 
+                skippedGames: JSON.stringify(skipped),
+                skipped: { increment: 1 },
+                processed: { increment: 1 }
+              }
+            });
+            
+            return NextResponse.json({ 
+              status: 'running',
+              processed: 1,
+              skipped: 1
+            });
+          }
         }
-      }
 
-      if (!bggData) {
-        throw new Error('Failed to fetch BGG data');
+        if (!bggData) {
+          throw new Error('BGG API returned no data');
+        }
+      } catch (bggError) {
+        // Capture detailed error information
+        bggDebugInfo.error = bggError instanceof Error ? bggError.message : 'Unknown error';
+        bggDebugInfo.errorStack = bggError instanceof Error ? bggError.stack : null;
+        throw new Error(`BGG API Error: ${bggDebugInfo.error}`);
       }
 
       // Store before data
@@ -334,7 +367,8 @@ export async function POST(request: Request) {
           gameId: game.id,
           title: game.title,
           error: errorMessage,
-          retryCount: 1
+          retryCount: 1,
+          debug: bggDebugInfo || { error: 'No debug info available' }
         });
       }
       
