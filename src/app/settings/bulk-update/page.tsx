@@ -12,7 +12,7 @@ import styles from './page.module.css';
 
 interface BulkUpdateState {
   sessionId: string | null;
-  status: 'loading' | 'preview' | 'approval' | 'running' | 'completed' | 'error';
+  status: 'loading' | 'preview' | 'approval' | 'running' | 'paused' | 'completed' | 'error';
   data: {
     preview?: {
       totalGames: number;
@@ -63,6 +63,9 @@ interface BulkUpdateState {
       error: string;
     }>;
     error?: string;
+    pauseReason?: string;
+    secondsLeft?: number;
+    consecutiveFailures?: number;
   } | null;
 }
 
@@ -245,9 +248,33 @@ export default function BulkUpdatePage() {
 
   // Polling effect for running status
   useEffect(() => {
-    if (state.status === 'running' && state.sessionId) {
+    if ((state.status === 'running' || state.status === 'paused') && state.sessionId) {
       const interval = setInterval(async () => {
         const status = await fetchStatus(state.sessionId!);
+        
+        // Handle rate limit pause
+        if (status.status === 'paused' && status.pauseReason === 'rate_limit') {
+          const resumeTime = new Date(status.rateLimitExpiry).getTime();
+          const now = Date.now();
+          const secondsLeft = Math.max(0, Math.ceil((resumeTime - now) / 1000));
+          
+          if (secondsLeft <= 0) {
+            // Auto-resume
+            await handleResume();
+          } else {
+            setState(prev => ({ 
+              ...prev, 
+              status: 'paused',
+              data: { 
+                ...status, 
+                pauseReason: 'rate_limit',
+                secondsLeft 
+              } 
+            }));
+          }
+          return;
+        }
+        
         setState(prev => ({ ...prev, data: status }));
         
         if (status.status === 'completed') {
@@ -256,11 +283,11 @@ export default function BulkUpdatePage() {
           setState(prev => ({ ...prev, status: 'completed' }));
           clearInterval(interval);
         }
-      }, 3000);
+      }, 1000); // Poll every second for accurate countdown
       
       return () => clearInterval(interval);
     }
-  }, [state.status, state.sessionId, fetchStatus, showBrowserNotification]);
+  }, [state.status, state.sessionId, fetchStatus, showBrowserNotification, handleResume]);
 
   return (
     <div className={styles.page}>
@@ -292,14 +319,18 @@ export default function BulkUpdatePage() {
           />
         )}
         
-        {state.status === 'running' && state.data && (
+        {(state.status === 'running' || state.status === 'paused') && state.data && (
           <ProgressView 
             data={{
               progress: state.data.progress!,
-              currentGameId: state.data.currentGameId
+              currentGameId: state.data.currentGameId,
+              pauseReason: state.data.pauseReason,
+              secondsLeft: state.data.secondsLeft,
+              consecutiveFailures: state.data.consecutiveFailures
             }}
             onPause={handlePause}
             onCancel={handleCancel}
+            onResume={handleResume}
           />
         )}
         

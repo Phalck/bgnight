@@ -173,6 +173,10 @@ model BulkUpdateSession {
   skippedGames    String?  // JSON
   failedGames     String?  // JSON
   
+  consecutiveFailures Int      @default(0)
+  pauseReason         String?
+  rateLimitExpiry     DateTime?
+  
   createdAt       DateTime @default(now())
   startedAt       DateTime?
   completedAt     DateTime?

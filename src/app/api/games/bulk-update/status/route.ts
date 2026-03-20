@@ -31,6 +31,9 @@ export async function GET(request: Request) {
     return NextResponse.json({
       sessionId: bulkSession.id,
       status: bulkSession.status,
+      pauseReason: bulkSession.pauseReason,
+      rateLimitExpiry: bulkSession.rateLimitExpiry,
+      consecutiveFailures: bulkSession.consecutiveFailures,
       progress: {
         total: bulkSession.totalGames,
         processed: bulkSession.processed,

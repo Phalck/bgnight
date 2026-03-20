@@ -58,6 +58,23 @@ export async function POST(request: Request) {
 
     const game = games[0];
     
+    // Check consecutive failures
+    const consecutiveFailures = bulkSession.consecutiveFailures || 0;
+    if (consecutiveFailures >= 3) {
+      // Stop after 3 consecutive failures
+      await prisma.bulkUpdateSession.update({
+        where: { id: sessionId },
+        data: { 
+          status: 'completed',
+          completedAt: new Date()
+        }
+      });
+      return NextResponse.json({ 
+        status: 'completed',
+        stopReason: 'max_consecutive_failures'
+      });
+    }
+    
     // Update current game
     await prisma.bulkUpdateSession.update({
       where: { id: sessionId },
@@ -245,7 +262,8 @@ export async function POST(request: Request) {
           autoMatched: isAutoMatched ? { increment: 1 } : undefined,
           manualApproved: !isAutoMatched ? { increment: 1 } : undefined,
           beforeData: JSON.stringify(existingBefore),
-          afterData: JSON.stringify(existingAfter)
+          afterData: JSON.stringify(existingAfter),
+          consecutiveFailures: 0 // Reset on success
         }
       });
 
@@ -253,13 +271,39 @@ export async function POST(request: Request) {
         status: 'running',
         processed: 1,
         autoMatched: isAutoMatched ? 1 : 0,
-        manualApproved: !isAutoMatched ? 1 : 0
+        manualApproved: !isAutoMatched ? 1 : 0,
+        consecutiveFailures: 0
       });
 
     } catch (error) {
-      // Handle failure
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Check for rate limit error
+      if (errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
+        const resumeAt = new Date(Date.now() + 10000); // 10 seconds from now
+        
+        await prisma.bulkUpdateSession.update({
+          where: { id: sessionId },
+          data: { 
+            status: 'paused',
+            pauseReason: 'rate_limit',
+            rateLimitExpiry: resumeAt,
+            lastActivityAt: new Date()
+          }
+        });
+        
+        return NextResponse.json({ 
+          status: 'paused',
+          pauseReason: 'rate_limit',
+          resumeAt: resumeAt.toISOString(),
+          message: 'Rate limited by BGG. Resuming in 10 seconds.'
+        });
+      }
+      
+      // Handle regular failure
       const failed = bulkSession.failedGames && bulkSession.failedGames !== '' ? JSON.parse(bulkSession.failedGames) : [];
       const existingFailed = failed.find((f: any) => f.gameId === game.id);
+      const newConsecutiveFailures = consecutiveFailures + 1;
       
       if (existingFailed) {
         existingFailed.retryCount++;
@@ -269,21 +313,23 @@ export async function POST(request: Request) {
           await prisma.bulkUpdateSession.update({
             where: { id: sessionId },
             data: { 
-              failedGames: JSON.stringify(failed)
+              failedGames: JSON.stringify(failed),
+              consecutiveFailures: newConsecutiveFailures
             }
           });
           
           return NextResponse.json({ 
             status: 'running',
             failed: 0,
-            willRetry: true
+            willRetry: true,
+            consecutiveFailures: newConsecutiveFailures
           });
         }
       } else {
         failed.push({
           gameId: game.id,
           title: game.title,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: errorMessage,
           retryCount: 1
         });
       }
@@ -293,14 +339,16 @@ export async function POST(request: Request) {
         data: { 
           failedGames: JSON.stringify(failed),
           failed: { increment: 1 },
-          processed: { increment: 1 }
+          processed: { increment: 1 },
+          consecutiveFailures: newConsecutiveFailures
         }
       });
       
       return NextResponse.json({ 
         status: 'running',
         processed: 1,
-        failed: 1
+        failed: 1,
+        consecutiveFailures: newConsecutiveFailures
       });
     }
 

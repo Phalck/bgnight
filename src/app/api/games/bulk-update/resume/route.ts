@@ -23,6 +23,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
+    // Check rate limit cooldown
+    if (bulkSession.pauseReason === 'rate_limit' && bulkSession.rateLimitExpiry) {
+      const now = new Date();
+      const resumeAt = new Date(bulkSession.rateLimitExpiry);
+      
+      if (now < resumeAt) {
+        const secondsLeft = Math.ceil((resumeAt.getTime() - now.getTime()) / 1000);
+        return NextResponse.json({ 
+          error: 'Rate limit cooldown',
+          retryAfter: secondsLeft
+        }, { status: 429 });
+      }
+    }
+
     await prisma.bulkUpdateSession.update({
       where: { id: sessionId },
       data: { 
