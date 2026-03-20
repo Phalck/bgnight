@@ -205,7 +205,7 @@ export default function BulkUpdatePage() {
 
   const handleCancel = useCallback(async () => {
     if (!state.sessionId) {
-      router.push('/admin/settings');
+      router.push('/collection');
       return;
     }
     
@@ -215,7 +215,7 @@ export default function BulkUpdatePage() {
       body: JSON.stringify({ sessionId: state.sessionId })
     });
     
-    router.push('/admin/settings');
+    router.push('/collection');
   }, [state.sessionId, router]);
 
   const handleRetryFailed = useCallback(async (gameIds: string[]) => {
@@ -312,11 +312,20 @@ export default function BulkUpdatePage() {
             }}
             onRetryFailed={handleRetryFailed}
             onExport={handleExport}
-            onClose={() => router.push('/admin/settings')}
-            onReset={() => {
+            onClose={() => router.push('/collection')}
+            onReset={async () => {
+              // Clear the completed session first
+              if (state.sessionId) {
+                await fetch('/api/games/bulk-update/cancel', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sessionId: state.sessionId })
+                });
+              }
+              // Reset state and reload preview
               setState({
                 sessionId: null,
-                status: 'preview',
+                status: 'loading',
                 data: null
               });
               checkExistingSession();
@@ -327,8 +336,8 @@ export default function BulkUpdatePage() {
         {state.status === 'error' && (
           <div className={styles.error}>
             <p>Error: {state.data?.error}</p>
-            <button onClick={() => router.push('/admin/settings')}>
-              Back to Settings
+            <button onClick={() => router.push('/collection')}>
+              Back to Collection
             </button>
           </div>
         )}
