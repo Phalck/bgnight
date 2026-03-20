@@ -46,11 +46,21 @@ async function fetchXML(url: string): Promise<string> {
   const bggToken = process.env.BGG_API_TOKEN;
   if (bggToken) {
     headers['Authorization'] = `Bearer ${bggToken}`;
+    console.log('[BGG] Using authentication token');
+  } else {
+    console.log('[BGG] No authentication token available');
   }
 
+  console.log('[BGG] Fetching URL:', url);
   const response = await fetch(url, { headers });
+  
+  console.log('[BGG] Response status:', response.status, response.statusText);
+  console.log('[BGG] Response headers:', Object.fromEntries(response.headers.entries()));
+  
   if (!response.ok) {
-    throw new Error(`Request failed with ${response.status}`);
+    const errorText = await response.text();
+    console.error('[BGG] HTTP Error:', response.status, errorText.substring(0, 500));
+    throw new Error(`Request failed with ${response.status}: ${errorText.substring(0, 200)}`);
   }
   return response.text();
 }
@@ -73,14 +83,20 @@ export async function searchBGG(query: string): Promise<BGGGame[]> {
     await delay(5000);
     
     const searchUrl = `${BGG_API_BASE}/search?query=${encodeURIComponent(query)}`;
-    console.log('Search URL:', searchUrl);
+    console.log('[BGG] Searching for:', query);
+    console.log('[BGG] Search URL:', searchUrl);
+    
     const xml = await fetchXML(searchUrl);
-    console.log('XML response (first 500 chars):', xml.substring(0, 500));
+    console.log('[BGG] Search response length:', xml.length);
+    console.log('[BGG] Search response preview (first 1000 chars):', xml.substring(0, 1000));
+    
     const doc = parseXML(xml);
-    console.log('Parsed doc, items found');
     
     const items = doc.querySelectorAll('item');
+    console.log('[BGG] Search found items:', items.length);
+    
     if (items.length === 0) {
+      console.log('[BGG] No items found for query:', query);
       return [];
     }
 
@@ -88,27 +104,34 @@ export async function searchBGG(query: string): Promise<BGGGame[]> {
     items.forEach((item, index) => {
       if (index < 10) {
         const id = parseInt(item.getAttribute('id') || '0', 10);
+        const name = item.getAttribute('name') || 'Unknown';
+        console.log(`[BGG] Search result ${index + 1}: ID=${id}, Name=${name}`);
         if (id) ids.push(id);
       }
     });
 
+    console.log('[BGG] IDs to fetch:', ids);
+
     if (ids.length === 0) {
+      console.log('[BGG] No valid IDs found');
       return [];
     }
 
     return getGamesByIds(ids);
   } catch (error) {
-    console.error('BGG search error:', error);
+    console.error('[BGG] Search error for query:', query, error);
     return [];
   }
 }
 
 export async function getGameById(id: number): Promise<BGGGame | null> {
   try {
+    console.log('[BGG] getGameById called with ID:', id);
     const games = await getGamesByIds([id]);
+    console.log('[BGG] getGameById result:', games.length > 0 ? `Found ${games[0].name}` : 'Not found');
     return games[0] || null;
   } catch (error) {
-    console.error('BGG get game error:', error);
+    console.error('[BGG] getGameById error for ID:', id, error);
     return null;
   }
 }
@@ -122,20 +145,37 @@ async function getGamesByIds(ids: number[]): Promise<BGGGame[]> {
     
     const idsParam = ids.join(',');
     const thingUrl = `${BGG_API_BASE}/thing?id=${idsParam}&stats=1`;
+    
+    console.log('[BGG] Fetching games with IDs:', ids);
+    console.log('[BGG] URL:', thingUrl);
+    
     const xml = await fetchXML(thingUrl);
+    
+    console.log('[BGG] Response length:', xml.length);
+    console.log('[BGG] Response preview (first 1000 chars):', xml.substring(0, 1000));
+    
     const doc = parseXML(xml);
     
     const items = doc.querySelectorAll('item');
+    console.log('[BGG] Number of items found:', items.length);
+    
     const games: BGGGame[] = [];
 
-    items.forEach(item => {
+    items.forEach((item, index) => {
+      console.log(`[BGG] Parsing item ${index + 1}/${items.length}`);
       const game = parseGameItem(item);
-      if (game) games.push(game);
+      if (game) {
+        console.log(`[BGG] Successfully parsed game: ${game.name} (ID: ${game.id})`);
+        games.push(game);
+      } else {
+        console.log(`[BGG] Failed to parse item ${index + 1}`);
+      }
     });
 
+    console.log('[BGG] Total games parsed:', games.length);
     return games;
   } catch (error) {
-    console.error('BGG get games error:', error);
+    console.error('[BGG] Error in getGamesByIds for IDs:', ids, error);
     return [];
   }
 }
