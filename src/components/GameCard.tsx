@@ -179,27 +179,12 @@ export function GameCard({
           </div>
         )}
 
-        {/* BGG Stats */}
-        {(game.bggRating || game.complexity || game.bggRank) && (
+        {/* BGG Rank */}
+        {game.bggRank && game.bggRank > 0 && (
           <div className={styles.bggStats}>
-            {game.bggRating && game.bggRating > 0 && (
-              <span className={styles.bggRating}>
-                ⭐ {game.bggRating.toFixed(1)}/10
-                {game.bggRatingsCount && game.bggRatingsCount > 0 && (
-                  <span className={styles.ratingCount}> ({game.bggRatingsCount.toLocaleString()})</span>
-                )}
-              </span>
-            )}
-            {game.complexity && game.complexity > 0 && (
-              <span className={styles.bggComplexity}>
-                ⚖️ {game.complexity.toFixed(1)}/5
-              </span>
-            )}
-            {game.bggRank && game.bggRank > 0 && (
-              <span className={styles.bggRank}>
-                🏆 #{game.bggRank.toLocaleString()}
-              </span>
-            )}
+            <span className={styles.bggRank}>
+              🏆 #{game.bggRank.toLocaleString()}
+            </span>
           </div>
         )}
       </div>
