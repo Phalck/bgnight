@@ -118,6 +118,7 @@ export default function CollectionPage() {
   const [showBGGImport, setShowBGGImport] = useState(false);
   const [bggImportLoading, setBggImportLoading] = useState(false);
   const [bggImportData, setBggImportData] = useState<BGGGameData | null>(null);
+  const [importedBggId, setImportedBggId] = useState<number | null>(null);
   const [bggImportError, setBggImportError] = useState('');
   const [showBGGConfirmModal, setShowBGGConfirmModal] = useState(false);
   
@@ -385,10 +386,12 @@ export default function CollectionPage() {
         publishers: editForm.publishers.split(',').map(p => p.trim()).filter(Boolean),
         complexity: editForm.complexity,
         bggRating: editForm.bggRating,
+        bggId: importedBggId || editingGame.bggId,
       });
 
       setGames(games.map(g => g.id === editingGame.id ? updated : g));
       setEditingGame(null);
+      setImportedBggId(null); // Reset after successful save
       addToast('Game updated successfully', 'success');
     } catch (err) {
       const message = api.getErrorMessage(err);
@@ -462,6 +465,7 @@ export default function CollectionPage() {
     setBggImportLoading(true);
     setBggImportError('');
     setBggImportData(null);
+    setImportedBggId(null);
     
     try {
       const response = await fetch(`/api/bgg-import?gameId=${encodeURIComponent(gameId)}`);
@@ -477,6 +481,7 @@ export default function CollectionPage() {
         }
       } else {
         setBggImportData(data.data);
+        setImportedBggId(data.bggId);
       }
     } catch (err) {
       setBggImportError('Failed to connect to BGG');
@@ -490,6 +495,7 @@ export default function CollectionPage() {
     setBggImportLoading(true);
     setBggImportError('');
     setBggImportData(null);
+    setImportedBggId(null);
     
     try {
       const response = await fetch(`/api/bgg-import?gameName=${encodeURIComponent(editingGame?.title || '')}`);
@@ -506,6 +512,7 @@ export default function CollectionPage() {
         }
       } else {
         setBggImportData(data.data);
+        setImportedBggId(data.bggId);
       }
     } catch (err) {
       setBggImportError('Failed to connect to BGG');
