@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect, useRef } from 'react';
 import { SettingsMenu } from './SettingsMenu';
@@ -13,6 +13,7 @@ import styles from './Header.module.css';
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
   const { addToast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -294,7 +295,20 @@ export function Header() {
                           📤 Restore Logged Plays
                         </button>
                       </div>
-                      
+
+                      <div className={styles.mobileSettingsGroup}>
+                        <h4 className={styles.mobileSettingsGroupTitle}>Collection Tools</h4>
+                        <button
+                          className={styles.mobileSettingsItem}
+                          onClick={() => {
+                            router.push('/settings/bulk-update');
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          🔄 Bulk Update from BGG
+                        </button>
+                      </div>
+
                       <div className={styles.mobileSettingsGroup}>
                         <h4 className={styles.mobileSettingsGroupTitle}>Danger Zone</h4>
                         <button 
