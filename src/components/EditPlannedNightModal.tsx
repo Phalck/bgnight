@@ -55,6 +55,12 @@ interface PlannedGame {
   order: number;
 }
 
+interface PlayerResponse {
+  playerId: string;
+  status: 'coming' | 'not_coming' | 'maybe';
+  respondedAt: string;
+}
+
 interface PlannedNight {
   id: string;
   plannedAt: string;
@@ -63,6 +69,10 @@ interface PlannedNight {
   customMessage?: string;
   games: PlannedGame[];
   players: Player[];
+  playerResponses?: PlayerResponse[];
+  inviteToken?: string | null;
+  inviteExpiresAt?: string | null;
+  inviteEnabled?: boolean;
 }
 
 interface EditPlannedNightModalProps {
