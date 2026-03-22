@@ -107,6 +107,28 @@ export async function put<T>(url: string, data: unknown, options?: RequestInit):
   }
 }
 
+export async function patch<T>(url: string, data: unknown, options?: RequestInit): Promise<T> {
+  try {
+    const isFormData = data instanceof FormData;
+    
+    const response = await fetch(url, {
+      ...options,
+      method: 'PATCH',
+      headers: isFormData
+        ? { ...options?.headers }
+        : {
+            'Content-Type': 'application/json',
+            ...options?.headers,
+          },
+      body: isFormData ? data : JSON.stringify(data),
+    });
+    return handleResponse<T>(response);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(0, 'Network error. Please check your connection.');
+  }
+}
+
 export async function del<T>(url: string, options?: RequestInit): Promise<T> {
   try {
     const response = await fetch(url, {
