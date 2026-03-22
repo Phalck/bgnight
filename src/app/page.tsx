@@ -68,6 +68,19 @@ export default function Home() {
               Create Account
             </a>
           </div>
+          <div className={styles.openSource}>
+            <p>
+              This app is open source and available on{' '}
+              <a 
+                href="https://github.com/Phalck/bgnight" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className={styles.githubLink}
+              >
+                GitHub
+              </a>
+            </p>
+          </div>
         </div>
         <div className={styles.bggAttribution}>
           <a 
