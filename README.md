@@ -21,8 +21,25 @@ Board Game Night is your all-in-one companion for organizing tabletop gaming ses
 ### 📅 Game Night Planning
 - **Create events** - Plan game nights with date, time, and location
 - **Game selection** - Choose from your collection based on player count and preferences
+- **Edit planned nights** - Add/remove games and players, change event details
+- **Cancel events** - Remove planned game nights with one click
 - **Invite friends** - Generate shareable invites for your planned nights
+- **Invite link management** - Generate, regenerate, or disable invite links with expiration times (4h, 8h, 24h, 48h)
 - **YouTube integration** - Search for game tutorials to share with your group
+
+### 📧 Invite System & RSVP
+- **Public invite pages** - Players can RSVP (Coming/Maybe/Not Coming) without logging in
+- **Game voting** - Invitees can vote on which games they want to play
+- **Real-time responses** - View who has responded and their game preferences
+- **Vote tracking** - See vote counts and voter names for each game
+- **RSVP statistics** - Track responses: Coming, Maybe, Not Coming, No Response
+
+### 🌐 Public Game Nights
+- **Browse all events** - Public page showing game nights from all users (no login required)
+- **Filter by organizer** - View events by specific organizers
+- **Date filtering** - Filter by Today, This Week, This Month, or All dates
+- **Event discovery** - Find upcoming board game nights in your community
+- **Read-only view** - See event details, games, and RSVP counts without needing an account
 
 ### 📊 Play Tracking
 - **Log plays** - Record who played what, when, and who won
@@ -61,12 +78,13 @@ The first user to register automatically becomes an admin and gains access to th
 ## 🚀 How to Use
 
 ### Getting Started
-1. **Create an account** - Sign up with your email at https://bgnight.vercel.app
+1. **Browse public game nights** - Visit the landing page and click "Browse upcoming board game nights" to see events from all users (no login required!)
+2. **Create an account** - Sign up with your email at https://bgnight.vercel.app
    - If the site is in **invite-only mode**, you will need an invite code from an administrator
    - The invite code field will appear automatically when required
-2. **Import your collection** - Use the BGG import feature or add games manually
-3. **Log a play** - Select a game and log your first play session with friends
-4. **Start planning** - Create your first game night!
+3. **Import your collection** - Use the BGG import feature or add games manually
+4. **Log a play** - Select a game and log your first play session with friends
+5. **Start planning** - Create your first game night!
 
 ### Managing Your Collection
 
@@ -124,10 +142,33 @@ The **weight** (complexity) and **BGG rating** are imported from BoardGameGeek a
 
 ### Planning a Game Night
 1. Go to **Plan BGN**
-2. Set the date, time, and location
-3. Select the number of players
-4. Choose games from your collection
-5. Generate an invite link to share
+2. Select games from your collection
+3. Set the date, time, and location
+4. Choose players to invite
+5. Select invite link expiration (4h, 8h, 24h, or 48h)
+6. Click **Save & Close** - the invite link is automatically copied to your clipboard!
+
+### Managing Planned Game Nights
+1. Go to **Planned BGNs** to view all your events
+2. **Edit** (✏️) - Modify games, players, or event details
+3. **Cancel** - Delete a planned night
+4. **Copy Invite** (✉️) - Copy the invite text with link to clipboard
+5. **Invite Link Manager** - View link status, copy, regenerate, or disable links
+6. **RSVP Tracking** - See who is coming, maybe coming, not coming, or hasn't responded
+7. **Game Votes** - View vote counts and who voted for each game
+
+### Sending Invites to Players
+When you save a game night, the full invite text is automatically copied to your clipboard, including:
+- Event date, time, and location
+- List of games with player counts and durations
+- YouTube tutorial links (if selected)
+- RSVP link for players to respond and vote
+
+Players can:
+- Select their name from the dropdown
+- RSVP (Coming/Maybe/Not Coming)
+- Vote on games they're interested in playing
+- View other players' responses and votes
 
 ### Logging Plays
 1. From your collection, click on a game
@@ -229,13 +270,21 @@ The admin dashboard displays:
 
 ## 📝 API Routes
 
+### Authenticated Routes
 - `GET/POST /api/games` - Manage game collection
 - `GET/POST /api/plays` - Log and retrieve plays
 - `GET/POST /api/planned-nights` - Manage events
+- `POST/PATCH/DELETE /api/planned-nights/[id]/invite` - Manage invite links
 - `GET /api/backup/*` - Export data
 - `POST /api/restore/*` - Import data
 - `DELETE /api/delete/*` - Remove data
 - `POST/DELETE /api/user/delete-request` - Account deletion
+
+### Public Routes (No Authentication Required)
+- `GET /api/public/planned-nights` - Browse all upcoming game nights
+- `GET /api/invite/[token]` - View public invite page data
+- `POST /api/invite/[token]/rsvp` - Submit RSVP response
+- `POST /api/invite/[token]/vote` - Vote on games
 
 ## 🔐 Environment Variables
 
