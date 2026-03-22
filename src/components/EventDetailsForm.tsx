@@ -15,13 +15,22 @@ interface EventDetailsFormProps {
   location: string;
   customMessage: string;
   selectedPlayers: Player[];
+  inviteExpiration: number;
   onDateTimeChange: (value: string) => void;
   onLocationChange: (value: string) => void;
   onCustomMessageChange: (value: string) => void;
   onPlayersChange: (players: Player[]) => void;
   onAddPlayer: (name: string) => Promise<Player | null>;
+  onInviteExpirationChange: (value: number) => void;
   onGenerateInvite: () => void;
 }
+
+const EXPIRATION_OPTIONS = [
+  { value: 4, label: '4 hours' },
+  { value: 8, label: '8 hours' },
+  { value: 24, label: '24 hours' },
+  { value: 48, label: '48 hours' },
+];
 
 export function EventDetailsForm({
   availablePlayers,
@@ -29,11 +38,13 @@ export function EventDetailsForm({
   location,
   customMessage,
   selectedPlayers,
+  inviteExpiration,
   onDateTimeChange,
   onLocationChange,
   onCustomMessageChange,
   onPlayersChange,
   onAddPlayer,
+  onInviteExpirationChange,
   onGenerateInvite,
 }: EventDetailsFormProps) {
   // datetime-local input returns/expects format: YYYY-MM-DDTHH:mm
@@ -92,6 +103,22 @@ export function EventDetailsForm({
             rows={3}
             className={styles.textarea}
           />
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="inviteExpiration">Invite Link Expires After</label>
+          <select
+            id="inviteExpiration"
+            value={inviteExpiration}
+            onChange={(e) => onInviteExpirationChange(Number(e.target.value))}
+            className={styles.select}
+          >
+            {EXPIRATION_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

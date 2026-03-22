@@ -29,6 +29,11 @@ export async function GET() {
                 maxPlayTime: true,
               },
             },
+            votes: {
+              select: {
+                playerId: true,
+              },
+            },
           },
           orderBy: {
             order: 'asc',
@@ -40,12 +45,19 @@ export async function GET() {
             name: true,
           },
         },
+        playerResponses: {
+          select: {
+            playerId: true,
+            status: true,
+            respondedAt: true,
+          },
+        },
       },
       orderBy: {
         plannedAt: 'desc',
       },
     });
-    
+
     return NextResponse.json(plannedNights);
   } catch (error) {
     console.error('Failed to fetch planned nights:', error);

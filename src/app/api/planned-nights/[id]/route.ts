@@ -35,6 +35,11 @@ export async function GET(
                 maxPlayTime: true,
               },
             },
+            votes: {
+              select: {
+                playerId: true,
+              },
+            },
           },
           orderBy: {
             order: 'asc',
@@ -46,13 +51,20 @@ export async function GET(
             name: true,
           },
         },
+        playerResponses: {
+          select: {
+            playerId: true,
+            status: true,
+            respondedAt: true,
+          },
+        },
       },
     });
-    
+
     if (!plannedNight) {
       return NextResponse.json({ error: 'Planned night not found' }, { status: 404 });
     }
-    
+
     return NextResponse.json(plannedNight);
   } catch (error) {
     console.error('Failed to fetch planned night:', error);

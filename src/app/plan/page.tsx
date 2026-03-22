@@ -91,6 +91,7 @@ export default function PlanBGNPage() {
   const [location, setLocation] = useState('');
   const [customMessage, setCustomMessage] = useState('');
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+  const [inviteExpiration, setInviteExpiration] = useState(24);
   const [showEventDetails, setShowEventDetails] = useState(false);
   
   // Invite generator
@@ -314,7 +315,13 @@ export default function PlanBGNPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.post('/api/planned-nights', {
+      // First, create the planned night
+      const plannedNight = await api.post<{
+        id: string;
+        eventDateTime?: string;
+        location?: string;
+        customMessage?: string;
+      }>('/api/planned-nights', {
         eventDateTime: eventDateTime || null,
         location: location || null,
         customMessage: customMessage || null,
@@ -330,8 +337,20 @@ export default function PlanBGNPage() {
         }),
       });
 
+      // Then, generate the invite link
+      const inviteResponse = await api.post<{
+        token: string;
+        expiresAt: string;
+        url: string;
+      }>(`/api/planned-nights/${plannedNight.id}/invite`, {
+        expirationHours: inviteExpiration,
+      });
+
+      // Copy the invite link to clipboard
+      await navigator.clipboard.writeText(inviteResponse.url);
+
       router.push('/planned-nights');
-      addToast('Game night planned successfully!', 'success');
+      addToast('Game night planned successfully! Invite link copied to clipboard.', 'success');
     } catch (err) {
       const message = api.getErrorMessage(err);
       addToast(message, 'error');
@@ -659,11 +678,13 @@ export default function PlanBGNPage() {
                 location={location}
                 customMessage={customMessage}
                 selectedPlayers={selectedPlayers}
+                inviteExpiration={inviteExpiration}
                 onDateTimeChange={setEventDateTime}
                 onLocationChange={setLocation}
                 onCustomMessageChange={setCustomMessage}
                 onPlayersChange={setSelectedPlayers}
                 onAddPlayer={handleAddPlayer}
+                onInviteExpirationChange={setInviteExpiration}
                 onGenerateInvite={handleGenerateInvite}
               />
             )}

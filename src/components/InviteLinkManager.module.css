@@ -1,0 +1,198 @@
+.container {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.generateBtn {
+  background: var(--primary);
+  color: var(--bg-dark);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.generateBtn:hover {
+  filter: brightness(1.1);
+}
+
+.generateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.select {
+  padding: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.formActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.cancelBtn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelBtn:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.linkInfo {
+  margin-bottom: 0.75rem;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.statusActive {
+  color: #22c55e;
+  font-size: 0.75rem;
+}
+
+.expiration {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.linkDisplay {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.linkInput {
+  flex: 1;
+  padding: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-family: monospace;
+}
+
+.copyBtn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyBtn:hover {
+  border-color: var(--primary);
+  background: rgba(230, 169, 25, 0.1);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.regenerateBtn {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.regenerateBtn:hover {
+  border-color: var(--primary);
+  background: rgba(230, 169, 25, 0.1);
+}
+
+.regenerateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.disableBtn {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.disableBtn:hover {
+  border-color: var(--secondary);
+  background: rgba(233, 69, 96, 0.1);
+  color: var(--secondary);
+}
+
+.disableBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .actions {
+    flex-direction: column;
+  }
+}

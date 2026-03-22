@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { LogPlayModal } from '@/components/LogPlayModal';
 import { EditPlannedNightModal } from '@/components/EditPlannedNightModal';
+import { InviteLinkManager } from '@/components/InviteLinkManager';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/Toast';
 import * as api from '@/lib/api-client';
@@ -32,6 +33,12 @@ interface PlannedGame {
   order: number;
 }
 
+interface PlayerResponse {
+  playerId: string;
+  status: 'coming' | 'not_coming' | 'maybe';
+  respondedAt: string;
+}
+
 interface PlannedNight {
   id: string;
   plannedAt: string;
@@ -40,6 +47,10 @@ interface PlannedNight {
   customMessage?: string;
   games: PlannedGame[];
   players: Player[];
+  playerResponses: PlayerResponse[];
+  inviteToken?: string | null;
+  inviteExpiresAt?: string | null;
+  inviteEnabled?: boolean;
 }
 
 interface GameForLog {
@@ -464,6 +475,48 @@ Sent via Board Game Night App 🎲`;
                         </span>
                       </div>
                     )}
+
+                    {/* RSVP Stats */}
+                    {night.playerResponses && night.playerResponses.length > 0 && (
+                      <div className={styles.rsvpSection}>
+                        <h4 className={styles.rsvpTitle}>RSVPs</h4>
+                        <div className={styles.rsvpStats}>
+                          <div className={styles.rsvpStat}>
+                            <span className={styles.rsvpNumber + ' ' + styles.coming}>
+                              {night.playerResponses.filter(r => r.status === 'coming').length}
+                            </span>
+                            <span className={styles.rsvpLabel}>Coming</span>
+                          </div>
+                          <div className={styles.rsvpStat}>
+                            <span className={styles.rsvpNumber + ' ' + styles.maybe}>
+                              {night.playerResponses.filter(r => r.status === 'maybe').length}
+                            </span>
+                            <span className={styles.rsvpLabel}>Maybe</span>
+                          </div>
+                          <div className={styles.rsvpStat}>
+                            <span className={styles.rsvpNumber + ' ' + styles.notComing}>
+                              {night.playerResponses.filter(r => r.status === 'not_coming').length}
+                            </span>
+                            <span className={styles.rsvpLabel}>Not Coming</span>
+                          </div>
+                          <div className={styles.rsvpStat}>
+                            <span className={styles.rsvpNumber}>
+                              {night.players.length - night.playerResponses.length}
+                            </span>
+                            <span className={styles.rsvpLabel}>No Response</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Invite Link Manager */}
+                    <InviteLinkManager
+                      nightId={night.id}
+                      inviteToken={night.inviteToken}
+                      inviteExpiresAt={night.inviteExpiresAt}
+                      inviteEnabled={night.inviteEnabled}
+                      onUpdate={fetchPlannedNights}
+                    />
                   </div>
                 );
               })}

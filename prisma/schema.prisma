@@ -82,9 +82,11 @@ model Player {
   playLogs          PlayLog[] @relation("PlayLogPlayers")
   wins              PlayLog[] @relation("PlayLogWinners")
   plannedGameNights PlannedGameNight[] @relation("PlannedGameNightPlayers")
+  playerResponses   PlayerResponse[]
+  gameVotes         GameVote[]
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
-  
+
   @@unique([name, userId])
   @@index([userId])
 }
@@ -110,19 +112,30 @@ model PlayLog {
 }
 
 model PlannedGameNight {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plannedAt     DateTime @default(now())
-  eventDateTime DateTime?
-  location      String?
-  customMessage String?
-  games         PlannedGame[]
-  players       Player[]    @relation("PlannedGameNightPlayers")
-  createdAt     DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plannedAt       DateTime @default(now())
+  eventDateTime   DateTime?
+  location        String?
+  customMessage   String?
+  games           PlannedGame[]
+  players         Player[]    @relation("PlannedGameNightPlayers")
+  
+  // Invite link fields
+  inviteToken     String?   @unique
+  inviteExpiresAt DateTime?
+  inviteEnabled   Boolean   @default(false)
+  
+  // RSVP tracking
+  playerResponses PlayerResponse[]
+  gameVotes       GameVote[]
+  
+  createdAt       DateTime @default(now())
   
   @@index([userId])
   @@index([plannedAt])
+  @@index([inviteToken])
 }
 
 model PlannedGame {
@@ -135,9 +148,40 @@ model PlannedGame {
   youtubeVideoTitle String?
   youtubeVideoUrl   String?
   order             Int
-  
+  votes             GameVote[]
+
   @@index([plannedNightId])
   @@index([gameId])
+}
+
+model PlayerResponse {
+  id              String   @id @default(cuid())
+  plannedNightId  String
+  plannedNight    PlannedGameNight @relation(fields: [plannedNightId], references: [id], onDelete: Cascade)
+  playerId        String
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  status          String   // "coming", "not_coming", "maybe"
+  respondedAt     DateTime @default(now())
+
+  @@unique([plannedNightId, playerId])
+  @@index([plannedNightId])
+  @@index([playerId])
+}
+
+model GameVote {
+  id              String   @id @default(cuid())
+  plannedNightId  String
+  plannedNight    PlannedGameNight @relation(fields: [plannedNightId], references: [id], onDelete: Cascade)
+  plannedGameId   String
+  plannedGame     PlannedGame @relation(fields: [plannedGameId], references: [id], onDelete: Cascade)
+  playerId        String
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  votedAt         DateTime @default(now())
+
+  @@unique([plannedNightId, plannedGameId, playerId])
+  @@index([plannedNightId])
+  @@index([plannedGameId])
+  @@index([playerId])
 }
 
 model ManualEditTracking {
