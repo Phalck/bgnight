@@ -332,6 +332,16 @@ Sent via Board Game Night App 🎲`;
                         >
                           📋
                         </button>
+                        <button
+                          className={styles.cancelBtn}
+                          onClick={() => handleDelete(night.id)}
+                          disabled={deletingId === night.id}
+                          title="Cancel this planned game night"
+                        >
+                          {deletingId === night.id ? (
+                            <LoadingSpinner size="small" />
+                          ) : 'Cancel'}
+                        </button>
                         {allGamesLogged && (
                           <button
                             className={styles.removeCompletedBtn}
@@ -341,7 +351,7 @@ Sent via Board Game Night App 🎲`;
                           >
                             {deletingId === night.id ? (
                               <LoadingSpinner size="small" />
-                            ) : '✓ Remove'}
+                            ) : 'Remove'}
                           </button>
                         )}
                       </div>

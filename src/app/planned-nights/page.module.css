@@ -221,6 +221,29 @@
   cursor: not-allowed;
 }
 
+.cancelBtn {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.cancelBtn:hover {
+  border-color: var(--secondary);
+  background: rgba(233, 69, 96, 0.1);
+  color: var(--secondary);
+}
+
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .customMessage {
   color: var(--text-secondary);
   font-style: italic;
