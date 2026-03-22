@@ -327,6 +327,25 @@
   margin: 0 0 0.25rem 0;
 }
 
+.voteInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.25rem 0;
+}
+
+.voteCount {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.voterNames {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  opacity: 0.8;
+}
+
 .videoLink {
   color: var(--primary);
   font-size: 0.8rem;
@@ -439,8 +458,53 @@
 .rsvpTitle {
   font-size: 0.875rem;
   font-weight: 600;
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 1rem 0;
   color: var(--text-secondary);
+}
+
+.rsvpGroup {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.rsvpGroup:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.rsvpGroupTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rsvpGroupTitle.coming {
+  color: #22c55e;
+}
+
+.rsvpGroupTitle.maybe {
+  color: #f59e0b;
+}
+
+.rsvpGroupTitle.notComing {
+  color: #ef4444;
+}
+
+.rsvpPlayerList {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.noPlayers {
+  font-style: italic;
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .rsvpStats {

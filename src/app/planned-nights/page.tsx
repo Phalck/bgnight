@@ -17,6 +17,10 @@ interface Player {
   name: string;
 }
 
+interface GameVote {
+  playerId: string;
+}
+
 interface PlannedGame {
   id: string;
   game: {
@@ -31,6 +35,7 @@ interface PlannedGame {
   youtubeVideoTitle?: string;
   youtubeVideoUrl?: string;
   order: number;
+  votes?: GameVote[];
 }
 
 interface PlayerResponse {
@@ -199,6 +204,35 @@ export default function PlannedNightsPage() {
   const formatPlayers = (min: number, max: number) => {
     if (min === max) return `${min} players`;
     return `${min}-${max} players`;
+  };
+
+  const getPlayerName = (night: PlannedNight, playerId: string) => {
+    return night.players.find(p => p.id === playerId)?.name || '';
+  };
+
+  const getPlayersByStatus = (night: PlannedNight, status: 'coming' | 'not_coming' | 'maybe' | 'no_response') => {
+    if (status === 'no_response') {
+      const respondedIds = new Set(night.playerResponses?.map(r => r.playerId) || []);
+      return night.players
+        .filter(p => !respondedIds.has(p.id))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+    
+    const respondedPlayerIds = night.playerResponses
+      ?.filter(r => r.status === status)
+      .map(r => r.playerId) || [];
+    
+    return night.players
+      .filter(p => respondedPlayerIds.includes(p.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  const getVoterNamesForGame = (night: PlannedNight, game: PlannedGame) => {
+    if (!game.votes || !night.players) return [];
+    return game.votes
+      .map(vote => getPlayerName(night, vote.playerId))
+      .filter(name => name)
+      .sort((a, b) => a.localeCompare(b));
   };
 
   const regenerateInvite = async (night: PlannedNight) => {
@@ -424,6 +458,8 @@ Sent via Board Game Night App 🎲`;
                     <div className={styles.gamesList}>
                       {night.games.map(plannedGame => {
                         const isLogged = loggedGameIds.has(plannedGame.game.id);
+                        const voterNames = getVoterNamesForGame(night, plannedGame);
+                        const voteCount = plannedGame.votes?.length || 0;
                         
                         return (
                           <div key={plannedGame.id} className={`${styles.gameItem} ${isLogged ? styles.loggedGame : ''}`}>
@@ -445,6 +481,12 @@ Sent via Board Game Night App 🎲`;
                                 {formatPlayers(plannedGame.game.minPlayers, plannedGame.game.maxPlayers)}
                                 {plannedGame.game.maxPlayTime && ` • ${plannedGame.game.maxPlayTime} min`}
                               </p>
+                              <div className={styles.voteInfo}>
+                                <span className={styles.voteCount}>👍 {voteCount} vote{voteCount !== 1 ? 's' : ''}</span>
+                                {voterNames.length > 0 && (
+                                  <span className={styles.voterNames}>{voterNames.join(', ')}</span>
+                                )}
+                              </div>
                               {plannedGame.youtubeVideoUrl && (
                                 <a 
                                   href={plannedGame.youtubeVideoUrl}
@@ -480,37 +522,69 @@ Sent via Board Game Night App 🎲`;
                     )}
 
                     {/* RSVP Stats */}
-                    {night.playerResponses && night.playerResponses.length > 0 && (
-                      <div className={styles.rsvpSection}>
-                        <h4 className={styles.rsvpTitle}>RSVPs</h4>
-                        <div className={styles.rsvpStats}>
-                          <div className={styles.rsvpStat}>
-                            <span className={styles.rsvpNumber + ' ' + styles.coming}>
-                              {night.playerResponses.filter(r => r.status === 'coming').length}
-                            </span>
-                            <span className={styles.rsvpLabel}>Coming</span>
-                          </div>
-                          <div className={styles.rsvpStat}>
-                            <span className={styles.rsvpNumber + ' ' + styles.maybe}>
-                              {night.playerResponses.filter(r => r.status === 'maybe').length}
-                            </span>
-                            <span className={styles.rsvpLabel}>Maybe</span>
-                          </div>
-                          <div className={styles.rsvpStat}>
-                            <span className={styles.rsvpNumber + ' ' + styles.notComing}>
-                              {night.playerResponses.filter(r => r.status === 'not_coming').length}
-                            </span>
-                            <span className={styles.rsvpLabel}>Not Coming</span>
-                          </div>
-                          <div className={styles.rsvpStat}>
-                            <span className={styles.rsvpNumber}>
-                              {night.players.length - night.playerResponses.length}
-                            </span>
-                            <span className={styles.rsvpLabel}>No Response</span>
-                          </div>
+                    <div className={styles.rsvpSection}>
+                      <h4 className={styles.rsvpTitle}>RSVPs</h4>
+                      
+                      {/* Coming */}
+                      <div className={styles.rsvpGroup}>
+                        <h5 className={styles.rsvpGroupTitle + ' ' + styles.coming}>
+                          ✅ Coming ({night.playerResponses?.filter(r => r.status === 'coming').length || 0})
+                        </h5>
+                        <div className={styles.rsvpPlayerList}>
+                          {(() => {
+                            const comingPlayers = getPlayersByStatus(night, 'coming');
+                            return comingPlayers.length > 0 
+                              ? comingPlayers.map(p => p.name).join(', ')
+                              : <span className={styles.noPlayers}>None yet</span>;
+                          })()}
                         </div>
                       </div>
-                    )}
+                      
+                      {/* Maybe */}
+                      <div className={styles.rsvpGroup}>
+                        <h5 className={styles.rsvpGroupTitle + ' ' + styles.maybe}>
+                          🤔 Maybe ({night.playerResponses?.filter(r => r.status === 'maybe').length || 0})
+                        </h5>
+                        <div className={styles.rsvpPlayerList}>
+                          {(() => {
+                            const maybePlayers = getPlayersByStatus(night, 'maybe');
+                            return maybePlayers.length > 0 
+                              ? maybePlayers.map(p => p.name).join(', ')
+                              : <span className={styles.noPlayers}>None yet</span>;
+                          })()}
+                        </div>
+                      </div>
+                      
+                      {/* Not Coming */}
+                      <div className={styles.rsvpGroup}>
+                        <h5 className={styles.rsvpGroupTitle + ' ' + styles.notComing}>
+                          ❌ Not Coming ({night.playerResponses?.filter(r => r.status === 'not_coming').length || 0})
+                        </h5>
+                        <div className={styles.rsvpPlayerList}>
+                          {(() => {
+                            const notComingPlayers = getPlayersByStatus(night, 'not_coming');
+                            return notComingPlayers.length > 0 
+                              ? notComingPlayers.map(p => p.name).join(', ')
+                              : <span className={styles.noPlayers}>None yet</span>;
+                          })()}
+                        </div>
+                      </div>
+                      
+                      {/* No Response */}
+                      <div className={styles.rsvpGroup}>
+                        <h5 className={styles.rsvpGroupTitle}>
+                          ❓ No Response ({night.players.length - (night.playerResponses?.length || 0)})
+                        </h5>
+                        <div className={styles.rsvpPlayerList}>
+                          {(() => {
+                            const noResponsePlayers = getPlayersByStatus(night, 'no_response');
+                            return noResponsePlayers.length > 0 
+                              ? noResponsePlayers.map(p => p.name).join(', ')
+                              : <span className={styles.noPlayers}>Everyone has responded!</span>;
+                          })()}
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Invite Link Manager */}
                     <InviteLinkManager
