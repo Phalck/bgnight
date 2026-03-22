@@ -1,0 +1,253 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Header } from '@/components/Header';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import styles from './page.module.css';
+
+interface Game {
+  id: string;
+  game: {
+    id: string;
+    title: string;
+    thumbnail?: string | null;
+    minPlayers: number;
+    maxPlayers: number;
+    maxPlayTime?: number | null;
+  };
+  youtubeVideoUrl?: string;
+  voteCount: number;
+}
+
+interface RSVPStats {
+  coming: number;
+  maybe: number;
+  notComing: number;
+  noResponse: number;
+}
+
+interface PlannedNight {
+  id: string;
+  eventDateTime?: string;
+  location?: string;
+  customMessage?: string;
+  organizer: string;
+  games: Game[];
+  rsvpStats: RSVPStats;
+}
+
+const DATE_FILTERS = [
+  { value: 'all', label: 'All Dates' },
+  { value: 'today', label: 'Today' },
+  { value: 'week', label: 'This Week' },
+  { value: 'month', label: 'This Month' },
+];
+
+export default function GameNightsPage() {
+  const [plannedNights, setPlannedNights] = useState<PlannedNight[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [organizers, setOrganizers] = useState<string[]>([]);
+  
+  // Filter states
+  const [selectedOrganizer, setSelectedOrganizer] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all');
+
+  useEffect(() => {
+    fetchPlannedNights();
+  }, [selectedOrganizer, dateFilter]);
+
+  const fetchPlannedNights = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (selectedOrganizer && selectedOrganizer !== 'all') {
+        params.append('organizer', selectedOrganizer);
+      }
+      params.append('dateFilter', dateFilter);
+      params.append('upcoming', 'true');
+
+      const response = await fetch(`/api/public/planned-nights?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch planned nights');
+      }
+
+      const data = await response.json();
+      setPlannedNights(data);
+
+      // Extract unique organizers for filter dropdown
+      const uniqueOrganizers = Array.from(new Set(data.map((night: PlannedNight) => night.organizer)));
+      setOrganizers(uniqueOrganizers.sort());
+      setError(null);
+    } catch (err) {
+      setError('Failed to load planned nights');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (datetimeString?: string) => {
+    if (!datetimeString) return 'Date TBD';
+    
+    const [datePart, timePart] = datetimeString.split('T');
+    if (!datePart || !timePart) return datetimeString;
+    
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes] = timePart.split(':').map(Number);
+    
+    const date = new Date(year, month - 1, day, hours, minutes);
+    
+    return date.toLocaleString('sv-SE', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+
+  const formatPlayers = (min: number, max: number) => {
+    if (min === max) return `${min} players`;
+    return `${min}-${max} players`;
+  };
+
+  return (
+    <>
+      <Header />
+      <main className={styles.main}>
+        <div className={styles.container}>
+          <div className={styles.header}>
+            <h1 className={styles.title}>📅 Public Game Nights</h1>
+            <p className={styles.subtitle}>Discover board game nights happening near you</p>
+          </div>
+
+          {/* Filters */}
+          <div className={styles.filters}>
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Organizer</label>
+              <select
+                className={styles.filterSelect}
+                value={selectedOrganizer}
+                onChange={(e) => setSelectedOrganizer(e.target.value)}
+              >
+                <option value="all">All Organizers</option>
+                {organizers.map((organizer) => (
+                  <option key={organizer} value={organizer}>
+                    {organizer}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>When</label>
+              <div className={styles.filterButtons}>
+                {DATE_FILTERS.map((filter) => (
+                  <button
+                    key={filter.value}
+                    className={`${styles.filterBtn} ${dateFilter === filter.value ? styles.active : ''}`}
+                    onClick={() => setDateFilter(filter.value)}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          {loading ? (
+            <div className={styles.loading}>
+              <LoadingSpinner />
+              <p>Loading game nights...</p>
+            </div>
+          ) : error ? (
+            <div className={styles.error}>
+              <p>{error}</p>
+            </div>
+          ) : plannedNights.length === 0 ? (
+            <div className={styles.empty}>
+              <p>No game nights found matching your filters.</p>
+            </div>
+          ) : (
+            <div className={styles.nightsList}>
+              {plannedNights.map((night) => (
+                <div key={night.id} className={styles.nightCard}>
+                  <div className={styles.nightHeader}>
+                    <h2 className={styles.nightTitle}>🎲 Game Night</h2>
+                    <div className={styles.nightMeta}>
+                      <p className={styles.organizer}>👤 {night.organizer}</p>
+                      <p className={styles.date}>📅 {formatDate(night.eventDateTime)}</p>
+                      {night.location && <p className={styles.location}>📍 {night.location}</p>}
+                    </div>
+                  </div>
+
+                  {night.customMessage && (
+                    <div className={styles.message}>
+                      <p>{night.customMessage}</p>
+                    </div>
+                  )}
+
+                  <div className={styles.gamesSection}>
+                    <h3 className={styles.sectionTitle}>Games ({night.games.length})</h3>
+                    <div className={styles.gamesList}>
+                      {night.games.map((plannedGame) => (
+                        <div key={plannedGame.id} className={styles.gameItem}>
+                          {plannedGame.game.thumbnail ? (
+                            <img
+                              src={plannedGame.game.thumbnail}
+                              alt={plannedGame.game.title}
+                              className={styles.gameThumb}
+                            />
+                          ) : (
+                            <div className={styles.gamePlaceholder}>🎲</div>
+                          )}
+                          <div className={styles.gameInfo}>
+                            <h4 className={styles.gameTitle}>{plannedGame.game.title}</h4>
+                            <p className={styles.gameMeta}>
+                              {formatPlayers(plannedGame.game.minPlayers, plannedGame.game.maxPlayers)}
+                              {plannedGame.game.maxPlayTime && ` • ${plannedGame.game.maxPlayTime} min`}
+                            </p>
+                            <p className={styles.voteCount}>👍 {plannedGame.voteCount} votes</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={styles.rsvpSection}>
+                    <h3 className={styles.sectionTitle}>RSVPs</h3>
+                    <div className={styles.rsvpGrid}>
+                      <div className={styles.rsvpBox}>
+                        <span className={styles.rsvpIcon}>✅</span>
+                        <span className={styles.rsvpCount}>{night.rsvpStats.coming}</span>
+                        <span className={styles.rsvpLabel}>Coming</span>
+                      </div>
+                      <div className={styles.rsvpBox}>
+                        <span className={styles.rsvpIcon}>🤔</span>
+                        <span className={styles.rsvpCount}>{night.rsvpStats.maybe}</span>
+                        <span className={styles.rsvpLabel}>Maybe</span>
+                      </div>
+                      <div className={styles.rsvpBox}>
+                        <span className={styles.rsvpIcon}>❌</span>
+                        <span className={styles.rsvpCount}>{night.rsvpStats.notComing}</span>
+                        <span className={styles.rsvpLabel}>Not Coming</span>
+                      </div>
+                      <div className={styles.rsvpBox}>
+                        <span className={styles.rsvpIcon}>❓</span>
+                        <span className={styles.rsvpCount}>{night.rsvpStats.noResponse}</span>
+                        <span className={styles.rsvpLabel}>No Response</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+    </>
+  );
+}
