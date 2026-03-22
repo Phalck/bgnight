@@ -47,7 +47,7 @@ interface PlannedNight {
   customMessage?: string;
   games: PlannedGame[];
   players: Player[];
-  playerResponses: PlayerResponse[];
+  playerResponses?: PlayerResponse[];
   inviteToken?: string | null;
   inviteExpiresAt?: string | null;
   inviteEnabled?: boolean;
