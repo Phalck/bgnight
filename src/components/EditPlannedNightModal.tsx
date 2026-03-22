@@ -271,6 +271,7 @@ export function EditPlannedNightModal({
   
   // Players state
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>(plannedNight.players);
+  const [localAvailablePlayers, setLocalAvailablePlayers] = useState<Player[]>(availablePlayers);
   
   // Details state
   const [eventDateTime, setEventDateTime] = useState(plannedNight.eventDateTime || '');
@@ -339,6 +340,8 @@ export function EditPlannedNightModal({
   const handleAddPlayer = async (name: string): Promise<Player | null> => {
     try {
       const response = await api.post<Player>('/api/players', { name });
+      // Add the new player to local available players so they appear in the list
+      setLocalAvailablePlayers(prev => [...prev, response]);
       return response;
     } catch (err) {
       const message = api.getErrorMessage(err);
@@ -456,7 +459,7 @@ export function EditPlannedNightModal({
           {activeTab === 'players' && (
             <div className={styles.tabContent}>
               <PlayerSelector
-                availablePlayers={availablePlayers}
+                availablePlayers={localAvailablePlayers}
                 selectedPlayers={selectedPlayers}
                 onChange={setSelectedPlayers}
                 onAddPlayer={handleAddPlayer}
