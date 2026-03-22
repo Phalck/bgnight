@@ -210,6 +210,8 @@ export default function PlannedNightsPage() {
    📺 How to play: ${plannedGame.youtubeVideoUrl}` : ''}`;
     }).join('\n\n');
 
+    const inviteUrl = night.inviteToken ? `${window.location.origin}/invite/${night.inviteToken}` : '';
+    
     const inviteText = `🎲 Game Night Invitation! 🎲
 
 ${night.customMessage ? night.customMessage + '\n\n' : ''}Hey everyone! Let's play some board games:
@@ -217,6 +219,7 @@ ${night.customMessage ? night.customMessage + '\n\n' : ''}Hey everyone! Let's pl
 ${gamesList}
 
 ${night.eventDateTime ? `📅 When: ${formatDate(night.eventDateTime)}\n` : ''}${night.location ? `📍 Where: ${night.location}\n` : ''}${night.players.length > 0 ? `👥 Who's coming: ${night.players.map(p => p.name).join(', ')}\n` : ''}
+${inviteUrl ? `🔗 RSVP and vote on games here: ${inviteUrl}\n` : ''}
 Looking forward to seeing you all there!
 
 Sent via Board Game Night App 🎲`;
