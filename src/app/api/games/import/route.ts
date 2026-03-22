@@ -29,10 +29,6 @@ function decodeHtmlEntities(text: string): string {
     '&nbsp;': ' ',
     '&ndash;': '–',
     '&mdash;': '—',
-    '&lsquo;': ''',
-    '&rsquo;': ''',
-    '&ldquo;': '"',
-    '&rdquo;': '"',
     '&hellip;': '…',
   };
   
@@ -42,6 +38,10 @@ function decodeHtmlEntities(text: string): string {
   for (const [entity, char] of Object.entries(entities)) {
     decoded = decoded.replace(new RegExp(entity, 'g'), char);
   }
+  
+  // Handle curly quotes
+  decoded = decoded.replace(/&lsquo;|&rsquo;/g, "'");
+  decoded = decoded.replace(/&ldquo;|&rdquo;/g, '"');
   
   // Replace numeric entities (decimal and hexadecimal)
   decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
