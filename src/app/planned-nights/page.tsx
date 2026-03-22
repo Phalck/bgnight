@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { LogPlayModal } from '@/components/LogPlayModal';
+import { EditPlannedNightModal } from '@/components/EditPlannedNightModal';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/Toast';
 import * as api from '@/lib/api-client';
@@ -65,6 +66,11 @@ export default function PlannedNightsPage() {
   const [preFillDate, setPreFillDate] = useState('');
   const [preFillLocation, setPreFillLocation] = useState('');
   const [showLogModal, setShowLogModal] = useState(false);
+  
+  // Edit modal state
+  const [editingNight, setEditingNight] = useState<PlannedNight | null>(null);
+  const [availableGames, setAvailableGames] = useState<GameForLog[]>([]);
+  const [loadingEditData, setLoadingEditData] = useState(false);
 
   const fetchPlannedNights = useCallback(async () => {
     try {
@@ -124,6 +130,38 @@ export default function PlannedNightsPage() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleEdit = async (night: PlannedNight) => {
+    setLoadingEditData(true);
+    setEditingNight(night);
+    
+    try {
+      // Load all user's games for the edit modal
+      interface GameWithDetails {
+        id: string;
+        title: string;
+        thumbnail?: string | null;
+        minPlayers: number;
+        maxPlayers: number;
+        maxPlayTime?: number | null;
+      }
+      const games = await api.get<GameWithDetails[]>('/api/games');
+      setAvailableGames(games);
+    } catch (err) {
+      const message = api.getErrorMessage(err);
+      addToast(message, 'error');
+      setEditingNight(null);
+    } finally {
+      setLoadingEditData(false);
+    }
+  };
+
+  const handleSaveEdit = (updatedNight: PlannedNight) => {
+    setPlannedNights(prev => 
+      prev.map(night => night.id === updatedNight.id ? updatedNight : night)
+    );
+    setEditingNight(null);
   };
 
   const formatDate = (datetimeString: string) => {
@@ -333,6 +371,14 @@ Sent via Board Game Night App 🎲`;
                           📋
                         </button>
                         <button
+                          className={styles.editBtn}
+                          onClick={() => handleEdit(night)}
+                          disabled={loadingEditData}
+                          title="Edit this planned game night"
+                        >
+                          ✏️
+                        </button>
+                        <button
                           className={styles.cancelBtn}
                           onClick={() => handleDelete(night.id)}
                           disabled={deletingId === night.id}
@@ -438,6 +484,17 @@ Sent via Board Game Night App 🎲`;
           onAddPlayer={handleAddPlayer}
           preFillDate={preFillDate}
           preFillLocation={preFillLocation}
+        />
+      )}
+
+      {editingNight && (
+        <EditPlannedNightModal
+          plannedNight={editingNight}
+          availableGames={availableGames}
+          availablePlayers={players}
+          isOpen={true}
+          onClose={() => setEditingNight(null)}
+          onSave={handleSaveEdit}
         />
       )}
     </>

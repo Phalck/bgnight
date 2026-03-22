@@ -211,6 +211,26 @@
   background: rgba(230, 169, 25, 0.1);
 }
 
+.editBtn {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.editBtn:hover {
+  border-color: #3498db;
+  background: rgba(52, 152, 219, 0.1);
+}
+
+.editBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .deleteBtn:hover {
   border-color: var(--secondary);
   background: rgba(233, 69, 96, 0.1);

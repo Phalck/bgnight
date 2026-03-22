@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "postinstall": "prisma generate",
     "vercel-build": "./build.sh",
     "db:migrate": "prisma migrate dev",
@@ -14,6 +17,9 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@prisma/client": "^5.22.0",
     "@types/pg": "^8.18.0",
     "bcryptjs": "^3.0.3",
@@ -29,13 +35,21 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
     "@types/bcryptjs": "^2.4.6",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jest": "^30.3.0",
+    "jest-environment-node": "^30.3.0",
+    "jest-mock-extended": "^4.0.0",
+    "node-mocks-http": "^1.17.2",
     "tailwindcss": "^4",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
