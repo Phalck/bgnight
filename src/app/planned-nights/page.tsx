@@ -69,7 +69,15 @@ export default function PlannedNightsPage() {
   
   // Edit modal state
   const [editingNight, setEditingNight] = useState<PlannedNight | null>(null);
-  const [availableGames, setAvailableGames] = useState<GameForLog[]>([]);
+  interface GameWithDetails {
+    id: string;
+    title: string;
+    thumbnail?: string | null;
+    minPlayers: number;
+    maxPlayers: number;
+    maxPlayTime?: number | null;
+  }
+  const [availableGames, setAvailableGames] = useState<GameWithDetails[]>([]);
   const [loadingEditData, setLoadingEditData] = useState(false);
 
   const fetchPlannedNights = useCallback(async () => {
@@ -138,14 +146,6 @@ export default function PlannedNightsPage() {
     
     try {
       // Load all user's games for the edit modal
-      interface GameWithDetails {
-        id: string;
-        title: string;
-        thumbnail?: string | null;
-        minPlayers: number;
-        maxPlayers: number;
-        maxPlayTime?: number | null;
-      }
       const games = await api.get<GameWithDetails[]>('/api/games');
       setAvailableGames(games);
     } catch (err) {
