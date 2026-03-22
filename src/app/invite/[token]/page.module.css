@@ -301,6 +301,97 @@
   margin: 0;
 }
 
+/* Your Current Response */
+.yourResponse {
+  background: var(--bg-dark);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.yourName {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.yourStatus {
+  font-size: 0.95rem;
+  margin: 0 0 0.75rem 0;
+  color: var(--text-secondary);
+}
+
+.yourVotes {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.votesLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+}
+
+.votedGamesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.votedGameTag {
+  background: rgba(230, 169, 25, 0.15);
+  color: var(--primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Detailed Responses */
+.detailedResponses {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.responseGroup {
+  background: var(--bg-dark);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.responseGroupTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  color: var(--text-primary);
+}
+
+.playerList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.playerTag {
+  background: var(--surface);
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+/* Voter Names */
+.voterNames {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
+}
+
 @media (max-width: 640px) {
   .main {
     padding: 1rem;

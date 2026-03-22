@@ -7,6 +7,10 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/Toast';
 import styles from './page.module.css';
 
+interface GameVote {
+  playerId: string;
+}
+
 interface Game {
   id: string;
   game: {
@@ -19,6 +23,7 @@ interface Game {
   };
   youtubeVideoUrl?: string;
   voteCount: number;
+  votes: GameVote[];
 }
 
 interface Player {
@@ -82,8 +87,19 @@ export default function InvitePage() {
 
   const handlePlayerSelect = (playerId: string) => {
     setSelectedPlayerId(playerId);
-    // Reset votes when player changes
-    setPlayerVotes(new Set());
+    
+    // Set player's current votes from data
+    if (data && playerId) {
+      const votedGameIds = new Set<string>();
+      data.games.forEach(game => {
+        if (game.votes.some(vote => vote.playerId === playerId)) {
+          votedGameIds.add(game.id);
+        }
+      });
+      setPlayerVotes(votedGameIds);
+    } else {
+      setPlayerVotes(new Set());
+    }
   };
 
   const handleRSVP = async (status: 'coming' | 'not_coming' | 'maybe') => {
@@ -182,6 +198,43 @@ export default function InvitePage() {
     const noResponse = data.players.length - data.playerResponses.length;
     
     return { coming, notComing, maybe, noResponse };
+  };
+
+  const getPlayerResponse = (playerId: string) => {
+    if (!data?.playerResponses) return null;
+    return data.playerResponses.find(r => r.playerId === playerId);
+  };
+
+  const getPlayerName = (playerId: string) => {
+    if (!data?.players) return '';
+    return data.players.find(p => p.id === playerId)?.name || '';
+  };
+
+  const getPlayersByStatus = (status: 'coming' | 'not_coming' | 'maybe' | 'no_response') => {
+    if (!data) return [];
+    
+    if (status === 'no_response') {
+      const respondedIds = new Set(data.playerResponses?.map(r => r.playerId) || []);
+      return data.players
+        .filter(p => !respondedIds.has(p.id))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+    
+    const respondedPlayerIds = data.playerResponses
+      ?.filter(r => r.status === status)
+      .map(r => r.playerId) || [];
+    
+    return data.players
+      .filter(p => respondedPlayerIds.includes(p.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  const getVoterNamesForGame = (game: Game) => {
+    if (!data?.players || !game.votes) return [];
+    return game.votes
+      .map(vote => getPlayerName(vote.playerId))
+      .filter(name => name)
+      .sort((a, b) => a.localeCompare(b));
   };
 
   if (loading) {
@@ -295,76 +348,150 @@ export default function InvitePage() {
             </div>
           </div>
 
-          {/* Response Stats */}
+          {/* Your Current Response */}
+          {selectedPlayerId && (
+            <div className={styles.section}>
+              <h2>Your Current Response</h2>
+              <div className={styles.yourResponse}>
+                <p className={styles.yourName}>
+                  👤 {getPlayerName(selectedPlayerId)}
+                </p>
+                {(() => {
+                  const response = getPlayerResponse(selectedPlayerId);
+                  if (response) {
+                    const statusLabels = {
+                      coming: '✅ Coming',
+                      maybe: '🤔 Maybe',
+                      not_coming: '❌ Not Coming'
+                    };
+                    return <p className={styles.yourStatus}>Status: {statusLabels[response.status]}</p>;
+                  }
+                  return <p className={styles.yourStatus}>Status: ❓ No response yet</p>;
+                })()}
+                {playerVotes.size > 0 && (
+                  <div className={styles.yourVotes}>
+                    <p className={styles.votesLabel}>Games you voted for:</p>
+                    <div className={styles.votedGamesList}>
+                      {Array.from(playerVotes).map(gameId => {
+                        const game = data.games.find(g => g.id === gameId);
+                        return game ? (
+                          <span key={gameId} className={styles.votedGameTag}>
+                            {game.game.title}
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Who&apos;s Coming - Detailed List */}
           <div className={styles.section}>
-            <h2>Who's Coming?</h2>
-            <div className={styles.stats}>
-              <div className={styles.stat}>
-                <span className={styles.statNumber}>{stats.coming}</span>
-                <span className={styles.statLabel}>Coming</span>
-              </div>
-              <div className={styles.stat}>
-                <span className={styles.statNumber}>{stats.maybe}</span>
-                <span className={styles.statLabel}>Maybe</span>
-              </div>
-              <div className={styles.stat}>
-                <span className={styles.statNumber}>{stats.notComing}</span>
-                <span className={styles.statLabel}>Not Coming</span>
-              </div>
-              <div className={styles.stat}>
-                <span className={styles.statNumber}>{stats.noResponse}</span>
-                <span className={styles.statLabel}>No Response</span>
-              </div>
+            <h2>Who&apos;s Coming?</h2>
+            <div className={styles.detailedResponses}>
+              {stats.coming > 0 && (
+                <div className={styles.responseGroup}>
+                  <h3 className={styles.responseGroupTitle}>✅ Coming ({stats.coming})</h3>
+                  <div className={styles.playerList}>
+                    {getPlayersByStatus('coming').map(player => (
+                      <span key={player.id} className={styles.playerTag}>{player.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {stats.maybe > 0 && (
+                <div className={styles.responseGroup}>
+                  <h3 className={styles.responseGroupTitle}>🤔 Maybe ({stats.maybe})</h3>
+                  <div className={styles.playerList}>
+                    {getPlayersByStatus('maybe').map(player => (
+                      <span key={player.id} className={styles.playerTag}>{player.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {stats.notComing > 0 && (
+                <div className={styles.responseGroup}>
+                  <h3 className={styles.responseGroupTitle}>❌ Not Coming ({stats.notComing})</h3>
+                  <div className={styles.playerList}>
+                    {getPlayersByStatus('not_coming').map(player => (
+                      <span key={player.id} className={styles.playerTag}>{player.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {stats.noResponse > 0 && (
+                <div className={styles.responseGroup}>
+                  <h3 className={styles.responseGroupTitle}>❓ No Response ({stats.noResponse})</h3>
+                  <div className={styles.playerList}>
+                    {getPlayersByStatus('no_response').map(player => (
+                      <span key={player.id} className={styles.playerTag}>{player.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Games Section */}
           <div className={styles.section}>
             <h2>Games ({data.games.length})</h2>
-            <p className={styles.voteHint}>Click on games you're interested in playing!</p>
+            <p className={styles.voteHint}>Click on games you&apos;re interested in playing!</p>
             <div className={styles.gamesList}>
-              {data.games.map((plannedGame) => (
-                <div
-                  key={plannedGame.id}
-                  className={`${styles.gameCard} ${playerVotes.has(plannedGame.id) ? styles.voted : ''}`}
-                  onClick={() => handleVote(plannedGame.id)}
-                >
-                  {plannedGame.game.thumbnail ? (
-                    <img
-                      src={plannedGame.game.thumbnail}
-                      alt={plannedGame.game.title}
-                      className={styles.gameThumb}
-                    />
-                  ) : (
-                    <div className={styles.gamePlaceholder}>🎲</div>
-                  )}
-                  <div className={styles.gameInfo}>
-                    <h3 className={styles.gameTitle}>{plannedGame.game.title}</h3>
-                    <p className={styles.gameMeta}>
-                      👥 {plannedGame.game.minPlayers}-{plannedGame.game.maxPlayers} players
-                      {plannedGame.game.maxPlayTime && ` • ⏱️ ${plannedGame.game.maxPlayTime} min`}
-                    </p>
-                    <div className={styles.voteBadge}>
-                      <span className={styles.voteIcon}>👍</span>
-                      <span className={styles.voteCount}>{plannedGame.voteCount} votes</span>
-                      {playerVotes.has(plannedGame.id) && (
-                        <span className={styles.youVoted}>(You voted!)</span>
+              {data.games.map((plannedGame) => {
+                const voterNames = getVoterNamesForGame(plannedGame);
+                return (
+                  <div
+                    key={plannedGame.id}
+                    className={`${styles.gameCard} ${playerVotes.has(plannedGame.id) ? styles.voted : ''}`}
+                    onClick={() => handleVote(plannedGame.id)}
+                  >
+                    {plannedGame.game.thumbnail ? (
+                      <img
+                        src={plannedGame.game.thumbnail}
+                        alt={plannedGame.game.title}
+                        className={styles.gameThumb}
+                      />
+                    ) : (
+                      <div className={styles.gamePlaceholder}>🎲</div>
+                    )}
+                    <div className={styles.gameInfo}>
+                      <h3 className={styles.gameTitle}>{plannedGame.game.title}</h3>
+                      <p className={styles.gameMeta}>
+                        👥 {plannedGame.game.minPlayers}-{plannedGame.game.maxPlayers} players
+                        {plannedGame.game.maxPlayTime && ` • ⏱️ ${plannedGame.game.maxPlayTime} min`}
+                      </p>
+                      <div className={styles.voteBadge}>
+                        <span className={styles.voteIcon}>👍</span>
+                        <span className={styles.voteCount}>{plannedGame.voteCount} votes</span>
+                        {playerVotes.has(plannedGame.id) && (
+                          <span className={styles.youVoted}>(You voted!)</span>
+                        )}
+                      </div>
+                      {voterNames.length > 0 && (
+                        <p className={styles.voterNames}>
+                          {voterNames.join(', ')}
+                        </p>
+                      )}
+                      {plannedGame.youtubeVideoUrl && (
+                        <a
+                          href={plannedGame.youtubeVideoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.videoLink}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          📺 How to play
+                        </a>
                       )}
                     </div>
-                    {plannedGame.youtubeVideoUrl && (
-                      <a
-                        href={plannedGame.youtubeVideoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.videoLink}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        📺 How to play
-                      </a>
-                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
