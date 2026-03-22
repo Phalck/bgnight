@@ -77,7 +77,7 @@ export default function GameNightsPage() {
       setPlannedNights(data);
 
       // Extract unique organizers for filter dropdown
-      const uniqueOrganizers = Array.from(new Set(data.map((night: PlannedNight) => night.organizer)));
+      const uniqueOrganizers = Array.from(new Set(data.map((night: PlannedNight) => night.organizer))) as string[];
       setOrganizers(uniqueOrganizers.sort());
       setError(null);
     } catch (err) {
