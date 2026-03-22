@@ -8,7 +8,6 @@ import { GameCard } from '@/components/GameCard';
 import { VideoPickerModal } from '@/components/VideoPickerModal';
 import { SelectedGamesList } from '@/components/SelectedGamesList';
 import { EventDetailsForm } from '@/components/EventDetailsForm';
-import { InviteGenerator } from '@/components/InviteGenerator';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useToast } from '@/components/Toast';
 import * as api from '@/lib/api-client';
@@ -94,8 +93,6 @@ export default function PlanBGNPage() {
   const [inviteExpiration, setInviteExpiration] = useState(24);
   const [showEventDetails, setShowEventDetails] = useState(false);
   
-  // Invite generator
-  const [showInviteGenerator, setShowInviteGenerator] = useState(false);
   const [saving, setSaving] = useState(false);
   
   // Ref for scrolling to event details
@@ -308,8 +305,10 @@ export default function PlanBGNPage() {
     setShowVideoPicker(null);
   };
 
-  const handleGenerateInvite = () => {
-    setShowInviteGenerator(true);
+  const handleCancel = () => {
+    if (confirm('Are you sure you want to cancel? All your selections will be lost.')) {
+      router.push('/collection');
+    }
   };
 
   const handleSave = async () => {
@@ -400,10 +399,6 @@ Sent via Board Game Night App 🎲`;
       addToast(message, 'error');
       setSaving(false);
     }
-  };
-
-  const handleDontSave = () => {
-    setShowInviteGenerator(false);
   };
 
   if (status === 'loading' || loading) {
@@ -723,13 +718,15 @@ Sent via Board Game Night App 🎲`;
                 customMessage={customMessage}
                 selectedPlayers={selectedPlayers}
                 inviteExpiration={inviteExpiration}
+                saving={saving}
                 onDateTimeChange={setEventDateTime}
                 onLocationChange={setLocation}
                 onCustomMessageChange={setCustomMessage}
                 onPlayersChange={setSelectedPlayers}
                 onAddPlayer={handleAddPlayer}
                 onInviteExpirationChange={setInviteExpiration}
-                onGenerateInvite={handleGenerateInvite}
+                onSave={handleSave}
+                onCancel={handleCancel}
               />
             )}
           </div>
@@ -744,19 +741,6 @@ Sent via Board Game Night App 🎲`;
           onSkip={handleSkipVideo}
         />
       )}
-
-      <InviteGenerator
-        isOpen={showInviteGenerator}
-        onClose={() => setShowInviteGenerator(false)}
-        selectedGames={selectedGames}
-        selectedVideos={selectedVideos}
-        eventDateTime={eventDateTime}
-        location={location}
-        customMessage={customMessage}
-        selectedPlayers={selectedPlayers}
-        onSave={handleSave}
-        onDontSave={handleDontSave}
-      />
     </>
   );
 }

@@ -16,13 +16,15 @@ interface EventDetailsFormProps {
   customMessage: string;
   selectedPlayers: Player[];
   inviteExpiration: number;
+  saving?: boolean;
   onDateTimeChange: (value: string) => void;
   onLocationChange: (value: string) => void;
   onCustomMessageChange: (value: string) => void;
   onPlayersChange: (players: Player[]) => void;
   onAddPlayer: (name: string) => Promise<Player | null>;
   onInviteExpirationChange: (value: number) => void;
-  onGenerateInvite: () => void;
+  onSave: () => void;
+  onCancel: () => void;
 }
 
 const EXPIRATION_OPTIONS = [
@@ -39,13 +41,15 @@ export function EventDetailsForm({
   customMessage,
   selectedPlayers,
   inviteExpiration,
+  saving = false,
   onDateTimeChange,
   onLocationChange,
   onCustomMessageChange,
   onPlayersChange,
   onAddPlayer,
   onInviteExpirationChange,
-  onGenerateInvite,
+  onSave,
+  onCancel,
 }: EventDetailsFormProps) {
   // datetime-local input returns/expects format: YYYY-MM-DDTHH:mm
   // No conversion needed - use the string value directly to avoid timezone issues
@@ -123,8 +127,19 @@ export function EventDetailsForm({
       </div>
 
       <div className={styles.actions}>
-        <button className={styles.generateBtn} onClick={onGenerateInvite}>
-          Generate Invite
+        <button
+          className={styles.cancelBtn}
+          onClick={onCancel}
+          disabled={saving}
+        >
+          Cancel
+        </button>
+        <button
+          className={styles.generateBtn}
+          onClick={onSave}
+          disabled={saving}
+        >
+          {saving ? 'Saving...' : 'Save & Close'}
         </button>
       </div>
     </div>
