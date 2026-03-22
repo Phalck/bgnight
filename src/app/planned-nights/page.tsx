@@ -382,7 +382,7 @@ Sent via Board Game Night App 🎲`;
                           onClick={() => regenerateInvite(night)}
                           title="Copy invite to clipboard"
                         >
-                          📋
+                          ✉️
                         </button>
                         <button
                           className={styles.editBtn}
