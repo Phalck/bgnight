@@ -44,12 +44,12 @@ export function RestoreModal({ type, onClose }: RestoreModalProps) {
 
     try {
       const content = await file.text();
-      const data = JSON.parse(content);
+      const backupData = JSON.parse(content);
 
       const response = await fetch(`/api/restore/${type}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data, dryRun: true }),
+        body: JSON.stringify({ games: backupData.games }),
       });
 
       const result = await response.json();
@@ -62,7 +62,7 @@ export function RestoreModal({ type, onClose }: RestoreModalProps) {
         setConflicts(result.conflicts);
         setStep('conflicts');
       } else {
-        await performRestore(data);
+        await performRestore(backupData);
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to analyze file';
@@ -70,22 +70,28 @@ export function RestoreModal({ type, onClose }: RestoreModalProps) {
     }
   };
 
-  const performRestore = async (data: unknown) => {
+  const performRestore = async (backupData: { games: unknown[] }) => {
     setStep('restoring');
 
     try {
-      const resolutions: Record<number, string> = {};
-      conflictResolutions.forEach((resolution, index) => {
-        resolutions[index] = resolution;
-      });
+      // Get a single conflict resolution strategy
+      // If no conflicts or multiple different resolutions, default to 'skip'
+      let conflictResolution: 'skip' | 'replace' | 'keepBoth' = 'skip';
+      if (conflictResolutions.size > 0) {
+        const resolutions = Array.from(conflictResolutions.values());
+        const firstResolution = resolutions[0];
+        // Only use the resolution if all conflicts have the same resolution
+        if (resolutions.every(r => r === firstResolution)) {
+          conflictResolution = firstResolution;
+        }
+      }
 
       const response = await fetch(`/api/restore/${type}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          data, 
-          dryRun: false,
-          conflictResolutions: Object.keys(resolutions).length > 0 ? resolutions : undefined
+          games: backupData.games,
+          conflictResolution
         }),
       });
 
@@ -122,8 +128,8 @@ export function RestoreModal({ type, onClose }: RestoreModalProps) {
     }
 
     file?.text().then(content => {
-      const data = JSON.parse(content);
-      performRestore(data);
+      const backupData = JSON.parse(content);
+      performRestore(backupData);
     });
   };
 
