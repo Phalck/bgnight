@@ -34,6 +34,10 @@ export default function Home() {
           <p className={styles.subtitle}>
             Manage your board game collection and find the perfect game for any occasion
           </p>
+          <a href="/game-nights" className={styles.browseBox}>
+            <span className={styles.browseIcon}>📅</span>
+            <span className={styles.browseText}>Browse upcoming board game nights</span>
+          </a>
           <div className={styles.features}>
             <div className={styles.feature}>
               <span className={styles.featureIcon}>📚</span>
