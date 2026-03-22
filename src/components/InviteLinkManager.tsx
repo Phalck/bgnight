@@ -36,33 +36,6 @@ export function InviteLinkManager({
   const isExpired = inviteExpiresAt ? new Date() > new Date(inviteExpiresAt) : false;
   const isActive = inviteEnabled && inviteToken && !isExpired;
 
-  const formatExpiration = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('sv-SE', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const getTimeRemaining = (dateString: string) => {
-    const expiresAt = new Date(dateString);
-    const now = new Date();
-    const diff = expiresAt.getTime() - now.getTime();
-
-    if (diff <= 0) return 'Expired';
-
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m remaining`;
-    }
-    return `${minutes}m remaining`;
-  };
-
   const handleGenerate = async () => {
     setLoading(true);
     try {
@@ -126,12 +99,22 @@ export function InviteLinkManager({
     }
   };
 
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = async () => {
+    const url = getInviteUrl();
+    if (!url) return;
+    
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(url);
       addToast('Link copied to clipboard!', 'success');
     } catch {
       addToast('Failed to copy link', 'error');
+    }
+  };
+
+  const visitPage = () => {
+    const url = getInviteUrl();
+    if (url) {
+      window.open(url, '_blank');
     }
   };
 
@@ -143,13 +126,17 @@ export function InviteLinkManager({
   if (!isActive && !showGenerateForm) {
     return (
       <div className={styles.container}>
-        <button
-          className={styles.generateBtn}
-          onClick={() => setShowGenerateForm(true)}
-          disabled={loading}
-        >
-          {loading ? <LoadingSpinner size="small" /> : '🔗 Generate Invite Link'}
-        </button>
+        <div className={styles.statusRow}>
+          <span className={styles.statusText}>Player RSVP link has expired</span>
+          <button
+            className={styles.iconBtn}
+            onClick={() => setShowGenerateForm(true)}
+            disabled={loading}
+            title="Generate new invite link"
+          >
+            {loading ? <LoadingSpinner size="small" /> : '🔗'}
+          </button>
+        </div>
       </div>
     );
   }
@@ -194,47 +181,45 @@ export function InviteLinkManager({
 
   return (
     <div className={styles.container}>
-      <div className={styles.linkInfo}>
-        <div className={styles.status}>
-          <span className={styles.statusActive}>●</span>
-          <span>Active</span>
-          {inviteExpiresAt && (
-            <span className={styles.expiration}>
-              (Expires: {formatExpiration(inviteExpiresAt)} - {getTimeRemaining(inviteExpiresAt)})
-            </span>
-          )}
-        </div>
-        <div className={styles.linkDisplay}>
-          <input
-            type="text"
-            value={getInviteUrl()}
-            readOnly
-            className={styles.linkInput}
-          />
+      <div className={styles.statusRow}>
+        <span className={styles.statusTextActive}>
+          <span className={styles.statusDotActive}>●</span>
+          Player RSVP link is active
+        </span>
+        <div className={styles.iconActions}>
           <button
-            className={styles.copyBtn}
-            onClick={() => copyToClipboard(getInviteUrl())}
-            title="Copy link"
+            className={styles.iconBtn}
+            onClick={copyToClipboard}
+            disabled={loading}
+            title="Copy link to clipboard"
           >
             📋
           </button>
+          <button
+            className={styles.iconBtn}
+            onClick={visitPage}
+            disabled={loading}
+            title="Visit invite page"
+          >
+            🔗
+          </button>
+          <button
+            className={styles.iconBtn}
+            onClick={handleRegenerate}
+            disabled={loading}
+            title="Regenerate link"
+          >
+            {loading ? <LoadingSpinner size="small" /> : '🔄'}
+          </button>
+          <button
+            className={styles.iconBtn + ' ' + styles.iconBtnDanger}
+            onClick={handleDisable}
+            disabled={loading}
+            title="Disable link"
+          >
+            🚫
+          </button>
         </div>
-      </div>
-      <div className={styles.actions}>
-        <button
-          className={styles.regenerateBtn}
-          onClick={handleRegenerate}
-          disabled={loading}
-        >
-          {loading ? <LoadingSpinner size="small" /> : '🔄 Regenerate'}
-        </button>
-        <button
-          className={styles.disableBtn}
-          onClick={handleDisable}
-          disabled={loading}
-        >
-          {loading ? <LoadingSpinner size="small" /> : '🚫 Disable'}
-        </button>
       </div>
     </div>
   );

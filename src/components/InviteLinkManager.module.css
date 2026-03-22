@@ -6,6 +6,67 @@
   border-radius: 8px;
 }
 
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.statusText {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.statusTextActive {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statusDotActive {
+  color: #22c55e;
+  font-size: 0.75rem;
+}
+
+.iconActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.iconBtn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.iconBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: rgba(230, 169, 25, 0.1);
+}
+
+.iconBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.iconBtnDanger:hover:not(:disabled) {
+  border-color: var(--secondary);
+  background: rgba(233, 69, 96, 0.1);
+}
+
 .generateBtn {
   background: var(--primary);
   color: var(--bg-dark);
@@ -80,6 +141,12 @@
   color: var(--text-primary);
 }
 
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Legacy styles - keeping for compatibility */
 .linkInfo {
   margin-bottom: 0.75rem;
 }
