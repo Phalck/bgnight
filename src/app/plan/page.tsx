@@ -346,11 +346,55 @@ export default function PlanBGNPage() {
         expirationHours: inviteExpiration,
       });
 
-      // Copy the invite link to clipboard
-      await navigator.clipboard.writeText(inviteResponse.url);
+      // Generate the full invite text with the link
+      const formatPlayers = (min: number, max: number) => {
+        if (min === max) return `${min} players`;
+        return `${min}-${max} players`;
+      };
+
+      const formatDateTime = (datetimeString: string) => {
+        if (!datetimeString) return '';
+        const [datePart, timePart] = datetimeString.split('T');
+        if (!datePart || !timePart) return '';
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hours, minutes] = timePart.split(':').map(Number);
+        const date = new Date(year, month - 1, day, hours, minutes);
+        return date.toLocaleString('sv-SE', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+      };
+
+      const gamesList = selectedGames.map((game, index) => {
+        const video = selectedVideos.get(game.id);
+        return `${index + 1}. ${game.title}
+   👥 ${formatPlayers(game.minPlayers, game.maxPlayers)}
+   ⏱️ ${game.maxPlayTime || '?'} minutes${video ? `
+   📺 How to play: https://youtube.com/watch?v=${video.id}` : ''}`;
+      }).join('\n\n');
+
+      const inviteText = `🎲 Game Night Invitation! 🎲
+
+${customMessage ? customMessage + '\n\n' : ''}Hey everyone! Let's play some board games:
+
+${gamesList}
+
+${eventDateTime ? `📅 When: ${formatDateTime(eventDateTime)}\n` : ''}${location ? `📍 Where: ${location}\n` : ''}${selectedPlayers.length > 0 ? `👥 Who's coming: ${selectedPlayers.map(p => p.name).join(', ')}\n` : ''}
+🔗 RSVP and vote on games here: ${inviteResponse.url}
+
+Looking forward to seeing you all there!
+
+Sent via Board Game Night App 🎲`;
+
+      // Copy the full invite text to clipboard
+      await navigator.clipboard.writeText(inviteText);
 
       router.push('/planned-nights');
-      addToast('Game night planned successfully! Invite link copied to clipboard.', 'success');
+      addToast('Game night planned successfully! Invite copied to clipboard.', 'success');
     } catch (err) {
       const message = api.getErrorMessage(err);
       addToast(message, 'error');
