@@ -138,7 +138,7 @@ function parseGameXML(xml: string): { gameData: BGGGameData | null; errors: stri
     const bggRating = parseFloat(item.statistics?.ratings?.average?.['@_value']) || 0;
 
     const gameData: BGGGameData = {
-      title,
+      title: decodeHtmlEntities(title),
       description: decodeHtmlEntities(item.description),
       yearPublished: parseInt(item.yearpublished?.['@_value'], 10) || 0,
       minPlayers: parseInt(item.minplayers?.['@_value'], 10) || 1,

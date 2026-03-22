@@ -15,6 +15,45 @@ interface CSVRow {
   itemtype: string;
 }
 
+function decodeHtmlEntities(text: string): string {
+  if (!text) return '';
+  
+  const entities: { [key: string]: string } = {
+    '&quot;': '"',
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&apos;': "'",
+    '&#39;': "'",
+    '&#039;': "'",
+    '&nbsp;': ' ',
+    '&ndash;': '–',
+    '&mdash;': '—',
+    '&lsquo;': ''',
+    '&rsquo;': ''',
+    '&ldquo;': '"',
+    '&rdquo;': '"',
+    '&hellip;': '…',
+  };
+  
+  let decoded = text;
+  
+  // Replace named entities
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replace(new RegExp(entity, 'g'), char);
+  }
+  
+  // Replace numeric entities (decimal and hexadecimal)
+  decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
+    return String.fromCharCode(parseInt(dec, 10));
+  });
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+  
+  return decoded;
+}
+
 function parseCSV(text: string): CSVRow[] {
   const lines = text.trim().split('\n');
   
@@ -188,7 +227,7 @@ export async function POST(request: NextRequest) {
         await prisma.game.create({
           data: {
             bggId,
-            title: row.objectname.replace(/"/g, ''),
+            title: decodeHtmlEntities(row.objectname.replace(/"/g, '')),
             thumbnail: null,
             image: null,
             minPlayers,
