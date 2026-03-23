@@ -34,12 +34,13 @@ Board Game Night is your all-in-one companion for organizing tabletop gaming ses
 - **Vote tracking** - See vote counts and voter names for each game
 - **RSVP statistics** - Track responses: Coming, Maybe, Not Coming, No Response
 
-### 🌐 Public Game Nights
+### 🌐 Community BGNs
 - **Browse all events** - Public page showing game nights from all users (no login required)
 - **Filter by organizer** - View events by specific organizers
 - **Date filtering** - Filter by Today, This Week, This Month, or All dates
 - **Event discovery** - Find upcoming board game nights in your community
 - **Read-only view** - See event details, games, and RSVP counts without needing an account
+- **Your Event badge** - Your own planned nights are highlighted with a special badge so you can easily spot them
 
 ### 📊 Play Tracking
 - **Log plays** - Record who played what, when, and who won
@@ -47,8 +48,8 @@ Board Game Night is your all-in-one companion for organizing tabletop gaming ses
 - **Statistics** - View play history and game statistics
 - **Ratings & notes** - Rate games and add personal notes
 
-### 📈 Past BGNs Statistics
-The Past BGNs page includes a comprehensive statistics panel that displays insights from all your logged game nights:
+### 📈 My Past BGNs Statistics
+The My Past BGNs page includes a comprehensive statistics panel that displays insights from all your logged game nights:
 
 - **Top Winner** - Player with the most wins (displays "(tied)" when multiple players share the top spot)
 - **Most Played Games** - Top 3 games ranked by play count
@@ -78,7 +79,7 @@ The first user to register automatically becomes an admin and gains access to th
 ## 🚀 How to Use
 
 ### Getting Started
-1. **Browse public game nights** - Visit the landing page and click "Browse upcoming board game nights" to see events from all users (no login required!)
+1. **Browse Community BGNs** - Visit the landing page and click "Browse upcoming board game nights" to see events from all users (no login required!)
 2. **Create an account** - Sign up with your email at https://bgnight.vercel.app
    - If the site is in **invite-only mode**, you will need an invite code from an administrator
    - The invite code field will appear automatically when required
@@ -148,8 +149,8 @@ The **weight** (complexity) and **BGG rating** are imported from BoardGameGeek a
 5. Select invite link expiration (4h, 8h, 24h, or 48h)
 6. Click **Save & Close** - the invite link is automatically copied to your clipboard!
 
-### Managing Planned Game Nights
-1. Go to **Planned BGNs** to view all your events
+### Managing Your Planned Game Nights
+1. Go to **My Planned BGNs** to view all your events
 2. **Edit** (✏️) - Modify games, players, or event details
 3. **Cancel** - Delete a planned night
 4. **Copy Invite** (✉️) - Copy the invite text with link to clipboard
@@ -169,6 +170,15 @@ Players can:
 - RSVP (Coming/Maybe/Not Coming)
 - Vote on games they're interested in playing
 - View other players' responses and votes
+
+### Browsing Community BGNs
+1. Go to **Community BGNs** in the navigation (or click "Browse upcoming board game nights" on the homepage)
+2. Browse upcoming game nights from all users
+3. Filter by organizer or date range (Today, This Week, This Month)
+4. **Your events** are highlighted with a "Your Event" badge and gold border
+5. View event details, games, and RSVP statistics (read-only)
+
+**Note:** Community BGNs is a read-only view. To RSVP or vote on games, you need to use the invite link sent by the organizer.
 
 ### Logging Plays
 1. From your collection, click on a game

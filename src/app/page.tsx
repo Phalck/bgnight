@@ -59,6 +59,11 @@ export default function Home() {
               <h3>Plan your game nights</h3>
               <p>Pick a date, one or more games and send an invite with learn to play videos</p>
             </div>
+            <div className={styles.feature}>
+              <span className={styles.featureIcon}>🌐</span>
+              <h3>Discover Community Events</h3>
+              <p>Browse upcoming board game nights from the community. See what others are playing and find events near you.</p>
+            </div>
           </div>
           <div className={styles.cta}>
             <a href="/login" className={styles.primaryBtn}>
