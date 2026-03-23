@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Header } from '@/components/Header';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import styles from './page.module.css';
@@ -43,7 +44,8 @@ const DATE_FILTERS = [
   { value: 'month', label: 'This Month' },
 ];
 
-export default function GameNightsPage() {
+export default function CommunityBGNsPage() {
+  const { data: session } = useSession();
   const [plannedNights, setPlannedNights] = useState<PlannedNight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +54,9 @@ export default function GameNightsPage() {
   // Filter states
   const [selectedOrganizer, setSelectedOrganizer] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+
+  // Get current user's name to identify their events
+  const currentUserName = session?.user?.name || null;
 
   useEffect(() => {
     fetchPlannedNights();
@@ -119,8 +124,8 @@ export default function GameNightsPage() {
       <main className={styles.main}>
         <div className={styles.container}>
           <div className={styles.header}>
-            <h1 className={styles.title}>📅 Public Game Nights</h1>
-            <p className={styles.subtitle}>Discover board game nights happening near you</p>
+            <h1 className={styles.title}>🌐 Community BGNs</h1>
+            <p className={styles.subtitle}>Discover board game nights happening in your community</p>
           </div>
 
           {/* Filters */}
@@ -174,9 +179,14 @@ export default function GameNightsPage() {
           ) : (
             <div className={styles.nightsList}>
               {plannedNights.map((night) => (
-                <div key={night.id} className={styles.nightCard}>
+                <div key={night.id} className={`${styles.nightCard} ${currentUserName && night.organizer === currentUserName ? styles.yourEvent : ''}`}>
                   <div className={styles.nightHeader}>
-                    <h2 className={styles.nightTitle}>🎲 Game Night</h2>
+                    <div className={styles.nightTitleRow}>
+                      <h2 className={styles.nightTitle}>🎲 Game Night</h2>
+                      {currentUserName && night.organizer === currentUserName && (
+                        <span className={styles.yourEventBadge}>Your Event</span>
+                      )}
+                    </div>
                     <div className={styles.nightMeta}>
                       <p className={styles.organizer}>👤 {night.organizer}</p>
                       <p className={styles.date}>📅 {formatDate(night.eventDateTime)}</p>

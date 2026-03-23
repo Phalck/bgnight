@@ -374,7 +374,7 @@ Sent via Board Game Night App 🎲`;
         <div className={styles.container}>
           <div className={styles.header}>
             <div>
-              <h1 className={styles.title}>Planned BGNs</h1>
+              <h1 className={styles.title}>My Planned BGNs</h1>
               <p className={styles.subtitle}>Your planned board game nights</p>
             </div>
             <a href="/plan" className={styles.planBtn}>+ Plan New Night</a>

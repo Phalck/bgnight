@@ -128,8 +128,9 @@ export function Header() {
   const navLinks = session ? [
     { href: '/collection', label: 'My Collection' },
     { href: '/plan', label: 'Plan BGN' },
-    { href: '/planned-nights', label: 'Planned BGNs' },
-    { href: '/plays', label: 'Past BGNs' },
+    { href: '/planned-nights', label: 'My Planned BGNs' },
+    { href: '/plays', label: 'My Past BGNs' },
+    { href: '/community-bgn', label: 'Community BGNs' },
   ] : [];
 
   return (

@@ -329,7 +329,7 @@ export default function PastBGNsPage() {
         <div className={styles.container}>
           <div className={styles.header}>
             <div>
-              <h1 className={styles.title}>Past BGNs</h1>
+              <h1 className={styles.title}>My Past BGNs</h1>
               <p className={styles.subtitle}>Your game night history</p>
             </div>
             <span className={styles.count}>{plays.length} play{plays.length !== 1 ? 's' : ''} logged</span>

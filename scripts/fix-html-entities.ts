@@ -44,15 +44,15 @@ function decodeHtmlEntities(text: string): string {
     '&hellip;': '…',
     '&laquo;': '«',
     '&raquo;': '»',
-    '&lsquo;': ''',
-    '&rsquo;': ''',
-    '&ldquo;': '"',
-    '&rdquo;': '"',
   };
   
   for (const [entity, char] of Object.entries(namedEntities)) {
     decoded = decoded.replace(new RegExp(entity, 'g'), char);
   }
+  
+  // Handle curly quotes separately to avoid syntax issues
+  decoded = decoded.replace(/&lsquo;|&rsquo;/g, "'");
+  decoded = decoded.replace(/&ldquo;|&rdquo;/g, '"');
   
   return decoded;
 }
