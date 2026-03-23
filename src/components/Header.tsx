@@ -141,19 +141,26 @@ export function Header() {
           <span className={styles.logoText}>Board Game Night</span>
         </Link>
 
-        {session && (
-          <nav className={styles.nav}>
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`${styles.navLink} ${isActive(link.href) ? styles.active : ''}`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        )}
+        <nav className={styles.nav}>
+          {/* Public link - always visible */}
+          <Link
+            href="/community-bgn"
+            className={`${styles.navLink} ${isActive('/community-bgn') ? styles.active : ''}`}
+          >
+            Community BGNs
+          </Link>
+          
+          {/* Private links - only when logged in */}
+          {session && navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`${styles.navLink} ${isActive(link.href) ? styles.active : ''}`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
 
         <div className={styles.user}>
           {session ? (
@@ -221,6 +228,13 @@ export function Header() {
 
             {session ? (
               <nav className={styles.mobileNav}>
+                <Link
+                  href="/community-bgn"
+                  className={`${styles.mobileNavLink} ${isActive('/community-bgn') ? styles.active : ''}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Community BGNs
+                </Link>
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
@@ -356,6 +370,13 @@ export function Header() {
               </nav>
             ) : (
               <nav className={styles.mobileNav}>
+                <Link
+                  href="/community-bgn"
+                  className={`${styles.mobileNavLink} ${isActive('/community-bgn') ? styles.active : ''}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Community BGNs
+                </Link>
                 <Link
                   href="/login"
                   className={styles.mobileNavLink}
