@@ -14,7 +14,9 @@
     "vercel-build": "./build.sh",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "fix:entities:dry-run": "npx ts-node scripts/fix-html-entities.ts --dry-run",
+    "fix:entities:apply": "npx ts-node scripts/fix-html-entities.ts --apply"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
