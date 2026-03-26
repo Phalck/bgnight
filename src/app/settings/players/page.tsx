@@ -336,7 +336,7 @@ export default function PlayersManagementPage() {
                     {player.linkedUser ? (
                       <button
                         onClick={() => handleUnlink(player)}
-                        className={styles.actionBtn}
+                        className={`${styles.actionBtn} ${styles.actionBtnWide}`}
                         title="Unlink from user"
                       >
                         🔗❌

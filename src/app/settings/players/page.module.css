@@ -226,6 +226,10 @@
   cursor: not-allowed;
 }
 
+.actionBtnWide {
+  width: 80px;
+}
+
 /* Modal */
 .modalOverlay {
   position: fixed;
