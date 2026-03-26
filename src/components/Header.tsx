@@ -130,7 +130,6 @@ export function Header() {
     { href: '/plan', label: 'Plan BGN' },
     { href: '/planned-nights', label: 'My Planned BGNs' },
     { href: '/plays', label: 'My Past BGNs' },
-    { href: '/community-bgn', label: 'Community BGNs' },
   ] : [];
 
   return (
