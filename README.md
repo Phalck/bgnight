@@ -10,6 +10,20 @@ Board Game Night is your all-in-one companion for organizing tabletop gaming ses
 
 ## ✨ Features
 
+### 🔔 Inbox System
+Receive automatic invitations when you're added to board game nights:
+- **Real-time notifications** - Bell icon with unread badge and animations
+- **Automatic invitations** - Sent when linked players are added to planned nights
+- **RSVP countdown** - Dynamic expiration timer on invitations
+- **Full inbox management** - Mark read, delete, filter messages
+- **Auto-cleanup** - Messages removed 24 hours after event date
+
+### 👤 Player Linking & Profile Settings
+- **Link players to users** - Connect players to registered accounts
+- **Profile privacy controls** - Choose who can link to you and see your email
+- **Visual indicators** - 👤 symbol shows linked players in selectors
+- **Bidirectional unlinking** - Both owner and linked user can unlink
+
 ### 🎮 Game Collection Management
 - **Import from BoardGameGeek** - Sync your BGG collection automatically
 - **Bulk Update from BGG** - Refresh all games with latest BGG data (weight, rating, descriptions)
@@ -61,6 +75,40 @@ The statistics panel is always visible alongside the filters, showing helpful pl
 - **Backup** - Export your collection and play logs as JSON
 - **Restore** - Import backups with conflict resolution
 - **Account deletion** - Secure account removal with email verification
+
+### 👤 Profile Settings & Player Management
+- **Profile Settings** - Control your visibility and privacy preferences:
+  - **Allow Player Linking** - Let others link their players to your account
+  - **Show Email in Search** - Display your email when others search for users to link
+- **Manage Players** - Full player management with linking capabilities:
+  - **Add Players** - Create new players for your game nights
+  - **Edit Names** - Update player names anytime
+  - **Link to Users** - Connect players to registered user accounts (if they allow it)
+  - **Unlink Players** - Both the player owner and linked user can unlink
+  - **View Stats** - See game and win counts for each player
+  - **Delete Players** - Soft delete with confirmation
+- **Linked Player Indicator** - Players linked to users show a 👤 symbol in selectors
+
+### 📬 Inbox System
+Receive and manage board game night invitations directly in the app:
+- **Automatic Invitations** - When you're added as a linked player to a BGN, you receive an inbox message
+- **Real-Time Notifications** - Bell icon in header shows unread count and animates on new messages
+- **Toast Notifications** - Instant alerts when new invitations arrive (5 second display)
+- **Polling** - Checks for new messages every 30 seconds
+- **Message Details**:
+  - Event date, time, and location
+  - Sender name
+  - Dynamic RSVP expiration countdown
+  - Direct RSVP link button
+- **Inbox Dropdown** - Quick access to 5 most recent messages from the header bell
+- **Full Inbox Page** (`/inbox`) - View all messages with filters:
+  - **All Messages** - Complete message history
+  - **Unread** - Filter to see only unread messages
+  - **Mark All Read** - One-click to mark everything as read
+  - **Delete All** - Remove all messages at once
+- **Message Actions** - Mark as read, delete individual messages
+- **Auto-Cleanup** - Messages automatically deleted 24 hours after the event date
+- **Privacy** - Only users who have enabled "Allow Player Linking" in their profile can receive inbox invitations
 
 ### 👑 Admin Panel (Admin Users Only)
 The first user to register automatically becomes an admin and gains access to the admin panel at `/admin`.
@@ -145,9 +193,10 @@ The **weight** (complexity) and **BGG rating** are imported from BoardGameGeek a
 1. Go to **Plan BGN**
 2. Select games from your collection
 3. Set the date, time, and location
-4. Choose players to invite
+4. Choose players to invite (👤 indicates linked players who will receive inbox notifications)
 5. Select invite link expiration (4h, 8h, 24h, or 48h)
 6. Click **Save & Close** - the invite link is automatically copied to your clipboard!
+7. **Automatic inbox invitations** are sent to all linked players
 
 ### Managing Your Planned Game Nights
 1. Go to **My Planned BGNs** to view all your events
@@ -180,12 +229,49 @@ Players can:
 
 **Note:** Community BGNs is a read-only view. To RSVP or vote on games, you need to use the invite link sent by the organizer.
 
+### Player Linking and Inbox Invitations
+The app supports linking players to user accounts for automatic invitation delivery:
+
+#### Setting Up Player Linking
+**For the inviter:**
+1. Go to **Settings** → **Manage Players**
+2. Click **Add Player** to create players for your game nights
+3. Click the **🔗 Link** button next to a player
+4. Search for users who have enabled "Allow Player Linking" in their profile
+5. Select the user to link
+
+**For users who want to receive invitations:**
+1. Go to **Settings** → **Profile**
+2. Enable **"Allow others to add you as a player"**
+3. Optionally enable **"Show email in search"** to help others identify you
+4. Save your settings
+
+#### How Inbox Invitations Work
+When you plan a game night and select linked players:
+1. Create a game night at **Plan BGN**
+2. Select players (those with 👤 are linked to users)
+3. Save the planned night
+4. **Automatic invitations** are sent to all linked players' inboxes
+5. Recipients get:
+   - Real-time toast notification (if online)
+   - Inbox message with event details and RSVP countdown
+   - Direct link to RSVP page
+
+#### Managing Your Inbox
+- **Bell Icon** - Click the 🔔 in the header to see 5 most recent messages
+- **Unread Badge** - Red circle shows count of unread messages
+- **New Message Animation** - Bell pulses when new invitations arrive
+- **View All** - Click "View All Messages" to go to the full inbox page
+- **Filters** - Switch between "All Messages" and "Unread"
+- **Actions** - Mark as read, delete messages, or RSVP directly
+
 ### Logging Plays
 1. From your collection, click on a game
 2. Click **Log Play**
-3. Select players and winners
-4. Add optional details (duration, rating, notes)
-5. Save to track your gaming history
+3. Select players (👤 indicates linked users)
+4. Select winners
+5. Add optional details (duration, rating, notes)
+6. Save to track your gaming history
 
 ### Backup & Restore
 1. Click **Settings** (⚙️) in the header
@@ -295,6 +381,20 @@ The admin dashboard displays:
 - `GET /api/invite/[token]` - View public invite page data
 - `POST /api/invite/[token]/rsvp` - Submit RSVP response
 - `POST /api/invite/[token]/vote` - Vote on games
+
+### Inbox Routes
+- `GET /api/inbox` - List inbox messages with dynamic RSVP expiration
+- `GET /api/inbox/unread-count` - Get unread message count (for badge)
+- `PATCH /api/inbox/[id]/read` - Mark message as read
+- `PATCH /api/inbox/read-all` - Mark all messages as read
+- `DELETE /api/inbox/[id]` - Delete message
+
+### User & Player Routes
+- `GET/PUT /api/user/profile` - Get/update profile settings (player linking, email visibility)
+- `GET /api/users/search` - Search users who allow player linking
+- `GET/POST /api/players` - List/create players
+- `PUT/DELETE /api/players/[id]` - Update/delete player
+- `PUT/DELETE /api/players/[id]/link` - Link/unlink player to user
 
 ## 🔐 Environment Variables
 
