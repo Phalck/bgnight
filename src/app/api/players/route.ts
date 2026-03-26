@@ -91,6 +91,20 @@ export async function POST(request: NextRequest) {
         name: trimmedName,
         userId: session.user.id,
       },
+      include: {
+        _count: {
+          select: {
+            playLogs: true,
+            wins: true,
+          },
+        },
+        linkedUser: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
     
     return NextResponse.json(player);
