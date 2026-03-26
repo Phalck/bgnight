@@ -37,6 +37,9 @@ export default function PlayersManagementPage() {
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
   const [searching, setSearching] = useState(false);
   const [deletingPlayer, setDeletingPlayer] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newPlayerName, setNewPlayerName] = useState('');
+  const [addingPlayer, setAddingPlayer] = useState(false);
 
   const fetchPlayers = useCallback(async () => {
     try {
@@ -196,6 +199,42 @@ export default function PlayersManagementPage() {
     }
   };
 
+  const handleAddPlayer = async () => {
+    if (!newPlayerName.trim()) {
+      addToast('Player name is required', 'error');
+      return;
+    }
+
+    setAddingPlayer(true);
+    try {
+      const res = await fetch('/api/players', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newPlayerName.trim() }),
+      });
+
+      if (res.ok) {
+        const newPlayer = await res.json();
+        setPlayers([...players, newPlayer].sort((a, b) => a.name.localeCompare(b.name)));
+        setNewPlayerName('');
+        setShowAddModal(false);
+        addToast('Player created successfully', 'success');
+      } else {
+        const error = await res.json();
+        addToast(error.error || 'Failed to create player', 'error');
+      }
+    } catch (error) {
+      addToast('Failed to create player', 'error');
+    } finally {
+      setAddingPlayer(false);
+    }
+  };
+
+  const handleAddModalClose = () => {
+    setShowAddModal(false);
+    setNewPlayerName('');
+  };
+
   if (loading) {
     return <div className={styles.loading}>Loading players...</div>;
   }
@@ -203,10 +242,21 @@ export default function PlayersManagementPage() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Manage Players</h1>
-        <p className={styles.subtitle}>
-          {players.length} active player{players.length !== 1 ? 's' : ''}
-        </p>
+        <div className={styles.headerContent}>
+          <div>
+            <h1 className={styles.title}>Manage Players</h1>
+            <p className={styles.subtitle}>
+              {players.length} active player{players.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className={styles.addPlayerBtn}
+          >
+            <span className={styles.addIcon}>+</span>
+            Add Player
+          </button>
+        </div>
       </div>
 
       {players.length === 0 ? (
@@ -368,6 +418,58 @@ export default function PlayersManagementPage() {
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Player Modal */}
+      {showAddModal && (
+        <div className={styles.modalOverlay} onClick={handleAddModalClose}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Add New Player</h3>
+              <button
+                onClick={handleAddModalClose}
+                className={styles.closeBtn}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className={styles.modalContent}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Player Name</label>
+                <input
+                  type="text"
+                  placeholder="Enter player name..."
+                  value={newPlayerName}
+                  onChange={(e) => setNewPlayerName(e.target.value)}
+                  className={styles.formInput}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddPlayer();
+                    if (e.key === 'Escape') handleAddModalClose();
+                  }}
+                />
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  onClick={handleAddPlayer}
+                  className={styles.saveBtn}
+                  disabled={addingPlayer || !newPlayerName.trim()}
+                >
+                  {addingPlayer ? 'Creating...' : 'Create Player'}
+                </button>
+                <button
+                  onClick={handleAddModalClose}
+                  className={styles.cancelBtn}
+                  disabled={addingPlayer}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
