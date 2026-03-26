@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect, useRef } from 'react';
 import { SettingsMenu } from './SettingsMenu';
+import { Inbox } from './Inbox';
 import { RestoreModal } from './RestoreModal';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { EmailVerificationModal } from './EmailVerificationModal';
@@ -164,7 +165,9 @@ export function Header() {
         <div className={styles.user}>
           {session ? (
             <>
-              <span className={styles.userName}>{session.user.name || session.user.email}</span>
+              <div className={styles.desktopInbox}>
+                <Inbox />
+              </div>
               <div className={styles.desktopSettings}>
                 <SettingsMenu />
               </div>

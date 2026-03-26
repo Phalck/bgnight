@@ -127,10 +127,44 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             name: true,
+            linkedUserId: true,
           },
         },
       },
     });
+    
+    // Create inbox messages for players with linked users
+    const senderName = session.user.name || session.user.email || 'Someone';
+    const eventDate = eventDateTime 
+      ? new Date(eventDateTime).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      : 'TBD';
+    
+    for (const player of plannedNight.players) {
+      if (player.linkedUserId) {
+        const messageText = customMessage 
+          ? `${customMessage}\n\nEvent Date: ${eventDate}${location ? `\nLocation: ${location}` : ''}`
+          : `You've been invited to a board game night on ${eventDate}.${location ? ` Location: ${location}` : ''}`;
+        
+        await prisma.inboxMessage.create({
+          data: {
+            userId: player.linkedUserId,
+            type: 'BGN_INVITE',
+            title: 'Board Game Night Invitation',
+            message: messageText,
+            plannedNightId: plannedNight.id,
+            senderName: senderName,
+            eventDateTime: eventDateTime ? new Date(eventDateTime) : null,
+          },
+        });
+      }
+    }
     
     return NextResponse.json(plannedNight);
   } catch (error) {

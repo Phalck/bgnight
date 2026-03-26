@@ -2,6 +2,29 @@
   position: relative;
 }
 
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-dark);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.userIcon {
+  font-size: 1.25rem;
+}
+
+.userName {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .settingsBtn {
   background: var(--surface);
   border: 1px solid var(--border);

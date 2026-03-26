@@ -67,9 +67,8 @@
   gap: 1rem;
 }
 
-.userName {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+.desktopInbox {
+  display: block;
 }
 
 .logoutBtn {
@@ -364,7 +363,7 @@
     display: none;
   }
 
-  .userName {
+  .desktopInbox {
     display: none;
   }
 

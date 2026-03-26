@@ -120,6 +120,13 @@ export function SettingsMenu() {
 
         {isOpen && (
           <div className={styles.dropdown}>
+            <div className={styles.userSection}>
+              <span className={styles.userIcon}>👤</span>
+              <span className={styles.userName}>{session?.user?.name || session?.user?.email}</span>
+            </div>
+
+            <div className={styles.divider} />
+
             <div className={styles.section}>
               <h4 className={styles.sectionTitle}>Settings</h4>
               <button

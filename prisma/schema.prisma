@@ -22,6 +22,7 @@ model User {
   linkedPlayers      Player[] @relation("LinkedPlayer")
   playLogs           PlayLog[]
   plannedGameNights  PlannedGameNight[]
+  inboxMessages      InboxMessage[]
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
@@ -127,6 +128,7 @@ model PlannedGameNight {
   customMessage   String?
   games           PlannedGame[]
   players         Player[]    @relation("PlannedGameNightPlayers")
+  inboxMessages   InboxMessage[]
   
   // Invite link fields
   inviteToken     String?   @unique
@@ -235,4 +237,25 @@ model BulkUpdateSession {
   
   @@index([userId])
   @@index([status])
+}
+
+model InboxMessage {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            String   // "BGN_INVITE"
+  title           String
+  message         String
+  plannedNightId  String?
+  plannedNight    PlannedGameNight? @relation(fields: [plannedNightId], references: [id], onDelete: Cascade)
+  inviteToken     String?
+  senderName      String
+  eventDateTime   DateTime?
+  isRead          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([eventDateTime])
 }
