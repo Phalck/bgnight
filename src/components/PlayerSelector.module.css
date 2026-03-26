@@ -141,3 +141,9 @@
   padding: 1rem;
   margin: 0;
 }
+
+.linkedIndicator {
+  font-size: 0.875rem;
+  opacity: 0.8;
+  cursor: help;
+}

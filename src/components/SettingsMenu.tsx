@@ -121,6 +121,30 @@ export function SettingsMenu() {
         {isOpen && (
           <div className={styles.dropdown}>
             <div className={styles.section}>
+              <h4 className={styles.sectionTitle}>Settings</h4>
+              <button
+                className={styles.menuItem}
+                onClick={() => {
+                  router.push('/settings/profile');
+                  setIsOpen(false);
+                }}
+              >
+                👤 Profile
+              </button>
+              <button
+                className={styles.menuItem}
+                onClick={() => {
+                  router.push('/settings/players');
+                  setIsOpen(false);
+                }}
+              >
+                🎮 Manage Players
+              </button>
+            </div>
+
+            <div className={styles.divider} />
+
+            <div className={styles.section}>
               <h4 className={styles.sectionTitle}>Backup</h4>
               <button
                 className={styles.menuItem}

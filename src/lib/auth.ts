@@ -39,6 +39,8 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
           mustChangePassword: user.mustChangePassword,
+          allowPlayerLinking: user.allowPlayerLinking,
+          showEmailInSearch: user.showEmailInSearch,
         };
       },
     }),
@@ -50,11 +52,18 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.mustChangePassword = user.mustChangePassword;
+        token.allowPlayerLinking = user.allowPlayerLinking;
+        token.showEmailInSearch = user.showEmailInSearch;
+      }
+      // Handle session update from client
+      if (trigger === "update" && session) {
+        token.allowPlayerLinking = session.allowPlayerLinking ?? token.allowPlayerLinking;
+        token.showEmailInSearch = session.showEmailInSearch ?? token.showEmailInSearch;
       }
       return token;
     },
@@ -63,6 +72,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.mustChangePassword = token.mustChangePassword as boolean;
+        session.user.allowPlayerLinking = token.allowPlayerLinking as boolean;
+        session.user.showEmailInSearch = token.showEmailInSearch as boolean;
       }
       return session;
     },

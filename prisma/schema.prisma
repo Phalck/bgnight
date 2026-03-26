@@ -15,8 +15,11 @@ model User {
   role               String   @default("USER")
   isActive           Boolean  @default(true)
   mustChangePassword Boolean  @default(false)
+  allowPlayerLinking Boolean  @default(false)
+  showEmailInSearch  Boolean  @default(false)
   games              Game[]
   players            Player[]
+  linkedPlayers      Player[] @relation("LinkedPlayer")
   playLogs           PlayLog[]
   plannedGameNights  PlannedGameNight[]
   createdAt          DateTime @default(now())
@@ -79,6 +82,8 @@ model Player {
   name              String
   userId            String
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  linkedUserId      String?
+  linkedUser        User?    @relation("LinkedPlayer", fields: [linkedUserId], references: [id], onDelete: SetNull)
   playLogs          PlayLog[] @relation("PlayLogPlayers")
   wins              PlayLog[] @relation("PlayLogWinners")
   plannedGameNights PlannedGameNight[] @relation("PlannedGameNightPlayers")
@@ -89,6 +94,7 @@ model Player {
 
   @@unique([name, userId])
   @@index([userId])
+  @@index([linkedUserId])
 }
 
 model PlayLog {

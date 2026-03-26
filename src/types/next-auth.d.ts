@@ -8,6 +8,8 @@ declare module 'next-auth' {
       name?: string | null;
       role: string;
       mustChangePassword: boolean;
+      allowPlayerLinking: boolean;
+      showEmailInSearch: boolean;
     };
   }
   interface User {
@@ -16,6 +18,8 @@ declare module 'next-auth' {
     name?: string | null;
     role: string;
     mustChangePassword: boolean;
+    allowPlayerLinking: boolean;
+    showEmailInSearch: boolean;
   }
 }
 
@@ -24,5 +28,7 @@ declare module 'next-auth/jwt' {
     id: string;
     role: string;
     mustChangePassword: boolean;
+    allowPlayerLinking: boolean;
+    showEmailInSearch: boolean;
   }
 }

@@ -6,6 +6,10 @@ import styles from './PlayerSelector.module.css';
 interface Player {
   id: string;
   name: string;
+  linkedUser?: {
+    id: string;
+    name: string | null;
+  } | null;
 }
 
 interface PlayerSelectorProps {
@@ -79,6 +83,11 @@ export function PlayerSelector({
             {selectedPlayers.map(player => (
               <span key={player.id} className={styles.selectedTag}>
                 {player.name}
+                {player.linkedUser && (
+                  <span className={styles.linkedIndicator} title={`Linked to: ${player.linkedUser.name || 'Unknown User'}`}>
+                    👤
+                  </span>
+                )}
                 <button
                   type="button"
                   className={styles.removeBtn}
@@ -129,7 +138,14 @@ export function PlayerSelector({
                   checked={false}
                   onChange={() => handleTogglePlayer(player)}
                 />
-                <span className={styles.playerName}>{player.name}</span>
+                <span className={styles.playerName}>
+                  {player.name}
+                  {player.linkedUser && (
+                    <span className={styles.linkedIndicator} title={`Linked to: ${player.linkedUser.name || 'Unknown User'}`}>
+                      {' '}👤
+                    </span>
+                  )}
+                </span>
               </label>
             ))}
           </div>

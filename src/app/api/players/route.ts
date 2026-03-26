@@ -30,6 +30,12 @@ export async function GET(request: NextRequest) {
             wins: true,
           },
         },
+        linkedUser: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
     
