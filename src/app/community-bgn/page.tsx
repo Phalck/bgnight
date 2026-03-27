@@ -204,21 +204,17 @@ export default function CommunityBGNsPage() {
                     {filter.label}
                   </button>
                 ))}
+                {session?.user && (
+                  <button
+                    className={`${styles.filterBtn} ${showOnlyParticipating ? styles.active : ''}`}
+                    onClick={() => setShowOnlyParticipating(!showOnlyParticipating)}
+                  >
+                    {showOnlyParticipating ? 'My BGNs' : 'All BGNs'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
-
-          {/* My BGNs Toggle */}
-          {session?.user && (
-            <div className={styles.myBgnsToggle}>
-              <button
-                className={`${styles.toggleBtn} ${showOnlyParticipating ? styles.active : ''}`}
-                onClick={() => setShowOnlyParticipating(!showOnlyParticipating)}
-              >
-                {showOnlyParticipating ? 'My BGNs' : 'All BGNs'}
-              </button>
-            </div>
-          )}
 
           {/* Content */}
           {loading ? (

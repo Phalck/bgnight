@@ -96,38 +96,6 @@
   color: var(--bg-dark);
 }
 
-/* My BGNs Toggle */
-.myBgnsToggle {
-  padding: 1rem 2rem;
-  background: var(--bg-dark);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-}
-
-.toggleBtn {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 0.5rem 1.25rem;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.toggleBtn:hover {
-  border-color: var(--primary);
-  color: var(--text-primary);
-}
-
-.toggleBtn.active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--bg-dark);
-}
-
 /* Loading, Error, Empty states */
 .loading,
 .error,
