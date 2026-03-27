@@ -117,6 +117,15 @@
   background: rgba(233, 69, 96, 0.1);
 }
 
+.menuItem.logout {
+  color: var(--text-secondary);
+}
+
+.menuItem.logout:hover {
+  background: var(--bg-dark);
+  color: var(--text-primary);
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .dropdown {

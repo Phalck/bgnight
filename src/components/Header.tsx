@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useState, useEffect, useRef } from 'react';
 import { SettingsMenu } from './SettingsMenu';
 import { Inbox } from './Inbox';
@@ -171,9 +171,6 @@ export function Header() {
               <div className={styles.desktopSettings}>
                 <SettingsMenu />
               </div>
-              <button onClick={() => signOut()} className={styles.logoutBtn}>
-                Logout
-              </button>
               
               {/* Mobile hamburger button */}
               <button 
@@ -359,16 +356,6 @@ export function Header() {
                     </div>
                   )}
                 </div>
-                
-                <button 
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    signOut();
-                  }}
-                  className={styles.mobileLogoutBtn}
-                >
-                  Logout
-                </button>
               </nav>
             ) : (
               <nav className={styles.mobileNav}>

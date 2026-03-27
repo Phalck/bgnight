@@ -264,6 +264,17 @@ export function SettingsMenu() {
                 </div>
               </>
             )}
+
+            <div className={styles.divider} />
+
+            <div className={styles.section}>
+              <button
+                className={`${styles.menuItem} ${styles.logout}`}
+                onClick={() => signOut()}
+              >
+                🚪 Logout
+              </button>
+            </div>
           </div>
         )}
       </div>
