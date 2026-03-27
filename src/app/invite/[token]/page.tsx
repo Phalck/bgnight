@@ -41,7 +41,6 @@ interface InviteData {
   id: string;
   eventDateTime?: string;
   location?: string;
-  customMessage?: string;
   games: Game[];
   players: Player[];
   playerResponses: PlayerResponse[];
@@ -296,12 +295,6 @@ export default function InvitePage() {
               {data.location && <p className={styles.location}>📍 {data.location}</p>}
             </div>
           </div>
-
-          {data.customMessage && (
-            <div className={styles.message}>
-              <p>{data.customMessage}</p>
-            </div>
-          )}
 
           {/* Player Selection */}
           <div className={styles.section}>

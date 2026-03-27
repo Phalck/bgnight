@@ -28,7 +28,6 @@ interface InviteGeneratorProps {
   selectedVideos: Map<string, YouTubeVideo>;
   eventDateTime: string;
   location: string;
-  customMessage: string;
   selectedPlayers: Player[];
   onSave: () => void;
   onDontSave: () => void;
@@ -41,7 +40,6 @@ export function InviteGenerator({
   selectedVideos,
   eventDateTime,
   location,
-  customMessage,
   selectedPlayers,
   onSave,
   onDontSave,
@@ -90,7 +88,7 @@ export function InviteGenerator({
 
     return `🎲 Game Night Invitation! 🎲
 
-${customMessage ? customMessage + '\n\n' : ''}Hey everyone! Let's play some board games:
+Hey everyone! Let's play some board games:
 
 ${gamesList}
 

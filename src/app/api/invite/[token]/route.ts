@@ -89,7 +89,6 @@ export async function GET(
       id: plannedNight.id,
       eventDateTime: plannedNight.eventDateTime,
       location: plannedNight.location,
-      customMessage: plannedNight.customMessage,
       games: gamesWithVotes,
       players: plannedNight.players,
       playerResponses: plannedNight.playerResponses,

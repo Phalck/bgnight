@@ -32,7 +32,6 @@ interface PlannedNight {
   id: string;
   eventDateTime?: string;
   location?: string;
-  customMessage?: string;
   organizer: string;
   userId?: string;
   games: Game[];
@@ -260,12 +259,6 @@ export default function CommunityBGNsPage() {
                       </div>
                     </div>
                   </div>
-
-                  {night.customMessage && (
-                    <div className={styles.message}>
-                      <p>{night.customMessage}</p>
-                    </div>
-                  )}
 
                   <div className={styles.gamesSection}>
                     <h3 className={styles.sectionTitle}>Games ({night.games.length})</h3>

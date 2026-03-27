@@ -13,13 +13,11 @@ interface EventDetailsFormProps {
   availablePlayers: Player[];
   eventDateTime: string;
   location: string;
-  customMessage: string;
   selectedPlayers: Player[];
   inviteExpiration: number;
   saving?: boolean;
   onDateTimeChange: (value: string) => void;
   onLocationChange: (value: string) => void;
-  onCustomMessageChange: (value: string) => void;
   onPlayersChange: (players: Player[]) => void;
   onAddPlayer: (name: string) => Promise<Player | null>;
   onInviteExpirationChange: (value: number) => void;
@@ -38,13 +36,11 @@ export function EventDetailsForm({
   availablePlayers,
   eventDateTime,
   location,
-  customMessage,
   selectedPlayers,
   inviteExpiration,
   saving = false,
   onDateTimeChange,
   onLocationChange,
-  onCustomMessageChange,
   onPlayersChange,
   onAddPlayer,
   onInviteExpirationChange,
@@ -94,18 +90,6 @@ export function EventDetailsForm({
             selectedPlayers={selectedPlayers}
             onChange={onPlayersChange}
             onAddPlayer={onAddPlayer}
-          />
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="customMessage">Custom Message (Optional)</label>
-          <textarea
-            id="customMessage"
-            value={customMessage}
-            onChange={(e) => onCustomMessageChange(e.target.value)}
-            placeholder="Add a personal message to your invite..."
-            rows={3}
-            className={styles.textarea}
           />
         </div>
 

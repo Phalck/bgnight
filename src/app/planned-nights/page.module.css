@@ -264,16 +264,6 @@
   cursor: not-allowed;
 }
 
-.customMessage {
-  color: var(--text-secondary);
-  font-style: italic;
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  background: var(--bg-dark);
-  border-radius: 8px;
-  border-left: 3px solid var(--primary);
-}
-
 .gamesList {
   display: flex;
   flex-direction: column;

@@ -66,7 +66,6 @@ interface PlannedNight {
   plannedAt: string;
   eventDateTime?: string;
   location?: string;
-  customMessage?: string;
   games: PlannedGame[];
   players: Player[];
   playerResponses?: PlayerResponse[];
@@ -286,7 +285,6 @@ export function EditPlannedNightModal({
   // Details state
   const [eventDateTime, setEventDateTime] = useState(plannedNight.eventDateTime || '');
   const [location, setLocation] = useState(plannedNight.location || '');
-  const [customMessage, setCustomMessage] = useState(plannedNight.customMessage || '');
 
   // Sensors for drag and drop
   const sensors = useSensors(
@@ -366,7 +364,6 @@ export function EditPlannedNightModal({
       const response = await api.patch<PlannedNight>(`/api/planned-nights/${plannedNight.id}`, {
         eventDateTime: eventDateTime || null,
         location: location || null,
-        customMessage: customMessage || null,
         playerIds: selectedPlayers.map(p => p.id),
         games: selectedGames.map((g, index) => ({
           gameId: g.game.id,
@@ -501,16 +498,6 @@ export function EditPlannedNightModal({
                 />
               </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Custom Message</label>
-                <textarea
-                  value={customMessage}
-                  onChange={(e) => setCustomMessage(e.target.value)}
-                  placeholder="Add a personal message to your invite..."
-                  className={styles.textarea}
-                  rows={4}
-                />
-              </div>
             </div>
           )}
         </div>

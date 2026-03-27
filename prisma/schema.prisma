@@ -126,7 +126,6 @@ model PlannedGameNight {
   plannedAt       DateTime @default(now())
   eventDateTime   DateTime?
   location        String?
-  customMessage   String?
   games           PlannedGame[]
   players         Player[]    @relation("PlannedGameNightPlayers")
   inboxMessages   InboxMessage[]

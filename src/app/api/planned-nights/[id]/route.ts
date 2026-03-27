@@ -141,7 +141,6 @@ export async function PATCH(
     const {
       eventDateTime,
       location,
-      customMessage,
       playerIds,
       games,
     } = body;
@@ -221,7 +220,6 @@ export async function PATCH(
         data: {
           eventDateTime: parsedEventDateTime,
           location: location || null,
-          customMessage: customMessage || null,
         },
       });
 

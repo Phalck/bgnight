@@ -49,7 +49,6 @@ interface PlannedNight {
   plannedAt: string;
   eventDateTime?: string;
   location?: string;
-  customMessage?: string;
   games: PlannedGame[];
   players: Player[];
   playerResponses?: PlayerResponse[];
@@ -248,7 +247,7 @@ export default function PlannedNightsPage() {
     
     const inviteText = `🎲 Game Night Invitation! 🎲
 
-${night.customMessage ? night.customMessage + '\n\n' : ''}Hey everyone! Let's play some board games:
+Hey everyone! Let's play some board games:
 
 ${gamesList}
 
@@ -450,10 +449,6 @@ Sent via Board Game Night App 🎲`;
                         )}
                       </div>
                     </div>
-
-                    {night.customMessage && (
-                      <p className={styles.customMessage}>{night.customMessage}</p>
-                    )}
 
                     <div className={styles.gamesList}>
                       {night.games.map(plannedGame => {

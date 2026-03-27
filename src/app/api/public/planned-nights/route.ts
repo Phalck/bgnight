@@ -146,7 +146,6 @@ export async function GET(request: NextRequest) {
           id: night.id,
           eventDateTime: night.eventDateTime,
           location: night.location,
-          customMessage: night.customMessage,
           organizer: night.user?.name || 'Anonymous',
           userId: night.user.id,
           games: night.games.map(plannedGame => ({

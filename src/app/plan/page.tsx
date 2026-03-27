@@ -88,7 +88,6 @@ export default function PlanBGNPage() {
   // Event details
   const [eventDateTime, setEventDateTime] = useState('');
   const [location, setLocation] = useState('');
-  const [customMessage, setCustomMessage] = useState('');
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
   const [inviteExpiration, setInviteExpiration] = useState(24);
   const [showEventDetails, setShowEventDetails] = useState(false);
@@ -319,11 +318,9 @@ export default function PlanBGNPage() {
         id: string;
         eventDateTime?: string;
         location?: string;
-        customMessage?: string;
       }>('/api/planned-nights', {
         eventDateTime: eventDateTime || null,
         location: location || null,
-        customMessage: customMessage || null,
         playerIds: selectedPlayers.map(p => p.id),
         games: selectedGames.map(game => {
           const video = selectedVideos.get(game.id);
@@ -378,7 +375,7 @@ export default function PlanBGNPage() {
 
       const inviteText = `🎲 Game Night Invitation! 🎲
 
-${customMessage ? customMessage + '\n\n' : ''}Hey everyone! Let's play some board games:
+Hey everyone! Let's play some board games:
 
 ${gamesList}
 
@@ -715,13 +712,11 @@ Sent via Board Game Night App 🎲`;
                 availablePlayers={players}
                 eventDateTime={eventDateTime}
                 location={location}
-                customMessage={customMessage}
                 selectedPlayers={selectedPlayers}
                 inviteExpiration={inviteExpiration}
                 saving={saving}
                 onDateTimeChange={setEventDateTime}
                 onLocationChange={setLocation}
-                onCustomMessageChange={setCustomMessage}
                 onPlayersChange={setSelectedPlayers}
                 onAddPlayer={handleAddPlayer}
                 onInviteExpirationChange={setInviteExpiration}

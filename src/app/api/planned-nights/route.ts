@@ -78,7 +78,6 @@ export async function POST(request: NextRequest) {
     const {
       eventDateTime,
       location,
-      customMessage,
       playerIds,
       games,
     } = body;
@@ -94,7 +93,6 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         eventDateTime: eventDateTime ? new Date(eventDateTime) : null,
         location: location || null,
-        customMessage: customMessage || null,
         games: {
           create: games.map((game: any, index: number) => ({
             gameId: game.gameId,
@@ -148,9 +146,7 @@ export async function POST(request: NextRequest) {
     
     for (const player of plannedNight.players) {
       if (player.linkedUserId) {
-        const messageText = customMessage 
-          ? `${customMessage}\n\nEvent Date: ${eventDate}${location ? `\nLocation: ${location}` : ''}`
-          : `You've been invited to a board game night on ${eventDate}.${location ? ` Location: ${location}` : ''}`;
+        const messageText = `You've been invited to a board game night on ${eventDate}.${location ? ` Location: ${location}` : ''}`;
         
         await prisma.inboxMessage.create({
           data: {
