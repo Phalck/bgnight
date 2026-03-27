@@ -126,6 +126,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'Player not found' }, { status: 404 });
     }
     
+    // Prevent unlinking self-player
+    if (player.isSelfPlayer) {
+      return NextResponse.json(
+        { error: 'Cannot unlink your self-player from yourself' },
+        { status: 403 }
+      );
+    }
+    
     // Check permission to unlink:
     // - Admin can unlink any player
     // - Player owner can unlink

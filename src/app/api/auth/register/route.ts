@@ -80,6 +80,17 @@ export async function POST(request: Request) {
       },
     });
 
+    // Create self-player for the new user
+    const emailPrefix = email.split('@')[0];
+    await prisma.player.create({
+      data: {
+        name: emailPrefix,
+        userId: user.id,
+        linkedUserId: user.id,
+        isSelfPlayer: true,
+      },
+    });
+
     // If invite code was used, mark it as used
     if (settings?.inviteOnlyMode && inviteCode) {
       await prisma.inviteCode.updateMany({

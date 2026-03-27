@@ -86,6 +86,7 @@ model Player {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   linkedUserId      String?
   linkedUser        User?    @relation("LinkedPlayer", fields: [linkedUserId], references: [id], onDelete: SetNull)
+  isSelfPlayer      Boolean  @default(false)
   playLogs          PlayLog[] @relation("PlayLogPlayers")
   wins              PlayLog[] @relation("PlayLogWinners")
   plannedGameNights PlannedGameNight[] @relation("PlannedGameNightPlayers")
@@ -97,6 +98,7 @@ model Player {
   @@unique([name, userId])
   @@index([userId])
   @@index([linkedUserId])
+  @@index([isSelfPlayer])
 }
 
 model PlayLog {

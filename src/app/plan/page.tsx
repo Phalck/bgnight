@@ -151,6 +151,17 @@ export default function PlanBGNPage() {
       router.push('/login');
     } else if (status === 'authenticated') {
       Promise.all([fetchPlayers(), fetchAllGames()]).then(() => setLoading(false));
+      
+      // Fetch and auto-select self-player
+      const fetchSelfPlayer = async () => {
+        try {
+          const selfPlayer = await api.get<Player>('/api/players/self');
+          setSelectedPlayers([selfPlayer]);
+        } catch (error) {
+          console.error('Failed to fetch self-player:', error);
+        }
+      };
+      fetchSelfPlayer();
     }
   }, [status, router, fetchPlayers, fetchAllGames]);
 

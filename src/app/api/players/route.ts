@@ -63,6 +63,21 @@ export async function POST(request: NextRequest) {
     
     const trimmedName = name.trim();
     
+    // Check if user has a self-player with this name
+    const selfPlayer = await prisma.player.findFirst({
+      where: {
+        userId: session.user.id,
+        isSelfPlayer: true,
+      },
+    });
+    
+    if (selfPlayer && trimmedName.toLowerCase() === selfPlayer.name.toLowerCase()) {
+      return NextResponse.json(
+        { error: `You already have a self-player named "${selfPlayer.name}"` },
+        { status: 409 }
+      );
+    }
+    
     // Check if player already exists (case-insensitive comparison)
     const allPlayers = await prisma.player.findMany({
       where: {

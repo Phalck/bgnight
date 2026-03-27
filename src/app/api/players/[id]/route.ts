@@ -83,6 +83,14 @@ export async function PUT(
       return NextResponse.json({ error: 'Player not found' }, { status: 404 });
     }
     
+    // Prevent empty names for self-players
+    if (player.isSelfPlayer && (!trimmedName || trimmedName.length === 0)) {
+      return NextResponse.json(
+        { error: 'Self-player name cannot be empty' },
+        { status: 400 }
+      );
+    }
+    
     // Check for duplicate name (case-insensitive, excluding current player)
     const existingPlayer = await prisma.player.findFirst({
       where: {
@@ -152,6 +160,14 @@ export async function DELETE(
     
     if (!player) {
       return NextResponse.json({ error: 'Player not found' }, { status: 404 });
+    }
+    
+    // Prevent deleting self-player
+    if (player.isSelfPlayer) {
+      return NextResponse.json(
+        { error: 'Cannot delete your self-player' },
+        { status: 403 }
+      );
     }
     
     // Soft delete by setting isActive to false

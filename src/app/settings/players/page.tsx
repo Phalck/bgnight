@@ -9,6 +9,7 @@ interface Player {
   name: string;
   isActive: boolean;
   createdAt: string;
+  isSelfPlayer: boolean;
   _count: {
     playLogs: number;
     wins: number;
@@ -301,7 +302,9 @@ export default function PlayersManagementPage() {
                 ) : (
                   <>
                     <h3 className={styles.playerName}>{player.name}</h3>
-                    {player.linkedUser && (
+                    {player.isSelfPlayer ? (
+                      <div className={styles.selfBadge}>You</div>
+                    ) : player.linkedUser && (
                       <div className={styles.linkedBadge}>
                         <span className={styles.linkIcon}>👤</span>
                         <span>Linked to: {player.linkedUser.name || 'Unknown User'}</span>
@@ -333,32 +336,46 @@ export default function PlayersManagementPage() {
                       ✏️
                     </button>
                     
-                    {player.linkedUser ? (
+                    {!player.isSelfPlayer && (
+                      <>
+                        {player.linkedUser ? (
+                          <button
+                            onClick={() => handleUnlink(player)}
+                            className={`${styles.actionBtn} ${styles.actionBtnWide}`}
+                            title="Unlink from user"
+                          >
+                            🔗❌
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleLinkStart(player)}
+                            className={styles.actionBtn}
+                            title="Link to user"
+                          >
+                            🔗
+                          </button>
+                        )}
+                      </>
+                    )}
+                    
+                    {player.isSelfPlayer ? (
                       <button
-                        onClick={() => handleUnlink(player)}
-                        className={`${styles.actionBtn} ${styles.actionBtnWide}`}
-                        title="Unlink from user"
+                        className={`${styles.actionBtn} ${styles.disabled}`}
+                        disabled
+                        title="You cannot delete your self-player"
                       >
-                        🔗❌
+                        🗑️
                       </button>
                     ) : (
                       <button
-                        onClick={() => handleLinkStart(player)}
-                        className={styles.actionBtn}
-                        title="Link to user"
+                        onClick={() => handleDelete(player.id)}
+                        className={`${styles.actionBtn} ${styles.danger}`}
+                        disabled={deletingPlayer === player.id}
+                        title="Delete player"
                       >
-                        🔗
+                        {deletingPlayer === player.id ? '⏳' : '🗑️'}
                       </button>
                     )}
-                    
-                    <button
-                      onClick={() => handleDelete(player.id)}
-                      className={`${styles.actionBtn} ${styles.danger}`}
-                      disabled={deletingPlayer === player.id}
-                      title="Delete player"
-                    >
-                      {deletingPlayer === player.id ? '⏳' : '🗑️'}
-                    </button>
                   </>
                 )}
               </div>
