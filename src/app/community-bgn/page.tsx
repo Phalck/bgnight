@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Header } from '@/components/Header';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { useToast } from '@/components/Toast';
 import styles from './page.module.css';
 
 interface Game {
@@ -33,8 +34,13 @@ interface PlannedNight {
   location?: string;
   customMessage?: string;
   organizer: string;
+  userId?: string;
   games: Game[];
   rsvpStats: RSVPStats;
+  isOwner?: boolean;
+  isPlayer?: boolean;
+  hasPendingRequest?: boolean;
+  canRequestJoin?: boolean;
 }
 
 const DATE_FILTERS = [
@@ -46,10 +52,12 @@ const DATE_FILTERS = [
 
 export default function CommunityBGNsPage() {
   const { data: session } = useSession();
+  const { addToast } = useToast();
   const [plannedNights, setPlannedNights] = useState<PlannedNight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [organizers, setOrganizers] = useState<string[]>([]);
+  const [requestingNights, setRequestingNights] = useState<Set<string>>(new Set());
   
   // Filter states
   const [selectedOrganizer, setSelectedOrganizer] = useState<string>('all');
@@ -89,6 +97,43 @@ export default function CommunityBGNsPage() {
       setError('Failed to load planned nights');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRequestJoin = async (nightId: string) => {
+    if (!session?.user) {
+      addToast('Please log in to request to join', 'error');
+      return;
+    }
+
+    setRequestingNights(prev => new Set(prev).add(nightId));
+
+    try {
+      const response = await fetch(`/api/planned-nights/${nightId}/request-join`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        addToast('Join request sent!', 'success');
+        // Update the night to show pending state
+        setPlannedNights(prev => prev.map(night => 
+          night.id === nightId 
+            ? { ...night, hasPendingRequest: true, canRequestJoin: false }
+            : night
+        ));
+      } else {
+        addToast(data.error || 'Failed to send request', 'error');
+      }
+    } catch (err) {
+      addToast('Failed to send join request', 'error');
+    } finally {
+      setRequestingNights(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(nightId);
+        return newSet;
+      });
     }
   };
 
@@ -190,7 +235,23 @@ export default function CommunityBGNsPage() {
                     <div className={styles.nightMeta}>
                       <p className={styles.organizer}>👤 {night.organizer}</p>
                       <p className={styles.date}>📅 {formatDate(night.eventDateTime)}</p>
-                      {night.location && <p className={styles.location}>📍 {night.location}</p>}
+                      <div className={styles.locationRow}>
+                        {night.location && <p className={styles.location}>📍 {night.location}</p>}
+                        {night.canRequestJoin && (
+                          <button
+                            className={styles.askJoinBtn}
+                            onClick={() => handleRequestJoin(night.id)}
+                            disabled={requestingNights.has(night.id) || night.hasPendingRequest}
+                          >
+                            {requestingNights.has(night.id) 
+                              ? 'Sending...' 
+                              : night.hasPendingRequest 
+                                ? 'Request pending' 
+                                : 'Ask to join'
+                            }
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 

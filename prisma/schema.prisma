@@ -23,6 +23,7 @@ model User {
   playLogs           PlayLog[]
   plannedGameNights  PlannedGameNight[]
   inboxMessages      InboxMessage[]
+  sentJoinRequests   InboxMessage[] @relation("JoinRequester")
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
@@ -243,7 +244,7 @@ model InboxMessage {
   id              String   @id @default(cuid())
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type            String   // "BGN_INVITE"
+  type            String   // "BGN_INVITE", "JOIN_REQUEST", "JOIN_RESPONSE"
   title           String
   message         String
   plannedNightId  String?
@@ -254,8 +255,15 @@ model InboxMessage {
   isRead          Boolean  @default(false)
   createdAt       DateTime @default(now())
   
+  // Join request fields
+  requesterId     String?
+  requester       User?    @relation("JoinRequester", fields: [requesterId], references: [id], onDelete: SetNull)
+  responseType    String?  // "ACCEPTED" or "DECLINED"
+  joinRequestId   String?  // Link to original request (for responses)
+  
   @@index([userId])
   @@index([isRead])
   @@index([createdAt])
   @@index([eventDateTime])
+  @@index([requesterId])
 }

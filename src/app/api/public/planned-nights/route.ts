@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/public/planned-nights - Public endpoint to list all planned nights
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+
     const { searchParams } = new URL(request.url);
     const organizer = searchParams.get('organizer');
     const dateFilter = searchParams.get('dateFilter'); // today, week, month, all
@@ -62,6 +67,7 @@ export async function GET(request: NextRequest) {
       include: {
         user: {
           select: {
+            id: true,
             name: true,
           },
         },
@@ -90,6 +96,7 @@ export async function GET(request: NextRequest) {
         players: {
           select: {
             id: true,
+            linkedUserId: true,
           },
         },
         playerResponses: {
@@ -104,6 +111,22 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Get pending join requests for authenticated user
+    let pendingRequests: Set<string> = new Set();
+    if (userId) {
+      const joinRequests = await prisma.inboxMessage.findMany({
+        where: {
+          requesterId: userId,
+          type: 'JOIN_REQUEST',
+          isRead: false,
+        },
+        select: {
+          plannedNightId: true,
+        },
+      });
+      pendingRequests = new Set(joinRequests.map(r => r.plannedNightId).filter(Boolean) as string[]);
+    }
+
     // Transform data to include organizer name and RSVP counts only (no player names)
     const transformedNights = plannedNights
       .filter(night => {
@@ -114,25 +137,39 @@ export async function GET(request: NextRequest) {
         }
         return true;
       })
-      .map(night => ({
-        id: night.id,
-        eventDateTime: night.eventDateTime,
-        location: night.location,
-        customMessage: night.customMessage,
-        organizer: night.user?.name || 'Anonymous',
-        games: night.games.map(plannedGame => ({
-          id: plannedGame.id,
-          game: plannedGame.game,
-          youtubeVideoUrl: plannedGame.youtubeVideoUrl,
-          voteCount: plannedGame.votes.length,
-        })),
-        rsvpStats: {
-          coming: night.playerResponses.filter(r => r.status === 'coming').length,
-          maybe: night.playerResponses.filter(r => r.status === 'maybe').length,
-          notComing: night.playerResponses.filter(r => r.status === 'not_coming').length,
-          noResponse: night.players.length - night.playerResponses.length,
-        },
-      }));
+      .map(night => {
+        const isOwner = userId === night.user.id;
+        const isPlayer = night.players.some(p => p.linkedUserId === userId);
+        const hasPendingRequest = pendingRequests.has(night.id);
+
+        return {
+          id: night.id,
+          eventDateTime: night.eventDateTime,
+          location: night.location,
+          customMessage: night.customMessage,
+          organizer: night.user?.name || 'Anonymous',
+          userId: night.user.id,
+          games: night.games.map(plannedGame => ({
+            id: plannedGame.id,
+            game: plannedGame.game,
+            youtubeVideoUrl: plannedGame.youtubeVideoUrl,
+            voteCount: plannedGame.votes.length,
+          })),
+          rsvpStats: {
+            coming: night.playerResponses.filter(r => r.status === 'coming').length,
+            maybe: night.playerResponses.filter(r => r.status === 'maybe').length,
+            notComing: night.playerResponses.filter(r => r.status === 'not_coming').length,
+            noResponse: night.players.length - night.playerResponses.length,
+          },
+          // Only include these fields for authenticated users
+          ...(userId && {
+            isOwner,
+            isPlayer,
+            hasPendingRequest,
+            canRequestJoin: !isOwner && !isPlayer,
+          }),
+        };
+      });
 
     return NextResponse.json(transformedNights);
   } catch (error) {

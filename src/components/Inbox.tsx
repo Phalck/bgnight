@@ -16,6 +16,8 @@ interface InboxMessage {
   createdAt: string;
   inviteToken?: string;
   expiresIn?: number;
+  responseType?: string;
+  requesterId?: string;
   plannedNight?: {
     eventDateTime: string | null;
     location: string | null;
@@ -46,8 +48,25 @@ export function Inbox() {
         // Check if we have new messages
         if (newCount > previousUnreadCount && previousUnreadCount > 0) {
           setHasNewMessage(true);
-          // Show toast for new message
-          addToast('New board game night invitation!', 'success');
+          // Fetch messages to check type for appropriate toast
+          const messagesRes = await fetch('/api/inbox');
+          if (messagesRes.ok) {
+            const messagesData = await messagesRes.json();
+            const latestMessage = messagesData[0];
+            if (latestMessage) {
+              if (latestMessage.type === 'JOIN_REQUEST') {
+                addToast(`New join request from ${latestMessage.senderName}!`, 'success');
+              } else if (latestMessage.type === 'JOIN_RESPONSE') {
+                if (latestMessage.responseType === 'ACCEPTED') {
+                  addToast('Your join request was accepted!', 'success');
+                } else {
+                  addToast('Your join request was declined', 'error');
+                }
+              } else {
+                addToast('New board game night invitation!', 'success');
+              }
+            }
+          }
           // Reset animation after 3 seconds
           setTimeout(() => setHasNewMessage(false), 3000);
         }
@@ -152,6 +171,48 @@ export function Inbox() {
       }
     } catch (error) {
       console.error('Error marking all as read:', error);
+    }
+  };
+
+  const handleAcceptJoin = async (messageId: string) => {
+    try {
+      const res = await fetch(`/api/inbox/${messageId}/accept-join`, {
+        method: 'POST',
+      });
+
+      if (res.ok) {
+        addToast('Join request accepted!', 'success');
+        // Remove the request from the list or mark as read
+        setMessages(messages.filter(m => m.id !== messageId));
+        setUnreadCount(Math.max(0, unreadCount - 1));
+      } else {
+        const data = await res.json();
+        addToast(data.error || 'Failed to accept request', 'error');
+      }
+    } catch (error) {
+      console.error('Error accepting join request:', error);
+      addToast('Failed to accept request', 'error');
+    }
+  };
+
+  const handleDeclineJoin = async (messageId: string) => {
+    try {
+      const res = await fetch(`/api/inbox/${messageId}/decline-join`, {
+        method: 'POST',
+      });
+
+      if (res.ok) {
+        addToast('Join request declined', 'success');
+        // Remove the request from the list
+        setMessages(messages.filter(m => m.id !== messageId));
+        setUnreadCount(Math.max(0, unreadCount - 1));
+      } else {
+        const data = await res.json();
+        addToast(data.error || 'Failed to decline request', 'error');
+      }
+    } catch (error) {
+      console.error('Error declining join request:', error);
+      addToast('Failed to decline request', 'error');
     }
   };
 
