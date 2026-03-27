@@ -41,6 +41,7 @@ interface PlannedNight {
   isPlayer?: boolean;
   hasPendingRequest?: boolean;
   canRequestJoin?: boolean;
+  yourRsvpStatus?: string;
 }
 
 const DATE_FILTERS = [
@@ -228,9 +229,14 @@ export default function CommunityBGNsPage() {
                   <div className={styles.nightHeader}>
                     <div className={styles.nightTitleRow}>
                       <h2 className={styles.nightTitle}>🎲 Game Night</h2>
-                      {currentUserName && night.organizer === currentUserName && (
-                        <span className={styles.yourEventBadge}>Your Event</span>
-                      )}
+                      <div className={styles.badges}>
+                        {currentUserName && night.organizer === currentUserName && (
+                          <span className={styles.yourEventBadge}>Your Event</span>
+                        )}
+                        {night.isPlayer && (
+                          <span className={styles.participatingBadge}>✓ Participating</span>
+                        )}
+                      </div>
                     </div>
                     <div className={styles.nightMeta}>
                       <p className={styles.organizer}>👤 {night.organizer}</p>
