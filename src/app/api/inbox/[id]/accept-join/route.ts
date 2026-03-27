@@ -121,24 +121,19 @@ export async function POST(
       });
     }
 
-    // Generate or get existing invite token
-    let inviteToken = plannedNight.inviteToken;
-    if (!inviteToken) {
-      inviteToken = randomBytes(32).toString('hex');
-      
-      // Set default expiration (24 hours from now)
-      const inviteExpiresAt = new Date();
-      inviteExpiresAt.setHours(inviteExpiresAt.getHours() + 24);
+    // Always generate a new invite token with 48-hour expiration
+    const inviteToken = randomBytes(32).toString('hex');
+    const inviteExpiresAt = new Date();
+    inviteExpiresAt.setHours(inviteExpiresAt.getHours() + 48);
 
-      await prisma.plannedGameNight.update({
-        where: { id: plannedNight.id },
-        data: {
-          inviteToken,
-          inviteExpiresAt,
-          inviteEnabled: true,
-        },
-      });
-    }
+    await prisma.plannedGameNight.update({
+      where: { id: plannedNight.id },
+      data: {
+        inviteToken,
+        inviteExpiresAt,
+        inviteEnabled: true,
+      },
+    });
 
     // Mark original request as read
     await prisma.inboxMessage.update({
