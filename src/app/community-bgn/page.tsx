@@ -62,6 +62,7 @@ export default function CommunityBGNsPage() {
   // Filter states
   const [selectedOrganizer, setSelectedOrganizer] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [showOnlyParticipating, setShowOnlyParticipating] = useState(false);
 
   // Get current user's name to identify their events
   const currentUserName = session?.user?.name || null;
@@ -207,6 +208,18 @@ export default function CommunityBGNsPage() {
             </div>
           </div>
 
+          {/* My BGNs Toggle */}
+          {session?.user && (
+            <div className={styles.myBgnsToggle}>
+              <button
+                className={`${styles.toggleBtn} ${showOnlyParticipating ? styles.active : ''}`}
+                onClick={() => setShowOnlyParticipating(!showOnlyParticipating)}
+              >
+                {showOnlyParticipating ? 'My BGNs' : 'All BGNs'}
+              </button>
+            </div>
+          )}
+
           {/* Content */}
           {loading ? (
             <div className={styles.loading}>
@@ -217,13 +230,15 @@ export default function CommunityBGNsPage() {
             <div className={styles.error}>
               <p>{error}</p>
             </div>
-          ) : plannedNights.length === 0 ? (
+          ) : plannedNights.filter(night => !showOnlyParticipating || night.isPlayer).length === 0 ? (
             <div className={styles.empty}>
-              <p>No game nights found matching your filters.</p>
+              <p>{showOnlyParticipating ? 'You are not participating in any game nights.' : 'No game nights found matching your filters.'}</p>
             </div>
           ) : (
             <div className={styles.nightsList}>
-              {plannedNights.map((night) => (
+              {plannedNights
+                .filter(night => !showOnlyParticipating || night.isPlayer)
+                .map((night) => (
                 <div key={night.id} className={`${styles.nightCard} ${currentUserName && night.organizer === currentUserName ? styles.yourEvent : ''}`}>
                   <div className={styles.nightHeader}>
                     <div className={styles.nightTitleRow}>
