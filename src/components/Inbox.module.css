@@ -157,6 +157,12 @@
   margin-bottom: 0.5rem;
 }
 
+.messageMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .messageType {
   font-size: 1rem;
 }
@@ -164,6 +170,22 @@
 .messageTime {
   font-size: 0.75rem;
   color: var(--text-secondary);
+}
+
+.newBadge {
+  background: var(--primary);
+  color: var(--bg-dark);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.125rem 0.375rem;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.eventDetails {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem 0;
 }
 
 .messageTitle {
@@ -233,6 +255,49 @@
 .actionBtn:hover {
   background: var(--surface);
   border-color: var(--primary);
+}
+
+/* Join Request Styles */
+.joinRequestActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.acceptBtn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.acceptBtn:hover {
+  opacity: 0.9;
+}
+
+.declineBtn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.declineBtn:hover {
+  background: rgba(233, 69, 96, 0.1);
+  border-color: var(--secondary);
+  color: var(--secondary);
 }
 
 .footer {

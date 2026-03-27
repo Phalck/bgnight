@@ -272,75 +272,183 @@ export function Inbox() {
                 <p>No messages</p>
               </div>
             ) : (
-              messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`${styles.messageCard} ${!message.isRead ? styles.unread : ''}`}
-                >
-                  <div className={styles.messageHeader}>
-                    <span className={styles.messageType}>📅</span>
-                    <span className={styles.messageTime}>{formatTimeAgo(message.createdAt)}</span>
-                  </div>
+              messages.map((message) => {
+                // JOIN REQUEST - Show organizer actions
+                if (message.type === 'JOIN_REQUEST') {
+                  return (
+                    <div
+                      key={message.id}
+                      className={`${styles.messageCard} ${styles.joinRequest} ${!message.isRead ? styles.unread : ''}`}
+                    >
+                      <div className={styles.messageHeader}>
+                        <div className={styles.messageMeta}>
+                          <span className={styles.messageType}>📨</span>
+                          <span className={styles.messageTime}>{formatTimeAgo(message.createdAt)}</span>
+                          {!message.isRead && <span className={styles.newBadge}>New</span>}
+                        </div>
+                      </div>
 
-                  <h4 className={styles.messageTitle}>{message.title}</h4>
-                  <p className={styles.messageSender}>From: {message.senderName}</p>
+                      <h4 className={styles.messageTitle}>{message.title}</h4>
+                      <p className={styles.messageSender}>From: {message.senderName}</p>
+                      <p className={styles.messagePreview}>{message.message}</p>
 
-                  <p className={styles.messagePreview}>
-                    {message.plannedNight?.eventDateTime 
-                      ? new Date(message.plannedNight.eventDateTime).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })
-                      : 'Date TBD'
-                    }
-                    {message.plannedNight?.location && ` • ${message.plannedNight.location}`}
-                  </p>
+                      {message.plannedNight?.eventDateTime && (
+                        <p className={styles.eventDetails}>
+                          📅 {new Date(message.plannedNight.eventDateTime).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                          {message.plannedNight?.location && ` • 📍 ${message.plannedNight.location}`}
+                        </p>
+                      )}
 
-                  {message.expiresIn !== undefined && message.expiresIn !== null && (
-                    <p className={styles.expiration}>
-                      RSVP expires in {message.expiresIn}h
+                      <div className={styles.joinRequestActions}>
+                        <button
+                          className={styles.acceptBtn}
+                          onClick={() => handleAcceptJoin(message.id)}
+                        >
+                          ✓ Invite & Add
+                        </button>
+                        <button
+                          className={styles.declineBtn}
+                          onClick={() => handleDeclineJoin(message.id)}
+                        >
+                          ✗ Decline
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // JOIN RESPONSE - Show acceptance/decline notification
+                if (message.type === 'JOIN_RESPONSE') {
+                  const isAccepted = message.responseType === 'ACCEPTED';
+                  return (
+                    <div
+                      key={message.id}
+                      className={`${styles.messageCard} ${styles.joinResponse} ${!message.isRead ? styles.unread : ''}`}
+                    >
+                      <div className={styles.messageHeader}>
+                        <div className={styles.messageMeta}>
+                          <span className={styles.messageType}>{isAccepted ? '✅' : '❌'}</span>
+                          <span className={styles.messageTime}>{formatTimeAgo(message.createdAt)}</span>
+                        </div>
+                      </div>
+
+                      <h4 className={styles.messageTitle}>{message.title}</h4>
+                      <p className={styles.messagePreview}>{message.message}</p>
+
+                      {isAccepted && message.inviteToken && (
+                        <button
+                          className={styles.rsvpBtn}
+                          onClick={() => {
+                            router.push(`/invite/${message.inviteToken}`);
+                            setIsOpen(false);
+                            if (!message.isRead) {
+                              handleMarkAsRead(message.id);
+                            }
+                          }}
+                        >
+                          RSVP Now
+                        </button>
+                      )}
+
+                      <div className={styles.messageActions}>
+                        {!message.isRead && (
+                          <button
+                            className={styles.actionBtn}
+                            onClick={() => handleMarkAsRead(message.id)}
+                            title="Mark as read"
+                          >
+                            ✓
+                          </button>
+                        )}
+                        <button
+                          className={styles.actionBtn}
+                          onClick={() => handleDelete(message.id)}
+                          title="Delete"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // BGN_INVITE - Default invitation message
+                return (
+                  <div
+                    key={message.id}
+                    className={`${styles.messageCard} ${!message.isRead ? styles.unread : ''}`}
+                  >
+                    <div className={styles.messageHeader}>
+                      <span className={styles.messageType}>📅</span>
+                      <span className={styles.messageTime}>{formatTimeAgo(message.createdAt)}</span>
+                    </div>
+
+                    <h4 className={styles.messageTitle}>{message.title}</h4>
+                    <p className={styles.messageSender}>From: {message.senderName}</p>
+
+                    <p className={styles.messagePreview}>
+                      {message.plannedNight?.eventDateTime 
+                        ? new Date(message.plannedNight.eventDateTime).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : 'Date TBD'
+                      }
+                      {message.plannedNight?.location && ` • ${message.plannedNight.location}`}
                     </p>
-                  )}
 
-                  <div className={styles.messageActions}>
-                    {message.inviteToken && (
-                      <button
-                        className={styles.rsvpBtn}
-                        onClick={() => {
-                          router.push(`/invite/${message.inviteToken}`);
-                          setIsOpen(false);
-                          if (!message.isRead) {
-                            handleMarkAsRead(message.id);
-                          }
-                        }}
-                      >
-                        RSVP Now
-                      </button>
+                    {message.expiresIn !== undefined && message.expiresIn !== null && (
+                      <p className={styles.expiration}>
+                        RSVP expires in {message.expiresIn}h
+                      </p>
                     )}
 
-                    {!message.isRead && (
+                    <div className={styles.messageActions}>
+                      {message.inviteToken && (
+                        <button
+                          className={styles.rsvpBtn}
+                          onClick={() => {
+                            router.push(`/invite/${message.inviteToken}`);
+                            setIsOpen(false);
+                            if (!message.isRead) {
+                              handleMarkAsRead(message.id);
+                            }
+                          }}
+                        >
+                          RSVP Now
+                        </button>
+                      )}
+
+                      {!message.isRead && (
+                        <button
+                          className={styles.actionBtn}
+                          onClick={() => handleMarkAsRead(message.id)}
+                          title="Mark as read"
+                        >
+                          ✓
+                        </button>
+                      )}
+
                       <button
                         className={styles.actionBtn}
-                        onClick={() => handleMarkAsRead(message.id)}
-                        title="Mark as read"
+                        onClick={() => handleDelete(message.id)}
+                        title="Delete"
                       >
-                        ✓
+                        🗑️
                       </button>
-                    )}
-
-                    <button
-                      className={styles.actionBtn}
-                      onClick={() => handleDelete(message.id)}
-                      title="Delete"
-                    >
-                      🗑️
-                    </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
