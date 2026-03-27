@@ -1,3 +1,9 @@
+.main {
+  min-height: 100vh;
+  padding-top: 64px; /* Account for fixed header */
+  background: var(--bg-dark);
+}
+
 .container {
   max-width: 900px;
   margin: 0 auto;

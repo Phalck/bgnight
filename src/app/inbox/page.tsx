@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { Header } from '@/components/Header';
 import { useToast } from '@/components/Toast';
 import styles from './page.module.css';
 
@@ -136,20 +137,28 @@ export default function InboxPage() {
 
   if (loading) {
     return (
-      <div className={styles.container}>
-        <div className={styles.loading}>Loading messages...</div>
-      </div>
+      <>
+        <Header />
+        <main className={styles.main}>
+          <div className={styles.container}>
+            <div className={styles.loading}>Loading messages...</div>
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Inbox</h1>
-          <p className={styles.subtitle}>
-            {messages.length} message{messages.length !== 1 ? 's' : ''}
-            {unreadCount > 0 && ` • ${unreadCount} unread`}
+    <>
+      <Header />
+      <main className={styles.main}>
+        <div className={styles.container}>
+          <div className={styles.header}>
+            <div>
+              <h1 className={styles.title}>Inbox</h1>
+              <p className={styles.subtitle}>
+                {messages.length} message{messages.length !== 1 ? 's' : ''}
+                {unreadCount > 0 && ` • ${unreadCount} unread`}
           </p>
         </div>
         <div className={styles.actions}>
@@ -267,5 +276,7 @@ export default function InboxPage() {
         </div>
       )}
     </div>
+  </main>
+</>
   );
 }
