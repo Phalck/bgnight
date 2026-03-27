@@ -46,6 +46,10 @@ export async function POST(
       return NextResponse.json({ error: 'Requester not found' }, { status: 404 });
     }
 
+    if (!joinRequest.plannedNight) {
+      return NextResponse.json({ error: 'Game night not found' }, { status: 404 });
+    }
+
     const plannedNight = joinRequest.plannedNight;
     const requester = joinRequest.requester;
 
