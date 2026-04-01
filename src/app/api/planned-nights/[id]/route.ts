@@ -271,7 +271,27 @@ export async function PATCH(
         });
       }
 
-      // 5. Fetch and return the updated night with all details
+      // 5. Delete orphaned PlayerResponses for players no longer in the BGN
+      await tx.playerResponse.deleteMany({
+        where: {
+          plannedNightId: id,
+          playerId: {
+            notIn: playerIds.length > 0 ? playerIds : [''],
+          },
+        },
+      });
+
+      // 6. Delete orphaned GameVotes for players no longer in the BGN
+      await tx.gameVote.deleteMany({
+        where: {
+          plannedNightId: id,
+          playerId: {
+            notIn: playerIds.length > 0 ? playerIds : [''],
+          },
+        },
+      });
+
+      // 7. Fetch and return the updated night with all details
       return tx.plannedGameNight.findUnique({
         where: { id },
         include: {
@@ -296,6 +316,13 @@ export async function PATCH(
             select: {
               id: true,
               name: true,
+            },
+          },
+          playerResponses: {
+            select: {
+              playerId: true,
+              status: true,
+              respondedAt: true,
             },
           },
         },
