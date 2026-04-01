@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect, useRef } from 'react';
 import { SettingsMenu } from './SettingsMenu';
 import { Inbox } from './Inbox';
@@ -267,6 +267,28 @@ export function Header() {
                   {mobileSettingsExpanded && (
                     <div className={styles.mobileSettingsContent}>
                       <div className={styles.mobileSettingsGroup}>
+                        <h4 className={styles.mobileSettingsGroupTitle}>Settings</h4>
+                        <button
+                          className={styles.mobileSettingsItem}
+                          onClick={() => {
+                            router.push('/settings/profile');
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          👤 Profile
+                        </button>
+                        <button
+                          className={styles.mobileSettingsItem}
+                          onClick={() => {
+                            router.push('/settings/players');
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          🎮 Manage Players
+                        </button>
+                      </div>
+
+                      <div className={styles.mobileSettingsGroup}>
                         <h4 className={styles.mobileSettingsGroupTitle}>Backup</h4>
                         <button 
                           className={styles.mobileSettingsItem}
@@ -351,6 +373,30 @@ export function Header() {
                           }}
                         >
                           ⚠️ Remove User Account
+                        </button>
+                      </div>
+
+                      {session?.user?.role === 'ADMIN' && (
+                        <div className={styles.mobileSettingsGroup}>
+                          <h4 className={styles.mobileSettingsGroupTitle}>Administration</h4>
+                          <button
+                            className={styles.mobileSettingsItem}
+                            onClick={() => {
+                              router.push('/admin');
+                              setMobileMenuOpen(false);
+                            }}
+                          >
+                            👑 Admin Panel
+                          </button>
+                        </div>
+                      )}
+
+                      <div className={styles.mobileSettingsGroup}>
+                        <button
+                          className={`${styles.mobileSettingsItem} ${styles.logout}`}
+                          onClick={() => signOut()}
+                        >
+                          🚪 Logout
                         </button>
                       </div>
                     </div>
