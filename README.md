@@ -124,6 +124,11 @@ The first user to register automatically becomes an admin and gains access to th
 2. Click **Settings** (⚙️) in the header
 3. Select **👑 Admin Panel** from the dropdown menu
 
+## 🆕 Recent Updates
+
+- **Settings Menu Consolidation** - Moved the Logout button from the header to the Settings menu dropdown for a cleaner navigation experience
+- **Unlink Button Fix** - Updated the Unlink button icon on the Manage Players page to show only the remove icon (❌) instead of a link icon
+
 ## 🚀 How to Use
 
 ### Getting Started

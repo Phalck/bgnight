@@ -45,6 +45,8 @@ interface InviteData {
   players: Player[];
   playerResponses: PlayerResponse[];
   inviteExpiresAt?: string;
+  linkedPlayers?: { id: string; name: string }[];
+  currentUser?: { id: string; name: string | null; email: string };
 }
 
 export default function InvitePage() {
@@ -57,10 +59,45 @@ export default function InvitePage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
   const [playerVotes, setPlayerVotes] = useState<Set<string>>(new Set());
+  const [isAutoDetected, setIsAutoDetected] = useState(false);
+  const [showPlayerSelector, setShowPlayerSelector] = useState(false);
 
   useEffect(() => {
     fetchInviteData();
   }, [token]);
+
+  // Auto-select linked player when data loads
+  useEffect(() => {
+    if (data?.linkedPlayers && data.linkedPlayers.length > 0) {
+      if (data.linkedPlayers.length === 1) {
+        // Single linked player - auto-select and set votes
+        setSelectedPlayerId(data.linkedPlayers[0].id);
+        setIsAutoDetected(true);
+        setShowPlayerSelector(false);
+        // Set votes for auto-selected player
+        const votedGameIds = new Set<string>();
+        data.games.forEach(game => {
+          if (game.votes.some(vote => vote.playerId === data.linkedPlayers![0].id)) {
+            votedGameIds.add(game.id);
+          }
+        });
+        setPlayerVotes(votedGameIds);
+      } else {
+        // Multiple linked players - show selector but pre-select first
+        setSelectedPlayerId(data.linkedPlayers[0].id);
+        setIsAutoDetected(true);
+        setShowPlayerSelector(true);
+        // Set votes for first linked player
+        const votedGameIds = new Set<string>();
+        data.games.forEach(game => {
+          if (game.votes.some(vote => vote.playerId === data.linkedPlayers![0].id)) {
+            votedGameIds.add(game.id);
+          }
+        });
+        setPlayerVotes(votedGameIds);
+      }
+    }
+  }, [data]);
 
   const fetchInviteData = async () => {
     try {
@@ -298,19 +335,95 @@ export default function InvitePage() {
 
           {/* Player Selection */}
           <div className={styles.section}>
-            <h2>Who are you?</h2>
-            <select
-              className={styles.playerSelect}
-              value={selectedPlayerId}
-            onChange={(e) => handlePlayerSelect(e.target.value)}
-            >
-              <option value="">Select your name...</option>
-              {data.players.map((player) => (
-                <option key={player.id} value={player.id}>
-                  {player.name}
-                </option>
-              ))}
-            </select>
+            {data?.currentUser && data.linkedPlayers && data.linkedPlayers.length > 0 ? (
+              // Logged in with linked players
+              <div className={styles.welcomeSection}>
+                <h2>👋 Welcome back, {data.currentUser.name || data.currentUser.email}!</h2>
+                
+                {isAutoDetected && !showPlayerSelector ? (
+                  // Auto-detected, show compact view with current response status
+                  <div className={styles.autoDetectedPlayer}>
+                    <div className={styles.detectedInfo}>
+                      <p className={styles.detectedText}>
+                        Responding as: <strong>{getPlayerName(selectedPlayerId)}</strong>
+                      </p>
+                      {(() => {
+                        const response = getPlayerResponse(selectedPlayerId);
+                        if (response) {
+                          const statusLabels = {
+                            coming: '✅ Coming',
+                            maybe: '🤔 Maybe',
+                            not_coming: '❌ Not Coming'
+                          };
+                          return (
+                            <p className={styles.currentStatus}>
+                              Current status: {statusLabels[response.status]}
+                            </p>
+                          );
+                        }
+                        return (
+                          <p className={styles.currentStatus}>
+                            Current status: ❓ No response yet
+                          </p>
+                        );
+                      })()}
+                    </div>
+                    <button 
+                      className={styles.changePlayerBtn}
+                      onClick={() => setShowPlayerSelector(true)}
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  // Show selector (either multiple linked or user clicked Change)
+                  <div className={styles.playerSelector}>
+                    <label className={styles.selectorLabel}>
+                      {data.linkedPlayers.length > 1 
+                        ? 'Select which player you are:' 
+                        : 'Select who you are:'}
+                    </label>
+                    <select
+                      className={styles.playerSelect}
+                      value={selectedPlayerId}
+                      onChange={(e) => handlePlayerSelect(e.target.value)}
+                    >
+                      <option value="">Select your name...</option>
+                      {data.players.map((player) => (
+                        <option key={player.id} value={player.id}>
+                          {player.name} {data.linkedPlayers?.find(lp => lp.id === player.id) ? '(Linked to you)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    {isAutoDetected && (
+                      <button 
+                        className={styles.backToDetectedBtn}
+                        onClick={() => setShowPlayerSelector(false)}
+                      >
+                        ← Back to {getPlayerName(selectedPlayerId)}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Not logged in or no linked players - show original dropdown
+              <>
+                <h2>Who are you?</h2>
+                <select
+                  className={styles.playerSelect}
+                  value={selectedPlayerId}
+                  onChange={(e) => handlePlayerSelect(e.target.value)}
+                >
+                  <option value="">Select your name...</option>
+                  {data?.players.map((player) => (
+                    <option key={player.id} value={player.id}>
+                      {player.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
           </div>
 
           {/* RSVP Section */}

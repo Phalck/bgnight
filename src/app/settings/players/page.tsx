@@ -342,9 +342,9 @@ export default function PlayersManagementPage() {
                           <button
                             onClick={() => handleUnlink(player)}
                             className={`${styles.actionBtn} ${styles.actionBtnWide}`}
-                            title="Unlink from user"
+                            title="Unlink player from user"
                           >
-                            🔗❌
+                            ❌
                           </button>
                         ) : (
                           <button

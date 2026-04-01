@@ -392,6 +392,95 @@
   font-style: italic;
 }
 
+/* Auto-RSVP Welcome Section */
+.welcomeSection {
+  background: var(--surface);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.welcomeSection h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+/* Auto-detected player display */
+.autoDetectedPlayer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.detectedInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detectedText {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.detectedText strong {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.currentStatus {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.changePlayerBtn {
+  padding: 0.5rem 1rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.changePlayerBtn:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+/* Player selector with multiple options */
+.playerSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.selectorLabel {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.backToDetectedBtn {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.backToDetectedBtn:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 640px) {
   .main {
     padding: 1rem;

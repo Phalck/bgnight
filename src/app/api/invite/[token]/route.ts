@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/invite/[token] - Get public invite details
@@ -9,6 +11,9 @@ export async function GET(
   const { token } = await params;
 
   try {
+    // Get current session (returns null if not logged in)
+    const session = await getServerSession(authOptions);
+
     const plannedNight = await prisma.plannedGameNight.findUnique({
       where: {
         inviteToken: token,
@@ -40,6 +45,7 @@ export async function GET(
           select: {
             id: true,
             name: true,
+            linkedUserId: true,
           },
         },
         playerResponses: {
@@ -85,6 +91,21 @@ export async function GET(
       voteCount: game.votes.length,
     }));
 
+    // Find linked players for current user
+    let linkedPlayers: { id: string; name: string }[] = [];
+    let currentUser: { id: string; name: string | null; email: string } | null = null;
+
+    if (session?.user?.id) {
+      linkedPlayers = plannedNight.players.filter(
+        p => p.linkedUserId === session.user.id
+      );
+      currentUser = {
+        id: session.user.id,
+        name: session.user.name ?? null,
+        email: session.user.email ?? '',
+      };
+    }
+
     return NextResponse.json({
       id: plannedNight.id,
       eventDateTime: plannedNight.eventDateTime,
@@ -93,6 +114,11 @@ export async function GET(
       players: plannedNight.players,
       playerResponses: plannedNight.playerResponses,
       inviteExpiresAt: plannedNight.inviteExpiresAt,
+      linkedPlayers: linkedPlayers.map(p => ({
+        id: p.id,
+        name: p.name,
+      })),
+      currentUser,
     });
   } catch (error) {
     console.error('Failed to fetch invite:', error);
