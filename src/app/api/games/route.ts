@@ -44,50 +44,53 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'BGG ID is required' }, { status: 400 });
     }
 
-    const existingGame = await prisma.game.findUnique({
-      where: { bggId: Number(bggId) },
+    const bggIdNumber = Number(bggId);
+
+    const ownGame = await prisma.game.findFirst({
+      where: { userId: session.user.id, bggId: bggIdNumber },
+      select: { id: true },
     });
 
-    if (existingGame && existingGame.userId === session.user.id) {
+    if (ownGame) {
       return NextResponse.json({ error: 'Game already in collection' }, { status: 400 });
     }
 
+    // Another account may already have this game: reuse its data to save a BGG request
+    const copySource = await prisma.game.findFirst({ where: { bggId: bggIdNumber } });
+
     let bggGame: BGGGame | null = null;
 
-    if (existingGame) {
+    if (copySource) {
       bggGame = {
-        id: existingGame.bggId,
-        name: existingGame.title,
-        thumbnail: existingGame.thumbnail || undefined,
-        image: existingGame.image || undefined,
-        minPlayers: existingGame.minPlayers,
-        maxPlayers: existingGame.maxPlayers,
-        minPlayTime: existingGame.minPlayTime || undefined,
-        maxPlayTime: existingGame.maxPlayTime || undefined,
-        yearPublished: existingGame.yearPublished || undefined,
-        description: existingGame.description || undefined,
-        mechanics: JSON.parse(existingGame.mechanics || '[]'),
-        categories: JSON.parse(existingGame.categories || '[]'),
-        designers: JSON.parse(existingGame.designers || '[]'),
-        publishers: JSON.parse(existingGame.publishers || '[]'),
+        id: copySource.bggId,
+        name: copySource.title,
+        thumbnail: copySource.thumbnail || undefined,
+        image: copySource.image || undefined,
+        minPlayers: copySource.minPlayers,
+        maxPlayers: copySource.maxPlayers,
+        minPlayTime: copySource.minPlayTime || undefined,
+        maxPlayTime: copySource.maxPlayTime || undefined,
+        yearPublished: copySource.yearPublished || undefined,
+        description: copySource.description || undefined,
+        mechanics: JSON.parse(copySource.mechanics || '[]'),
+        categories: JSON.parse(copySource.categories || '[]'),
+        designers: JSON.parse(copySource.designers || '[]'),
+        publishers: JSON.parse(copySource.publishers || '[]'),
+        complexity: copySource.complexity ?? undefined,
+        bggRating: copySource.bggRating ?? undefined,
       };
     } else {
-      bggGame = await getGameById(Number(bggId));
+      bggGame = await getGameById(bggIdNumber);
     }
 
     if (!bggGame) {
       return NextResponse.json({ error: 'Game not found on BGG' }, { status: 404 });
     }
 
-    const game = await prisma.game.upsert({
-      where: { bggId: Number(bggId) },
-      update: {
-        userId: session.user.id,
-        complexity: bggGame.complexity,
-        bggRating: bggGame.bggRating,
-      },
-      create: {
-        bggId: Number(bggId),
+    // A plain create: this must never touch another account's row
+    const game = await prisma.game.create({
+      data: {
+        bggId: bggIdNumber,
         title: bggGame.name,
         thumbnail: bggGame.thumbnail,
         image: bggGame.image,

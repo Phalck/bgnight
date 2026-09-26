@@ -52,7 +52,7 @@ model InviteCode {
 
 model Game {
   id              String   @id @default(cuid())
-  bggId           Int      @unique
+  bggId           Int
   title           String
   thumbnail       String?
   image           String?
@@ -77,6 +77,9 @@ model Game {
   playLogs        PlayLog[]
   plannedGames    PlannedGame[]
   createdAt       DateTime @default(now())
+
+  // Two accounts may own the same BGG game; one account may not own it twice
+  @@unique([userId, bggId])
 }
 
 model Player {

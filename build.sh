@@ -1,13 +1,10 @@
 #!/bin/bash
 # Build script for Vercel deployment
+#
+# Deliberately does NOT touch the database. It used to run
+# `prisma db push --accept-data-loss`, which would silently drop data on the production
+# database the moment a schema change removed or narrowed a column. Apply schema changes by
+# hand, against the database you mean, before deploying the code that needs them:
+#   DATABASE_URL=... npx prisma db push      (prompts before anything destructive)
 
-# Check if DATABASE_URL is set and contains postgresql
-if [[ -n "$DATABASE_URL" && "$DATABASE_URL" == *"postgresql"* ]]; then
-  echo "Detected PostgreSQL database, running migrations..."
-  npx prisma db push --accept-data-loss
-else
-  echo "Warning: DATABASE_URL not set or not PostgreSQL. Skipping database setup."
-fi
-
-# Build the Next.js app
 next build

@@ -10,13 +10,13 @@ jest.mock('@/lib/auth', () => ({
   authOptions: {},
 }));
 
-const mockGameFindUnique = jest.fn();
+const mockGameFindFirst = jest.fn();
 const mockGameCreate = jest.fn();
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     game: {
-      findUnique: (...args: unknown[]) => mockGameFindUnique(...args),
+      findFirst: (...args: unknown[]) => mockGameFindFirst(...args),
       create: (...args: unknown[]) => mockGameCreate(...args),
     },
   },
@@ -50,7 +50,7 @@ describe('Manual add - POST /api/games/manual', () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
     mockGetServerSession.mockResolvedValue({ user: { id: 'user-1' } });
-    mockGameFindUnique.mockResolvedValue(null);
+    mockGameFindFirst.mockResolvedValue(null);
     mockGameCreate.mockImplementation(({ data }) => created(data));
   });
 
@@ -78,7 +78,7 @@ describe('Manual add - POST /api/games/manual', () => {
   });
 
   it('rejects a game that is already in the same user\'s collection', async () => {
-    mockGameFindUnique.mockResolvedValueOnce({ userId: 'user-1' });
+    mockGameFindFirst.mockResolvedValueOnce({ userId: 'user-1' });
 
     const response = await post({ title: 'Baltic Empires', bggId: 349944 });
     const data = await response.json();
@@ -88,15 +88,21 @@ describe('Manual add - POST /api/games/manual', () => {
     expect(mockGameCreate).not.toHaveBeenCalled();
   });
 
-  it('adds the game unlinked, without touching the other user\'s row, when another account owns the BGG id', async () => {
-    mockGameFindUnique.mockResolvedValueOnce({ userId: 'user-2' });
+  it('only looks for duplicates within the current user\'s collection', async () => {
+    await post({ title: 'Baltic Empires', bggId: 349944 });
+
+    expect(mockGameFindFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'user-1', bggId: 349944 } }));
+  });
+
+  it('links the real BGG id normally even if another account owns the same game', async () => {
+    // findFirst is scoped to user-1, so another account's copy is invisible to it
+    mockGameFindFirst.mockResolvedValueOnce(null);
 
     const response = await post({ title: 'Baltic Empires', bggId: 349944 });
 
     expect(response.status).toBe(200);
     expect(mockGameCreate).toHaveBeenCalledTimes(1);
-    expect(mockGameCreate.mock.calls[0][0].data.bggId).toBeLessThan(0);
-    expect(mockGameCreate.mock.calls[0][0].data.userId).toBe('user-1');
+    expect(mockGameCreate.mock.calls[0][0].data).toMatchObject({ bggId: 349944, userId: 'user-1' });
   });
 
   it.each([0, -5, 1.5, 'abc'])('rejects an invalid BGG id (%s)', async (bggId) => {
@@ -109,7 +115,7 @@ describe('Manual add - POST /api/games/manual', () => {
     const response = await post({ title: 'My Homebrew Game' });
 
     expect(response.status).toBe(200);
-    expect(mockGameFindUnique).not.toHaveBeenCalled();
+    expect(mockGameFindFirst).not.toHaveBeenCalled();
     expect(mockGameCreate.mock.calls[0][0].data.bggId).toBeLessThan(0);
   });
 
@@ -134,7 +140,7 @@ describe('Manual add - POST /api/games/manual', () => {
     expect(mockGameCreate).toHaveBeenCalledTimes(5);
   });
 
-  it('reports a race on a real BGG id as "already in a collection", not a server error', async () => {
+  it('reports a double submit of a real BGG id as "already in your collection", not a server error', async () => {
     mockGameCreate.mockRejectedValueOnce(bggIdCollision());
 
     const response = await post({ title: 'Baltic Empires', bggId: 349944 });

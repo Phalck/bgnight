@@ -16,6 +16,10 @@
  *   2. Apply     - changes ONLY the games listed in the plan file (edit or delete entries to skip them):
  *        DATABASE_URL=... npm run fix:bggids -- --apply bgnight-bgg-id-plan.json
  *
+ * Relinking games that are currently unlinked (bggId <= 0), e.g. after bggId became unique
+ * per user instead of globally. They are only changed if a real BGG id is found:
+ *        DATABASE_URL=... npm run fix:bggids -- --include-unlinked --plan bgnight-bgg-id-plan.json
+ *
  * Offline check of the matching against real BGG, without a database:
  *        npm run fix:bggids -- --from-json rows.json --plan out.json
  *   where rows.json is [{ "id", "userId", "title", "bggId", "yearPublished" }, ...]
@@ -143,7 +147,7 @@ async function planMode() {
   const { plan, kept } = await buildPlan({
     games,
     infoById,
-    usedIds: new Set(games.map(g => g.bggId)),
+    includeUnlinked: process.argv.includes('--include-unlinked'),
     randomUnlinkedId,
     resolve: (title, year) => {
       console.log(`  searching BGG for "${title}" (${++searched})`);

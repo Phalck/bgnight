@@ -72,15 +72,23 @@ export async function buildPlan(opts: {
   games: GameRow[];
   infoById: Map<number, BggInfo>;
   resolve: Resolver;
-  usedIds: Set<number>; // every bggId currently in the table (any user)
   randomUnlinkedId: () => number;
+  // Also try to link games that are currently unlinked (bggId <= 0). Those are only ever
+  // changed when a real BGG id is found; otherwise they are left exactly as they are.
+  includeUnlinked?: boolean;
 }): Promise<{ plan: PlanEntry[]; kept: number }> {
-  const { games, infoById, resolve, usedIds, randomUnlinkedId } = opts;
-  const taken = new Set(usedIds);
+  const { games, infoById, resolve, randomUnlinkedId, includeUnlinked = false } = opts;
+
+  // bggId only has to be unique per user (@@unique([userId, bggId]))
+  const takenByUser = new Map<string, Set<number>>();
+  for (const g of games) {
+    if (!takenByUser.has(g.userId)) takenByUser.set(g.userId, new Set());
+    takenByUser.get(g.userId)!.add(g.bggId);
+  }
   const plan: PlanEntry[] = [];
   let kept = 0;
 
-  const newUnlinkedId = () => {
+  const newUnlinkedId = (taken: Set<number>) => {
     let id = randomUnlinkedId();
     while (taken.has(id)) id = randomUnlinkedId();
     taken.add(id);
@@ -88,14 +96,16 @@ export async function buildPlan(opts: {
   };
 
   for (const game of games) {
-    if (game.bggId <= 0) continue; // already unlinked
+    const alreadyUnlinked = game.bggId <= 0;
+    if (alreadyUnlinked && !includeUnlinked) continue;
 
-    const info = infoById.get(game.bggId);
+    const info = alreadyUnlinked ? undefined : infoById.get(game.bggId);
     if (info && looseMatch(game.title, info.names)) {
       kept++;
       continue;
     }
 
+    const taken = takenByUser.get(game.userId)!;
     const base = {
       gameId: game.id,
       userId: game.userId,
@@ -103,20 +113,28 @@ export async function buildPlan(opts: {
       oldBggId: game.bggId,
       oldBggName: info ? info.names[0] ?? null : null,
     };
-    const why = info
-      ? `id ${game.bggId} is "${info.names[0]}" on BGG, not this game`
-      : `id ${game.bggId} does not exist on BGG`;
+    const why = alreadyUnlinked
+      ? 'currently unlinked'
+      : info
+        ? `id ${game.bggId} is "${info.names[0]}" on BGG, not this game`
+        : `id ${game.bggId} does not exist on BGG`;
 
     const found = await resolve(game.title, game.yearPublished);
     if (found.status === 'match' && !taken.has(found.id)) {
       taken.add(found.id);
       plan.push({ ...base, newBggId: found.id, kind: 'linked', reason: `${why}; exact BGG match "${found.name}" is ${found.id}` });
-    } else if (found.status === 'match') {
-      plan.push({ ...base, newBggId: newUnlinkedId(), kind: 'unlinked', reason: `${why}; real id ${found.id} is already used by another row` });
+      continue;
+    }
+
+    // An already-unlinked game that cannot be linked is left alone
+    if (alreadyUnlinked) continue;
+
+    if (found.status === 'match') {
+      plan.push({ ...base, newBggId: newUnlinkedId(taken), kind: 'unlinked', reason: `${why}; real id ${found.id} is already in this user's collection` });
     } else if (found.status === 'ambiguous') {
-      plan.push({ ...base, newBggId: newUnlinkedId(), kind: 'unlinked', reason: `${why}; several BGG games match (${found.ids.join(', ')})` });
+      plan.push({ ...base, newBggId: newUnlinkedId(taken), kind: 'unlinked', reason: `${why}; several BGG games match (${found.ids.join(', ')})` });
     } else {
-      plan.push({ ...base, newBggId: newUnlinkedId(), kind: 'unlinked', reason: `${why}; no exact title match on BGG` });
+      plan.push({ ...base, newBggId: newUnlinkedId(taken), kind: 'unlinked', reason: `${why}; no exact title match on BGG` });
     }
   }
 

@@ -4,8 +4,8 @@ import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-// Game.bggId is unique across ALL users. Games that are not linked to BGG get a random
-// negative id: it can never collide with a real BGG id, and the bulk updater already
+// Game has a unique constraint on (userId, bggId). Games that are not linked to BGG get a
+// random negative id: it can never collide with a real BGG id, and the bulk updater already
 // treats bggId <= 0 as "not matched to BGG yet, search by title".
 const MAX_UNLINKED_ID = 2_000_000_000;
 const MAX_ATTEMPTS = 5;
@@ -60,19 +60,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Invalid BGG ID' }, { status: 400 });
       }
 
-      const existing = await prisma.game.findUnique({
-        where: { bggId },
-        select: { userId: true },
+      const existing = await prisma.game.findFirst({
+        where: { userId: session.user.id, bggId },
+        select: { id: true },
       });
 
-      if (existing?.userId === session.user.id) {
-        return NextResponse.json({ error: 'This game is already in your collection' }, { status: 400 });
-      }
       if (existing) {
-        // Another account already holds this BGG id and the column is globally unique.
-        // Add the game unlinked rather than fail (or, worse, take it over from them).
-        console.warn(`[Manual add] BGG id ${bggId} belongs to another user; adding "${title}" unlinked`);
-        bggId = null;
+        return NextResponse.json({ error: 'This game is already in your collection' }, { status: 400 });
       }
     }
 
@@ -109,8 +103,8 @@ export async function POST(request: Request) {
         if (!isBggIdCollision(error)) throw error;
 
         if (bggId !== null) {
-          // Someone added the same BGG game between our check and the insert
-          return NextResponse.json({ error: 'This game is already in a collection' }, { status: 400 });
+          // Added twice at once (double click) between our check and the insert
+          return NextResponse.json({ error: 'This game is already in your collection' }, { status: 400 });
         }
         if (attempt >= MAX_ATTEMPTS) throw error;
       }

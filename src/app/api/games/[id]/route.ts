@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 export async function PUT(
@@ -53,6 +54,9 @@ export async function PUT(
       publishers: JSON.parse(updated.publishers || '[]'),
     });
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return NextResponse.json({ error: 'Another game in your collection already uses that BGG ID' }, { status: 400 });
+    }
     console.error('Update game error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

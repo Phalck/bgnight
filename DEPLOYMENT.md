@@ -135,6 +135,19 @@ If migrations fail on Vercel:
 2. Push schema to Neon: `npx prisma db push`
 3. Redeploy
 
+## Schema Changes
+
+Deploys (`build.sh`) only build the app; they never change the database. When
+`prisma/schema.prisma` changes, apply it to Neon yourself **before** deploying the code that needs it:
+
+```bash
+set -a; source <(grep -E '^DATABASE_URL=' .env.production); set +a
+npx prisma db push      # stops and asks before anything that could lose data
+```
+
+To preview the SQL without touching the database:
+`npx prisma migrate diff --from-schema-datamodel <old schema> --to-schema-datamodel prisma/schema.prisma --script`
+
 ## Updating Your Deployment
 
 After making changes:
