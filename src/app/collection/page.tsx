@@ -76,6 +76,9 @@ interface BGGSearchResult {
   yearPublished?: number;
 }
 
+// Top of the max play time slider; at this value the time filter is off
+const MAX_TIME_SLIDER = 240;
+
 export default function CollectionPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -88,7 +91,7 @@ export default function CollectionPage() {
   const [filters, setFilters] = useState({
     minPlayers: 0,
     maxPlayers: 10,
-    maxTime: 240,
+    maxTime: MAX_TIME_SLIDER,
     mechanics: [] as string[],
     categories: [] as string[],
   });
@@ -678,7 +681,8 @@ export default function CollectionPage() {
     if (game.minPlayers > filters.maxPlayers || game.maxPlayers < filters.minPlayers) {
       return false;
     }
-    if (game.maxPlayTime && game.maxPlayTime > filters.maxTime) {
+    // The top of the slider means "any length" so long games (e.g. 6h wargames) stay visible
+    if (filters.maxTime < MAX_TIME_SLIDER && game.maxPlayTime && game.maxPlayTime > filters.maxTime) {
       return false;
     }
     if (filters.mechanics.length > 0) {
@@ -856,13 +860,13 @@ export default function CollectionPage() {
                 <input
                   type="range"
                   min="15"
-                  max="240"
+                  max={MAX_TIME_SLIDER}
                   step="15"
                   value={filters.maxTime}
                   onChange={(e) => setFilters({ ...filters, maxTime: Number(e.target.value) })}
                   className={styles.slider}
                 />
-                <span className={styles.sliderValue}>{filters.maxTime} min</span>
+                <span className={styles.sliderValue}>{filters.maxTime >= MAX_TIME_SLIDER ? `${MAX_TIME_SLIDER}+ min` : `${filters.maxTime} min`}</span>
               </div>
 
               <div className={styles.filterGroup}>
@@ -932,7 +936,7 @@ export default function CollectionPage() {
                       setFilters({
                         minPlayers: 0,
                         maxPlayers: 10,
-                        maxTime: 240,
+                        maxTime: MAX_TIME_SLIDER,
                         mechanics: [],
                         categories: [],
                       });

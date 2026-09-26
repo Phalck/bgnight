@@ -41,6 +41,9 @@ interface YouTubeVideo {
   channel: string;
 }
 
+// Top "4h+" option of the Time filter; at this value the time filter is off
+const MAX_TIME_OPTION = 240;
+
 export default function PlanBGNPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -60,7 +63,7 @@ export default function PlanBGNPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [postSearchFilters, setPostSearchFilters] = useState({
     playerCount: 4,
-    maxTime: 240,
+    maxTime: MAX_TIME_OPTION,
     mechanics: [] as string[],
     categories: [] as string[],
     minBggRating: 0,
@@ -192,7 +195,8 @@ export default function PlanBGNPage() {
       }
       
       // Play time filter
-      if (game.maxPlayTime && game.maxPlayTime > postSearchFilters.maxTime) {
+      // The top option ("4h+") means any length, so long games are not filtered out
+      if (postSearchFilters.maxTime < MAX_TIME_OPTION && game.maxPlayTime && game.maxPlayTime > postSearchFilters.maxTime) {
         return false;
       }
       
@@ -668,7 +672,7 @@ Sent via Board Game Night App 🎲`;
                     onClick={() => {
                       setPostSearchFilters({
                         playerCount: 4,
-                        maxTime: 240,
+                        maxTime: MAX_TIME_OPTION,
                         mechanics: [],
                         categories: [],
                         minBggRating: 0,
