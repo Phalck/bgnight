@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { toErrorMessage } from '@/lib/error-utils';
 
 interface CSVRow {
   objectname: string;
@@ -124,11 +125,11 @@ export async function POST(request: NextRequest) {
     try {
       formData = await request.formData();
       console.log('FormData parsed successfully');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Import failed: Cannot parse form data', err);
       return NextResponse.json({ 
         error: 'Invalid request', 
-        details: `Could not parse uploaded file: ${err.message}` 
+        details: `Could not parse uploaded file: ${toErrorMessage(err)}` 
       }, { status: 400 });
     }
     
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
     try {
       text = await file.text();
       console.log('File text length:', text.length);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Import failed: Cannot read file', err);
       return NextResponse.json({ 
         error: 'Cannot read file',
@@ -168,11 +169,11 @@ export async function POST(request: NextRequest) {
     try {
       rows = parseCSV(text);
       console.log('CSV parsed, rows:', rows.length);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Import failed: CSV parsing error', err);
       return NextResponse.json({ 
         error: 'CSV parsing failed',
-        details: err.message || 'Unable to parse CSV file. Please ensure it is a valid BGG export.'
+        details: toErrorMessage(err) || 'Unable to parse CSV file. Please ensure it is a valid BGG export.'
       }, { status: 400 });
     }
     
@@ -245,9 +246,9 @@ export async function POST(request: NextRequest) {
         });
 
         imported++;
-      } catch (err: any) {
+      } catch (err) {
         console.error(`Failed to import ${row.objectname}:`, err);
-        errors.push(`Failed to import ${row.objectname}: ${err.message}`);
+        errors.push(`Failed to import ${row.objectname}: ${toErrorMessage(err)}`);
       }
     }
 
@@ -260,11 +261,11 @@ export async function POST(request: NextRequest) {
       total: gamesToImport.length,
       success: imported > 0,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Import error:', error);
     return NextResponse.json({ 
       error: 'Internal server error',
-      details: error.message || 'An unexpected error occurred while importing'
+      details: toErrorMessage(error) || 'An unexpected error occurred while importing'
     }, { status: 500 });
   }
 }

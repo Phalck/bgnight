@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { fetchBGGGameById, BGGGameData } from '@/lib/bgg-import-client';
 import { XMLParser } from 'fast-xml-parser';
 import { bggHeaders } from '@/lib/bgg-headers';
+import { toErrorMessage } from '@/lib/error-utils';
 
 // Configure XML parser for search results
 const parser = new XMLParser({
@@ -111,8 +112,8 @@ export async function GET(request: Request) {
       logs,
     });
 
-  } catch (error: any) {
-    const errorMessage = error.message || 'Unknown error';
+  } catch (error) {
+    const errorMessage = toErrorMessage(error) || 'Unknown error';
     console.error('BGG import error:', error);
     return NextResponse.json({
       success: false,

@@ -133,7 +133,7 @@ Sent via Board Game Night App 🎲`;
 
         <div className={styles.modalActions}>
           <button className={styles.dontSaveBtn} onClick={onDontSave}>
-            Close & Don't Save
+            Close &amp; Don&apos;t Save
           </button>
           <button className={styles.saveBtn} onClick={onSave}>
             💾 Save & Close

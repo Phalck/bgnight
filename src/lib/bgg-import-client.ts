@@ -1,5 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
+import { asArray, toInt, toFloat, BggXmlItem } from './bgg-xml';
 import { bggHeaders } from './bgg-headers';
+import { toErrorMessage } from './error-utils';
 
 export interface BGGGameData {
   title: string;
@@ -94,7 +96,7 @@ function parseGameXML(xml: string): { gameData: BGGGameData | null; errors: stri
       return { gameData: null, errors };
     }
 
-    const item = Array.isArray(parsed.items.item) ? parsed.items.item[0] : parsed.items.item;
+    const item = asArray<BggXmlItem>(parsed.items.item)[0];
     
     if (!item) {
       errors.push('Could not extract item from parsed XML');
@@ -104,9 +106,9 @@ function parseGameXML(xml: string): { gameData: BGGGameData | null; errors: stri
     // Get primary name
     let title = '';
     if (item.name) {
-      const names = Array.isArray(item.name) ? item.name : [item.name];
-      const primaryName = names.find((n: any) => n['@_type'] === 'primary');
-      title = primaryName?.['@_value'] || names[0]?.['@_value'] || '';
+      const names = asArray(item.name);
+      const primaryName = names.find(n => n['@_type'] === 'primary');
+      title = String(primaryName?.['@_value'] || names[0]?.['@_value'] || '');
     }
     
     if (!title) {
@@ -116,40 +118,36 @@ function parseGameXML(xml: string): { gameData: BGGGameData | null; errors: stri
     // Get rank from ratings
     let bggRank = 0;
     if (item.statistics?.ratings?.ranks?.rank) {
-      const ranks = Array.isArray(item.statistics.ratings.ranks.rank) 
-        ? item.statistics.ratings.ranks.rank 
-        : [item.statistics.ratings.ranks.rank];
-      const boardgameRank = ranks.find((r: any) => r['@_name'] === 'boardgame');
+      const ranks = asArray(item.statistics.ratings.ranks.rank);
+      const boardgameRank = ranks.find(r => r['@_name'] === 'boardgame');
       if (boardgameRank && boardgameRank['@_value'] !== 'Not Ranked') {
-        bggRank = parseInt(boardgameRank['@_value'], 10) || 0;
+        bggRank = toInt(boardgameRank['@_value']) || 0;
       }
     }
 
     // Get links
-    const getLinks = (type: string): string[] => {
-      if (!item.link) return [];
-      const links = Array.isArray(item.link) ? item.link : [item.link];
-      return links
-        .filter((l: any) => l['@_type'] === type)
-        .map((l: any) => l['@_value'])
-        .filter(Boolean);
-    };
+    const getLinks = (type: string): string[] =>
+      asArray(item.link)
+        .filter(l => l['@_type'] === type)
+        .map(l => l['@_value'])
+        .filter(Boolean)
+        .map(String);
 
-    const complexity = parseFloat(item.statistics?.ratings?.averageweight?.['@_value']) || 0;
-    const bggRating = parseFloat(item.statistics?.ratings?.average?.['@_value']) || 0;
+    const complexity = toFloat(item.statistics?.ratings?.averageweight?.['@_value']) || 0;
+    const bggRating = toFloat(item.statistics?.ratings?.average?.['@_value']) || 0;
 
     const gameData: BGGGameData = {
       title: decodeHtmlEntities(title),
-      description: decodeHtmlEntities(item.description),
-      yearPublished: parseInt(item.yearpublished?.['@_value'], 10) || 0,
-      minPlayers: parseInt(item.minplayers?.['@_value'], 10) || 1,
-      maxPlayers: parseInt(item.maxplayers?.['@_value'], 10) || 1,
-      minPlayTime: parseInt(item.minplaytime?.['@_value'], 10) || 0,
-      maxPlayTime: parseInt(item.maxplaytime?.['@_value'], 10) || 0,
-      minAge: parseInt(item.minage?.['@_value'], 10) || 0,
+      description: decodeHtmlEntities(item.description ?? ''),
+      yearPublished: toInt(item.yearpublished?.['@_value']) || 0,
+      minPlayers: toInt(item.minplayers?.['@_value']) || 1,
+      maxPlayers: toInt(item.maxplayers?.['@_value']) || 1,
+      minPlayTime: toInt(item.minplaytime?.['@_value']) || 0,
+      maxPlayTime: toInt(item.maxplaytime?.['@_value']) || 0,
+      minAge: toInt(item.minage?.['@_value']) || 0,
       complexity,
       bggRating,
-      bggRatingsCount: parseInt(item.statistics?.ratings?.usersrated?.['@_value'], 10) || 0,
+      bggRatingsCount: toInt(item.statistics?.ratings?.usersrated?.['@_value']) || 0,
       bggRank,
       thumbnail: item.thumbnail || '',
       image: getHighResImageUrl(item.image),
@@ -161,8 +159,8 @@ function parseGameXML(xml: string): { gameData: BGGGameData | null; errors: stri
     };
 
     return { gameData, errors };
-  } catch (error: any) {
-    errors.push(`XML parsing error: ${error.message}`);
+  } catch (error) {
+    errors.push(`XML parsing error: ${toErrorMessage(error)}`);
     return { gameData: null, errors };
   }
 }

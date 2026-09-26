@@ -65,6 +65,13 @@ export async function GET() {
   }
 }
 
+interface PlannedGameInput {
+  gameId: string;
+  youtubeVideoId?: string | null;
+  youtubeVideoTitle?: string | null;
+  youtubeVideoUrl?: string | null;
+}
+
 // POST /api/planned-nights - Create new planned night
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -94,7 +101,7 @@ export async function POST(request: NextRequest) {
         eventDateTime: eventDateTime ? new Date(eventDateTime) : null,
         location: location || null,
         games: {
-          create: games.map((game: any, index: number) => ({
+          create: games.map((game: PlannedGameInput, index: number) => ({
             gameId: game.gameId,
             youtubeVideoId: game.youtubeVideoId || null,
             youtubeVideoTitle: game.youtubeVideoTitle || null,

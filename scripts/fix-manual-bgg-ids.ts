@@ -28,8 +28,10 @@
  */
 
 import * as fs from 'fs';
+import { toErrorMessage } from '../src/lib/error-utils';
 import { XMLParser } from 'fast-xml-parser';
 import { bggHeaders } from '../src/lib/bgg-headers';
+import { asArray, primaryName, toInt, BggXmlItem } from '../src/lib/bgg-xml';
 import {
   BggInfo,
   GameRow,
@@ -44,7 +46,6 @@ const REQUEST_GAP_MS = 2000;
 const THING_BATCH = 20;
 
 const xml = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', parseAttributeValue: true, trimValues: true });
-const asArray = <T>(v: T | T[] | undefined | null): T[] => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]);
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 function arg(name: string): string | undefined {
@@ -52,7 +53,7 @@ function arg(name: string): string | undefined {
   return i >= 0 ? process.argv[i + 1] : undefined;
 }
 
-async function bggGet(path: string): Promise<any> {
+async function bggGet(path: string): Promise<{ items?: { item?: BggXmlItem | BggXmlItem[] } }> {
   for (let attempt = 1; attempt <= 5; attempt++) {
     await sleep(REQUEST_GAP_MS);
     const res = await fetch(`${BGG}/${path}`, { headers: bggHeaders() });
@@ -73,11 +74,11 @@ async function fetchInfo(ids: number[]): Promise<Map<number, BggInfo>> {
     const batch = ids.slice(i, i + THING_BATCH);
     console.log(`  checking ids ${i + 1}-${i + batch.length} of ${ids.length} on BGG`);
     const parsed = await bggGet(`thing?id=${batch.join(',')}`);
-    for (const item of asArray<any>(parsed?.items?.item)) {
-      const names = asArray<any>(item.name);
+    for (const item of asArray(parsed?.items?.item)) {
+      const names = asArray(item.name);
       const primary = names.find(n => n['@_type'] === 'primary') ?? names[0];
       const ordered = [primary, ...names.filter(n => n !== primary)].map(n => String(n?.['@_value'] ?? '')).filter(Boolean);
-      map.set(Number(item['@_id']), { id: Number(item['@_id']), names: ordered, year: Number(item.yearpublished?.['@_value']) || undefined });
+      map.set(toInt(item['@_id']), { id: toInt(item['@_id']), names: ordered, year: toInt(item.yearpublished?.['@_value']) || undefined });
     }
   }
   return map;
@@ -85,12 +86,12 @@ async function fetchInfo(ids: number[]): Promise<Map<number, BggInfo>> {
 
 async function resolveByTitle(title: string, year: number | null): Promise<ResolveResult> {
   const parsed = await bggGet(`search?query=${encodeURIComponent(title)}&type=boardgame,boardgameexpansion&exact=1`);
-  const hits = asArray<any>(parsed?.items?.item)
-    .map(item => {
-      const names = asArray<any>(item.name);
-      const primary = names.find(n => n['@_type'] === 'primary') ?? names[0];
-      return { id: Number(item['@_id']), name: String(primary?.['@_value'] ?? ''), year: Number(item.yearpublished?.['@_value']) || undefined };
-    })
+  const hits = asArray(parsed?.items?.item)
+    .map(item => ({
+      id: toInt(item['@_id']),
+      name: primaryName(item) ?? '',
+      year: toInt(item.yearpublished?.['@_value']) || undefined,
+    }))
     .filter(h => h.id && exactMatch(title, [h.name]));
 
   if (hits.length === 1) return { status: 'match', id: hits[0].id, name: hits[0].name };
@@ -177,9 +178,9 @@ async function applyMode(planFile: string) {
       });
       if (result.count === 1) { done++; console.log(`  updated  "${p.title}": ${p.oldBggId} -> ${p.newBggId}`); }
       else { skipped++; console.log(`  skipped  "${p.title}": no longer has bggId ${p.oldBggId}`); }
-    } catch (error: any) {
+    } catch (error) {
       failed++;
-      console.log(`  FAILED   "${p.title}": ${error.code === 'P2002' ? `bggId ${p.newBggId} is already taken (re-run the dry run)` : error.message}`);
+      console.log(`  FAILED   "${p.title}": ${(error as { code?: string }).code === 'P2002' ? `bggId ${p.newBggId} is already taken (re-run the dry run)` : toErrorMessage(error)}`);
     }
   }
   console.log(`\nDone: ${done} updated, ${skipped} skipped, ${failed} failed.`);

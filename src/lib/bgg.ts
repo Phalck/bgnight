@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
 import { bggHeaders } from './bgg-headers';
+import { asArray, toInt, toFloat, primaryName, BggXmlItem } from './bgg-xml';
 
 // Use the bare host: www.boardgamegeek.com 301-redirects to it, and fetch drops the
 // Authorization header on a cross-host redirect, which turns into a 401.
@@ -93,12 +94,6 @@ function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// fast-xml-parser yields a bare object for one child and an array for several
-function asArray<T>(value: T | T[] | undefined): T[] {
-  if (value === undefined || value === null) return [];
-  return Array.isArray(value) ? value : [value];
-}
-
 export async function searchBGG(query: string): Promise<BGGGame[]> {
   try {
     console.log('Searching BGG for:', query);
@@ -114,7 +109,7 @@ export async function searchBGG(query: string): Promise<BGGGame[]> {
     console.log('[BGG] Search response length:', xml.length);
     console.log('[BGG] Search response preview (first 1000 chars):', xml.substring(0, 1000));
     
-    const items = asArray<any>(xmlParser.parse(xml)?.items?.item);
+    const items = asArray<BggXmlItem>(xmlParser.parse(xml)?.items?.item);
     console.log('[BGG] Search found items:', items.length);
     
     if (items.length === 0) {
@@ -124,9 +119,8 @@ export async function searchBGG(query: string): Promise<BGGGame[]> {
 
     const ids: number[] = [];
     items.slice(0, 10).forEach((item, index) => {
-      const id = parseInt(item['@_id'], 10) || 0;
-      const primary = asArray<any>(item.name).find(n => n['@_type'] === 'primary') ?? asArray<any>(item.name)[0];
-      console.log(`[BGG] Search result ${index + 1}: ID=${id}, Name=${primary?.['@_value'] ?? 'Unknown'}`);
+      const id = toInt(item['@_id']) || 0;
+      console.log(`[BGG] Search result ${index + 1}: ID=${id}, Name=${primaryName(item) ?? 'Unknown'}`);
       if (id) ids.push(id);
     });
 
@@ -174,7 +168,7 @@ async function getGamesByIds(ids: number[]): Promise<BGGGame[]> {
     console.log('[BGG] Response length:', xml.length);
     console.log('[BGG] Response preview (first 1000 chars):', xml.substring(0, 1000));
     
-    const items = asArray<any>(xmlParser.parse(xml)?.items?.item);
+    const items = asArray<BggXmlItem>(xmlParser.parse(xml)?.items?.item);
     console.log('[BGG] Number of items found:', items.length);
     
     const games: BGGGame[] = [];
@@ -245,22 +239,20 @@ function decodeHtmlEntities(text: string): string {
   return decoded;
 }
 
-function parseGameItem(item: any): BGGGame | null {
-  const id = parseInt(item['@_id'], 10) || 0;
+function parseGameItem(item: BggXmlItem): BGGGame | null {
+  const id = toInt(item['@_id']) || 0;
   if (!id) return null;
 
-  const names = asArray<any>(item.name);
-  const primary = names.find(n => n['@_type'] === 'primary') ?? names[0];
-  const name = decodeHtmlEntities(String(primary?.['@_value'] ?? 'Unknown'));
+  const name = decodeHtmlEntities(primaryName(item) ?? 'Unknown');
 
   const thumbnail = item.thumbnail ? String(item.thumbnail) : undefined;
   const image = getHighResImageUrl(item.image ? String(item.image) : undefined);
 
-  const minPlayTime = parseInt(item.minplaytime?.['@_value'], 10) || undefined;
-  const maxPlayTime = parseInt(item.maxplaytime?.['@_value'], 10) || undefined;
+  const minPlayTime = toInt(item.minplaytime?.['@_value']) || undefined;
+  const maxPlayTime = toInt(item.maxplaytime?.['@_value']) || undefined;
 
   const links = (type: string): string[] =>
-    asArray<any>(item.link)
+    asArray(item.link)
       .filter(l => l['@_type'] === type)
       .map(l => decodeHtmlEntities(String(l['@_value'] ?? '')))
       .filter(Boolean);
@@ -270,17 +262,17 @@ function parseGameItem(item: any): BGGGame | null {
     name,
     thumbnail,
     image,
-    minPlayers: parseInt(item.minplayers?.['@_value'], 10) || 1,
-    maxPlayers: parseInt(item.maxplayers?.['@_value'], 10) || 1,
+    minPlayers: toInt(item.minplayers?.['@_value']) || 1,
+    maxPlayers: toInt(item.maxplayers?.['@_value']) || 1,
     minPlayTime,
     maxPlayTime,
-    yearPublished: parseInt(item.yearpublished?.['@_value'], 10) || undefined,
+    yearPublished: toInt(item.yearpublished?.['@_value']) || undefined,
     description: decodeHtmlEntities(item.description ? String(item.description) : ''),
     mechanics: links('boardgamemechanic'),
     categories: links('boardgamecategory'),
     designers: links('boardgamedesigner'),
     publishers: links('boardgamepublisher'),
-    complexity: parseFloat(item.statistics?.ratings?.averageweight?.['@_value']) || undefined,
-    bggRating: parseFloat(item.statistics?.ratings?.average?.['@_value']) || undefined,
+    complexity: toFloat(item.statistics?.ratings?.averageweight?.['@_value']) || undefined,
+    bggRating: toFloat(item.statistics?.ratings?.average?.['@_value']) || undefined,
   };
 }

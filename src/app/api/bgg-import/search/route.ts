@@ -1,11 +1,23 @@
 import { NextResponse } from 'next/server';
 import { XMLParser } from 'fast-xml-parser';
 import { bggHeaders } from '@/lib/bgg-headers';
+import { toErrorMessage } from '@/lib/error-utils';
+import { asArray, toInt, BggXmlItem } from '@/lib/bgg-xml';
 
 interface BGGSearchResult {
   id: string;
   title: string;
   yearPublished?: number;
+}
+
+interface ParsedItem {
+  item: BggXmlItem;
+  title: string;
+  yearPublished?: number;
+}
+
+interface ScoredItem extends ParsedItem {
+  score: number;
 }
 
 interface BGGSearchResponse {
@@ -149,12 +161,12 @@ export async function GET(request: Request) {
       
       clearTimeout(timeoutId);
       logs.push(`[BGG Search] Response received: ${searchResponse.status} ${searchResponse.statusText}`);
-    } catch (fetchError: any) {
-      if (fetchError.name === 'AbortError') {
+    } catch (fetchError) {
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
         logs.push('[BGG Search] Error: Request timed out after 10s');
         throw new Error('Request timed out after 10 seconds');
       }
-      logs.push(`[BGG Search] Error: Fetch failed - ${fetchError.message}`);
+      logs.push(`[BGG Search] Error: Fetch failed - ${toErrorMessage(fetchError)}`);
       throw fetchError;
     }
     
@@ -172,8 +184,8 @@ export async function GET(request: Request) {
     try {
       searchParsed = parser.parse(searchXml);
       logs.push('[BGG Search] XML parsed successfully');
-    } catch (parseError: any) {
-      logs.push(`[BGG Search] Error: XML parsing failed - ${parseError.message}`);
+    } catch (parseError) {
+      logs.push(`[BGG Search] Error: XML parsing failed - ${toErrorMessage(parseError)}`);
       throw parseError;
     }
     
@@ -191,9 +203,7 @@ export async function GET(request: Request) {
       });
     }
     
-    let allItems = Array.isArray(searchParsed.items.item) 
-      ? searchParsed.items.item 
-      : [searchParsed.items.item];
+    const allItems = asArray<BggXmlItem>(searchParsed.items.item);
     
     logs.push(`[BGG Search] Found ${allItems.length} total items`);
     
@@ -211,25 +221,23 @@ export async function GET(request: Request) {
     }
     
     // Parse all items first for sorting
-    const parsedItems: Array<{ item: any; title: string; yearPublished?: number }> = allItems.map((item: any) => {
-      const id = item['@_id'];
-      
+    const parsedItems: ParsedItem[] = allItems.map((item): ParsedItem => {
       // Get primary name and decode HTML entities
       let title = '';
       if (item.name) {
-        const names = Array.isArray(item.name) ? item.name : [item.name];
-        const primaryName = names.find((n: any) => n['@_type'] === 'primary');
-        title = decodeHtmlEntities(primaryName?.['@_value'] || names[0]?.['@_value'] || '');
+        const names = asArray(item.name);
+        const primary = names.find(n => n['@_type'] === 'primary');
+        title = decodeHtmlEntities(String(primary?.['@_value'] || names[0]?.['@_value'] || ''));
       }
       
-      const yearPublished = parseInt(item.yearpublished?.['@_value'], 10) || undefined;
+      const yearPublished = toInt(item.yearpublished?.['@_value']) || undefined;
       
       return { item, title, yearPublished };
-    }).filter((r: any) => r.title); // Filter out entries without titles
+    }).filter(r => r.title); // Filter out entries without titles
     
     // Sort by relevance: exact match > starts with > contains > other
     const searchLower = gameName.toLowerCase().trim();
-    const scoredItems = parsedItems.map((parsed: any) => {
+    const scoredItems: ScoredItem[] = parsedItems.map((parsed): ScoredItem => {
       const titleLower = parsed.title.toLowerCase();
       let score = 0;
       
@@ -245,7 +253,7 @@ export async function GET(request: Request) {
     });
     
     // Sort by score (descending), then by year (newest first) for ties
-    scoredItems.sort((a: any, b: any) => {
+    scoredItems.sort((a, b) => {
       if (b.score !== a.score) {
         return b.score - a.score;
       }
@@ -264,11 +272,11 @@ export async function GET(request: Request) {
     logs.push(`[BGG Search] Returning items ${offset + 1} to ${offset + pageItems.length}`);
     
     // Map to final results
-    const results: BGGSearchResult[] = pageItems.map((parsed: any, index: number) => {
+    const results: BGGSearchResult[] = pageItems.map((parsed, index) => {
       logs.push(`[BGG Search] Item ${index + 1}: ID=${parsed.item['@_id']}, Title="${parsed.title}", Year=${parsed.yearPublished || 'N/A'}, Score=${parsed.score}`);
       
       return {
-        id: parsed.item['@_id'],
+        id: String(parsed.item['@_id']),
         title: parsed.title,
         yearPublished: parsed.yearPublished,
       };
@@ -287,15 +295,15 @@ export async function GET(request: Request) {
       logs,
     });
     
-  } catch (error: any) {
+  } catch (error) {
     const duration = Date.now() - startTime;
-    logs.push(`[BGG Search] Error after ${duration}ms: ${error.message}`);
+    logs.push(`[BGG Search] Error after ${duration}ms: ${toErrorMessage(error)}`);
     console.error('[BGG Search] Full error:', error);
     
     return NextResponse.json({
       success: false,
       error: 'Failed to search BoardGameGeek',
-      details: error.message,
+      details: toErrorMessage(error),
       logs,
     }, { status: 500 });
   }

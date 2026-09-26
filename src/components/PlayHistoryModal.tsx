@@ -104,7 +104,7 @@ export function PlayHistoryModal({
           ) : plays.length === 0 ? (
             <div className={styles.empty}>
               <p className={styles.emptyText}>No plays logged yet for this game</p>
-              <p className={styles.emptyHint}>Click "Log a Play" to record your first game night!</p>
+              <p className={styles.emptyHint}>Click &quot;Log a Play&quot; to record your first game night!</p>
             </div>
           ) : (
             <div className={styles.playsList}>

@@ -34,6 +34,12 @@ interface SuggestedGame {
   lastPlayedAt?: string | null;
 }
 
+// A game as returned by GET /api/games (only the fields used here)
+type CollectionGame = Omit<SuggestedGame, 'mechanics' | 'categories' | 'matchScore' | 'playCount' | 'lastPlayedAt'> & {
+  mechanics?: string[];
+  categories?: string[];
+};
+
 interface YouTubeVideo {
   id: string;
   title: string;
@@ -122,7 +128,7 @@ export default function PlanBGNPage() {
 
   const fetchAllGames = useCallback(async () => {
     try {
-      const data = await api.get<any[]>('/api/games');
+      const data = await api.get<CollectionGame[]>('/api/games');
       // Transform games to SuggestedGame format
       const transformedGames: SuggestedGame[] = data.map(game => ({
         id: game.id,
@@ -153,6 +159,8 @@ export default function PlanBGNPage() {
     if (status === 'unauthenticated') {
       router.push('/login');
     } else if (status === 'authenticated') {
+      // Loading data on mount: the state is set once the requests settle
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       Promise.all([fetchPlayers(), fetchAllGames()]).then(() => setLoading(false));
       
       // Fetch and auto-select self-player
@@ -249,12 +257,15 @@ export default function PlanBGNPage() {
       }
     });
     
+    // Kept as state (also set by fetchAllGames), so the filter result is synced from an effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFilteredSuggestions(filtered);
   }, [suggestions, postSearchFilters, searchQuery, sortOrder, hasSearched]);
 
   // Initialize filtered suggestions when suggestions change
   useEffect(() => {
     if (hasSearched) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilteredSuggestions(suggestions);
     }
   }, [suggestions, hasSearched]);

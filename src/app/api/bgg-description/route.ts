@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { XMLParser } from 'fast-xml-parser';
 import { bggHeaders } from '@/lib/bgg-headers';
+import { toErrorMessage } from '@/lib/error-utils';
 
 // Configure XML parser
 const parser = new XMLParser({
@@ -89,8 +90,8 @@ function parseDescriptionFromXML(xml: string): { description: string; errors: st
     }
 
     return { description, errors };
-  } catch (error: any) {
-    errors.push(`XML parsing error: ${error.message}`);
+  } catch (error) {
+    errors.push(`XML parsing error: ${toErrorMessage(error)}`);
     return { description: '', errors };
   }
 }
@@ -207,8 +208,8 @@ export async function GET(request: Request) {
       logs,
     });
 
-  } catch (error: any) {
-    const errorMessage = error.message || 'Unknown error';
+  } catch (error) {
+    const errorMessage = toErrorMessage(error) || 'Unknown error';
     console.error('BGG description fetch error:', error);
     return NextResponse.json({ 
       error: 'Failed to fetch description',

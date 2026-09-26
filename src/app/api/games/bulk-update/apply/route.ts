@@ -4,6 +4,31 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { clearManualEditTracking } from '@/lib/manual-edit-tracker';
 import { fetchBGGGameById } from '@/lib/bgg-import-client';
+import { Prisma } from '@prisma/client';
+
+// Game data as handed on to the update step (BGG fields renamed to the Game columns)
+interface BGGImportData {
+  id: number;
+  name: string;
+  description: string;
+  minPlayers: number;
+  maxPlayers: number;
+  minPlayTime: number;
+  maxPlayTime: number;
+  yearPublished: number;
+  thumbnail: string;
+  image: string;
+  mechanics: string[];
+  categories: string[];
+  designers: string[];
+  publishers: string[];
+  complexity: number;
+  bggRating: number;
+}
+
+// Entries of BulkUpdateSession.skippedGames / failedGames (stored as JSON strings)
+interface SkippedRecord { gameId: string; title: string; reason: string }
+interface FailedRecord { gameId: string; title: string; error: string; retryCount: number; debug?: unknown }
 
 export async function POST(request: Request) {
   try {
@@ -27,8 +52,8 @@ export async function POST(request: Request) {
 
     // Get unprocessed games
     const processedIds = bulkSession.afterData && bulkSession.afterData !== '' ? JSON.parse(bulkSession.afterData) : {};
-    const skippedIds = (bulkSession.skippedGames && bulkSession.skippedGames !== '' ? JSON.parse(bulkSession.skippedGames) : []).map((s: any) => s.gameId);
-    const failedIds = (bulkSession.failedGames && bulkSession.failedGames !== '' ? JSON.parse(bulkSession.failedGames) : []).map((f: any) => f.gameId);
+    const skippedIds = (bulkSession.skippedGames && bulkSession.skippedGames !== '' ? JSON.parse(bulkSession.skippedGames) : []).map((s: SkippedRecord) => s.gameId);
+    const failedIds = (bulkSession.failedGames && bulkSession.failedGames !== '' ? JSON.parse(bulkSession.failedGames) : []).map((f: FailedRecord) => f.gameId);
     
     const games = await prisma.game.findMany({
       where: { 
@@ -85,7 +110,7 @@ export async function POST(request: Request) {
     });
 
     // Initialize debug info and retry tracking outside try block so they're available in catch
-    let bggDebugInfo: any = {
+    let bggDebugInfo: Record<string, unknown> = {
       initialized: false,
       title: game.title,
       timestamp: new Date().toISOString()
@@ -93,7 +118,7 @@ export async function POST(request: Request) {
     
     // Check if this game was previously failed (i.e., it's a retry)
     const failedGames = bulkSession.failedGames && bulkSession.failedGames !== '' ? JSON.parse(bulkSession.failedGames) : [];
-    const wasPreviouslyFailed = failedGames.some((f: any) => f.gameId === game.id);
+    const wasPreviouslyFailed = failedGames.some((f: FailedRecord) => f.gameId === game.id);
 
     try {
       // Check if game has manual edits
@@ -129,7 +154,7 @@ export async function POST(request: Request) {
       }
 
       // Get BGG data using the working /api/bgg-import endpoint
-      let bggData: any = null;
+      let bggData: BGGImportData | null = null;
       
       // Update debug info
       bggDebugInfo = {
@@ -182,7 +207,7 @@ export async function POST(request: Request) {
           });
           
           // Build skip update data - don't increment processed if this is a retry
-          const skipUpdateData: any = {
+          const skipUpdateData: Prisma.BulkUpdateSessionUpdateInput = {
             skippedGames: JSON.stringify(skipped),
             skipped: { increment: 1 }
           };
@@ -283,7 +308,7 @@ export async function POST(request: Request) {
       const isAutoMatched = game.bggId && game.bggId > 0;
       
       // Build update data - don't increment processed if this is a retry
-      const updateData: any = {
+      const updateData: Prisma.BulkUpdateSessionUpdateInput = {
         autoMatched: isAutoMatched ? { increment: 1 } : undefined,
         manualApproved: !isAutoMatched ? { increment: 1 } : undefined,
         beforeData: JSON.stringify(existingBefore),
@@ -341,7 +366,7 @@ export async function POST(request: Request) {
       
       // Handle regular failure
       const failed = bulkSession.failedGames && bulkSession.failedGames !== '' ? JSON.parse(bulkSession.failedGames) : [];
-      const existingFailed = failed.find((f: any) => f.gameId === game.id);
+      const existingFailed = failed.find((f: FailedRecord) => f.gameId === game.id);
       const newConsecutiveFailures = consecutiveFailures + 1;
       
       if (existingFailed) {
@@ -375,7 +400,7 @@ export async function POST(request: Request) {
       }
       
       // Build failure update data - don't increment processed if this is a retry
-      const failureUpdateData: any = {
+      const failureUpdateData: Prisma.BulkUpdateSessionUpdateInput = {
         failedGames: JSON.stringify(failed),
         failed: { increment: 1 },
         consecutiveFailures: newConsecutiveFailures

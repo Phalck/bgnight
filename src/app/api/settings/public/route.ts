@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 // This endpoint is used by the registration page to check if invite-only mode is enabled
 export async function GET() {
   try {
-    let settings = await prisma.siteSettings.findFirst();
+    const settings = await prisma.siteSettings.findFirst();
     
     // Return default settings if none exist
     if (!settings) {

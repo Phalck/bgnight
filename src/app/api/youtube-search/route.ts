@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+interface YouTubeItem {
+  id: { videoId: string };
+  snippet: {
+    title: string;
+    channelTitle: string;
+    thumbnails: { medium?: { url: string }; default?: { url: string } };
+  };
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get('q');
@@ -25,7 +34,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: data.error.message }, { status: 500 });
     }
     
-    const videos = data.items.map((item: any) => ({
+    const videos = (data.items as YouTubeItem[]).map(item => ({
       id: item.id.videoId,
       title: item.snippet.title,
       thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,

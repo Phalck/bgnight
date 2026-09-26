@@ -98,6 +98,8 @@ export function Inbox() {
   useEffect(() => {
     if (!session?.user?.id) return;
 
+    // Initial fetch on mount; the polling below keeps it fresh
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUnreadCount();
     fetchMessages();
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 // GET /api/public/planned-nights - Public endpoint to list all planned nights
 export async function GET(request: NextRequest) {
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     const upcoming = searchParams.get('upcoming') === 'true';
 
     // Build where clause
-    const where: any = {};
+    const where: { eventDateTime?: Prisma.DateTimeFilter } = {};
 
     // Filter by date range
     if (dateFilter && dateFilter !== 'all') {

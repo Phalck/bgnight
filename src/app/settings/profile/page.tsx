@@ -141,7 +141,7 @@ export default function ProfileSettingsPage() {
           
           <div className={styles.settingDescription}>
             When enabled, other users can link their created players to your account. 
-            This is useful for tracking games where you participated but didn't create the player entry.
+            This is useful for tracking games where you participated but didn&apos;t create the player entry.
           </div>
         </div>
 

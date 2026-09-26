@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
+import { Prisma } from '@prisma/client';
 
 // Generate random 8-character invite code
 function generateInviteCode(): string {
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const showUsed = searchParams.get('showUsed') === 'true';
 
-    const where: any = {};
+    const where: Prisma.InviteCodeWhereInput = {};
     if (!showUsed) {
       where.usedBy = null;
     }

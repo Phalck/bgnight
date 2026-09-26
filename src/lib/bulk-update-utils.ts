@@ -2,13 +2,13 @@ import { BGGGame } from './bgg';
 
 export interface GameChange {
   field: string;
-  before: any;
-  after: any;
+  before: unknown;
+  after: unknown;
 }
 
 export function calculateChanges(
-  before: Record<string, any>,
-  after: Record<string, any>
+  before: Record<string, unknown>,
+  after: Record<string, unknown>
 ): GameChange[] {
   const changes: GameChange[] = [];
   
@@ -49,7 +49,7 @@ export function calculateChanges(
   return changes;
 }
 
-export function formatFieldValue(field: string, value: any): string {
+export function formatFieldValue(field: string, value: unknown): string {
   if (value === null || value === undefined) return 'Not set';
   
   switch (field) {

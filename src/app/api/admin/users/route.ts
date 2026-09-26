@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 // GET /api/admin/users - List all users with pagination and filters
 export async function GET(request: NextRequest) {
@@ -22,7 +24,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
     
     if (search) {
       where.OR = [
@@ -113,7 +115,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({

@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const failedGames = bulkSession.failedGames ? JSON.parse(bulkSession.failedGames) : [];
     
     // Remove the retried games from failed list
-    const updatedFailedGames = failedGames.filter((game: any) => !gameIds.includes(game.gameId));
+    const updatedFailedGames = failedGames.filter((game: { gameId: string }) => !gameIds.includes(game.gameId));
     
     // Decrement the failed count
     const newFailedCount = Math.max(0, bulkSession.failed - gameIds.length);

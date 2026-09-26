@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     const afterData = bulkSession.afterData && bulkSession.afterData !== '' ? JSON.parse(bulkSession.afterData) : {};
     
     // Calculate all changes
-    const allChanges: Record<string, any> = {};
+    const allChanges: Record<string, unknown> = {};
     for (const gameId of Object.keys(afterData)) {
       const before = beforeData[gameId];
       const after = afterData[gameId];
