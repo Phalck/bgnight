@@ -101,6 +101,9 @@ export default function AddPage() {
   const [hasPreviousResults, setHasPreviousResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  // BGG id of the game fetched from BGG (fetchedBggId) and of the one applied to the form (bggId)
+  const [fetchedBggId, setFetchedBggId] = useState<number | null>(null);
+  const [bggId, setBggId] = useState<number | null>(null);
   const [showGameSelection, setShowGameSelection] = useState(false);
 
   useEffect(() => {
@@ -122,6 +125,7 @@ export default function AddPage() {
       // Convert arrays to comma-separated strings for the API
       const gameData = {
         ...game,
+        bggId,
         mechanics: game.mechanics.join(', '),
         categories: game.categories.join(', '),
       };
@@ -129,6 +133,8 @@ export default function AddPage() {
       await api.post('/api/games/manual', gameData);
       
       addToast(`"${game.title}" added to your collection!`, 'success');
+      setBggId(null);
+      setFetchedBggId(null);
       setGame({
         title: '',
         thumbnail: '',
@@ -235,6 +241,7 @@ export default function AddPage() {
     setBggImportLoading(true);
     setBggImportError('');
     setBggImportData(null);
+    setFetchedBggId(null);
     
     try {
       const response = await fetch(`/api/bgg-import?gameId=${encodeURIComponent(gameId)}`);
@@ -250,6 +257,7 @@ export default function AddPage() {
         }
       } else {
         setBggImportData(data.data);
+        setFetchedBggId(data.bggId ?? null);
       }
     } catch (err) {
       setBggImportError('Failed to connect to BGG');
@@ -262,6 +270,7 @@ export default function AddPage() {
     setBggImportLoading(true);
     setBggImportError('');
     setBggImportData(null);
+    setFetchedBggId(null);
     
     try {
       const response = await fetch(`/api/bgg-import?gameName=${encodeURIComponent(game.title)}`);
@@ -277,6 +286,7 @@ export default function AddPage() {
         }
       } else {
         setBggImportData(data.data);
+        setFetchedBggId(data.bggId ?? null);
       }
     } catch (err) {
       setBggImportError('Failed to connect to BGG');
@@ -306,6 +316,7 @@ export default function AddPage() {
     };
 
     setGame(newGameState);
+    setBggId(fetchedBggId);
     
     setShowBGGImport(false);
     setBggImportData(null);

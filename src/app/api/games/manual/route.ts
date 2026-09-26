@@ -1,18 +1,38 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+
+// Game.bggId is unique across ALL users. Games that are not linked to BGG get a random
+// negative id: it can never collide with a real BGG id, and the bulk updater already
+// treats bggId <= 0 as "not matched to BGG yet, search by title".
+const MAX_UNLINKED_ID = 2_000_000_000;
+const MAX_ATTEMPTS = 5;
+
+function randomUnlinkedBggId(): number {
+  return -(Math.floor(Math.random() * MAX_UNLINKED_ID) + 1);
+}
+
+function isBggIdCollision(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+    return false;
+  }
+  const target = error.meta?.target;
+  return Array.isArray(target) ? target.includes('bggId') : String(target ?? '').includes('bggId');
+}
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const {
       title,
+      bggId: rawBggId,
       thumbnail,
       minPlayers,
       maxPlayers,
@@ -32,27 +52,69 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
-    const game = await prisma.game.create({
-      data: {
-        bggId: Math.floor(Math.random() * 1000000),
-        title,
-        thumbnail: thumbnail || null,
-        image: null,
-        minPlayers: minPlayers || 2,
-        maxPlayers: maxPlayers || 4,
-        minPlayTime: minPlayTime || null,
-        maxPlayTime: maxPlayTime || null,
-        yearPublished: yearPublished || null,
-        description: description || null,
-        mechanics: JSON.stringify(mechanics ? mechanics.split(',').map((m: string) => m.trim()).filter(Boolean) : []),
-        categories: JSON.stringify(categories ? categories.split(',').map((c: string) => c.trim()).filter(Boolean) : []),
-        designers: JSON.stringify(designers ? designers.split(',').map((d: string) => d.trim()).filter(Boolean) : []),
-        publishers: JSON.stringify(publishers ? publishers.split(',').map((p: string) => p.trim()).filter(Boolean) : []),
-        complexity: complexity || null,
-        bggRating: bggRating || null,
-        userId: session.user.id,
-      },
-    });
+    // Real BGG id, present when the form was filled from a BoardGameGeek import
+    let bggId: number | null = null;
+    if (rawBggId !== undefined && rawBggId !== null && rawBggId !== '') {
+      bggId = Number(rawBggId);
+      if (!Number.isInteger(bggId) || bggId <= 0) {
+        return NextResponse.json({ error: 'Invalid BGG ID' }, { status: 400 });
+      }
+
+      const existing = await prisma.game.findUnique({
+        where: { bggId },
+        select: { userId: true },
+      });
+
+      if (existing?.userId === session.user.id) {
+        return NextResponse.json({ error: 'This game is already in your collection' }, { status: 400 });
+      }
+      if (existing) {
+        // Another account already holds this BGG id and the column is globally unique.
+        // Add the game unlinked rather than fail (or, worse, take it over from them).
+        console.warn(`[Manual add] BGG id ${bggId} belongs to another user; adding "${title}" unlinked`);
+        bggId = null;
+      }
+    }
+
+    const splitList = (value: unknown) =>
+      JSON.stringify(typeof value === 'string' ? value.split(',').map(v => v.trim()).filter(Boolean) : []);
+
+    const data = {
+      title,
+      thumbnail: thumbnail || null,
+      image: null,
+      minPlayers: minPlayers || 2,
+      maxPlayers: maxPlayers || 4,
+      minPlayTime: minPlayTime || null,
+      maxPlayTime: maxPlayTime || null,
+      yearPublished: yearPublished || null,
+      description: description || null,
+      mechanics: splitList(mechanics),
+      categories: splitList(categories),
+      designers: splitList(designers),
+      publishers: splitList(publishers),
+      complexity: complexity || null,
+      bggRating: bggRating || null,
+      userId: session.user.id,
+    };
+
+    let game;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        game = await prisma.game.create({
+          data: { ...data, bggId: bggId ?? randomUnlinkedBggId() },
+        });
+        break;
+      } catch (error) {
+        if (!isBggIdCollision(error)) throw error;
+
+        if (bggId !== null) {
+          // Someone added the same BGG game between our check and the insert
+          return NextResponse.json({ error: 'This game is already in a collection' }, { status: 400 });
+        }
+        if (attempt >= MAX_ATTEMPTS) throw error;
+      }
+    }
 
     return NextResponse.json({
       ...game,
