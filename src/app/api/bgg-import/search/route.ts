@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { XMLParser } from 'fast-xml-parser';
+import { bggHeaders } from '@/lib/bgg-headers';
 
 interface BGGSearchResult {
   id: string;
@@ -79,12 +80,7 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Respons
   
   try {
     const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/xml, text/xml, */*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Referer': 'https://boardgamegeek.com/',
-      },
+      headers: bggHeaders(),
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
@@ -134,12 +130,7 @@ export async function GET(request: Request) {
     logs.push(`[BGG Search] Timeout: 10s`);
     
     // Build headers with authentication
-    const headers: Record<string, string> = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'application/xml, text/xml, */*',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Referer': 'https://boardgamegeek.com/',
-    };
+    const headers = bggHeaders();
     
     if (bggToken) {
       headers['Authorization'] = `Bearer ${bggToken}`;

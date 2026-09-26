@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { bggHeaders } from '@/lib/bgg-headers';
 
 // Common board game categories and mechanics for fallback
 const COMMON_CATEGORIES = [
@@ -65,12 +66,7 @@ async function fetchFromBGG(query: string): Promise<{ categories: string[]; mech
     const searchResponse = await fetch(
       `https://api.geekdo.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame`,
       {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/xml, text/xml, */*',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Referer': 'https://boardgamegeek.com/',
-        },
+        headers: bggHeaders(),
         signal: AbortSignal.timeout(5000),
       }
     );
@@ -92,12 +88,7 @@ async function fetchFromBGG(query: string): Promise<{ categories: string[]; mech
     const detailsResponse = await fetch(
       `https://api.geekdo.com/xmlapi2/thing?id=${gameId}`,
       {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/xml, text/xml, */*',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Referer': 'https://boardgamegeek.com/',
-        },
+        headers: bggHeaders(),
         signal: AbortSignal.timeout(5000),
       }
     );

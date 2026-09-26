@@ -1,4 +1,16 @@
-const BGG_API_BASE = 'https://www.boardgamegeek.com/xmlapi2';
+import { XMLParser } from 'fast-xml-parser';
+import { bggHeaders } from './bgg-headers';
+
+// Use the bare host: www.boardgamegeek.com 301-redirects to it, and fetch drops the
+// Authorization header on a cross-host redirect, which turns into a 401.
+const BGG_API_BASE = 'https://boardgamegeek.com/xmlapi2';
+
+const xmlParser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: '@_',
+  parseAttributeValue: true,
+  trimValues: true,
+});
 
 // Transform BGG image URL to get high-resolution version
 function getHighResImageUrl(url: string | undefined): string | undefined {
@@ -43,12 +55,7 @@ console.log('[BGG Library] All BGG env vars:', Object.keys(process.env).filter(k
 console.log('[BGG Library] ============================================');
 
 async function fetchXML(url: string): Promise<string> {
-  const headers: Record<string, string> = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': 'application/xml, text/xml, */*',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Referer': 'https://boardgamegeek.com/',
-  };
+  const headers = bggHeaders();
 
   // Add authentication token if available
   const bggToken = process.env.BGG_API_TOKEN?.trim();
@@ -57,7 +64,6 @@ async function fetchXML(url: string): Promise<string> {
   console.log('[BGG fetchXML] URL:', url);
   console.log('[BGG fetchXML] Token available:', !!bggToken);
   console.log('[BGG fetchXML] Token length:', bggToken?.length || 0);
-  console.log('[BGG fetchXML] Token preview:', bggToken ? bggToken.substring(0, 20) + '...' : 'N/A');
   
   if (bggToken) {
     headers['Authorization'] = `Bearer ${bggToken}`;
@@ -87,9 +93,10 @@ function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function parseXML(xml: string): Document {
-  const parser = new DOMParser();
-  return parser.parseFromString(xml, 'text/xml');
+// fast-xml-parser yields a bare object for one child and an array for several
+function asArray<T>(value: T | T[] | undefined): T[] {
+  if (value === undefined || value === null) return [];
+  return Array.isArray(value) ? value : [value];
 }
 
 export async function searchBGG(query: string): Promise<BGGGame[]> {
@@ -107,9 +114,7 @@ export async function searchBGG(query: string): Promise<BGGGame[]> {
     console.log('[BGG] Search response length:', xml.length);
     console.log('[BGG] Search response preview (first 1000 chars):', xml.substring(0, 1000));
     
-    const doc = parseXML(xml);
-    
-    const items = doc.querySelectorAll('item');
+    const items = asArray<any>(xmlParser.parse(xml)?.items?.item);
     console.log('[BGG] Search found items:', items.length);
     
     if (items.length === 0) {
@@ -118,13 +123,11 @@ export async function searchBGG(query: string): Promise<BGGGame[]> {
     }
 
     const ids: number[] = [];
-    items.forEach((item, index) => {
-      if (index < 10) {
-        const id = parseInt(item.getAttribute('id') || '0', 10);
-        const name = item.getAttribute('name') || 'Unknown';
-        console.log(`[BGG] Search result ${index + 1}: ID=${id}, Name=${name}`);
-        if (id) ids.push(id);
-      }
+    items.slice(0, 10).forEach((item, index) => {
+      const id = parseInt(item['@_id'], 10) || 0;
+      const primary = asArray<any>(item.name).find(n => n['@_type'] === 'primary') ?? asArray<any>(item.name)[0];
+      console.log(`[BGG] Search result ${index + 1}: ID=${id}, Name=${primary?.['@_value'] ?? 'Unknown'}`);
+      if (id) ids.push(id);
     });
 
     console.log('[BGG] IDs to fetch:', ids);
@@ -171,9 +174,7 @@ async function getGamesByIds(ids: number[]): Promise<BGGGame[]> {
     console.log('[BGG] Response length:', xml.length);
     console.log('[BGG] Response preview (first 1000 chars):', xml.substring(0, 1000));
     
-    const doc = parseXML(xml);
-    
-    const items = doc.querySelectorAll('item');
+    const items = asArray<any>(xmlParser.parse(xml)?.items?.item);
     console.log('[BGG] Number of items found:', items.length);
     
     const games: BGGGame[] = [];
@@ -244,74 +245,42 @@ function decodeHtmlEntities(text: string): string {
   return decoded;
 }
 
-function parseGameItem(item: Element): BGGGame | null {
-  const id = parseInt(item.getAttribute('id') || '0', 10);
+function parseGameItem(item: any): BGGGame | null {
+  const id = parseInt(item['@_id'], 10) || 0;
   if (!id) return null;
 
-  const nameEl = item.querySelector('name[type="primary"]');
-  const name = decodeHtmlEntities(nameEl?.getAttribute('value') || 'Unknown');
+  const names = asArray<any>(item.name);
+  const primary = names.find(n => n['@_type'] === 'primary') ?? names[0];
+  const name = decodeHtmlEntities(String(primary?.['@_value'] ?? 'Unknown'));
 
-  const thumbnail = item.querySelector('thumbnail')?.textContent || undefined;
-  const imageRaw = item.querySelector('image')?.textContent || undefined;
-  const image = getHighResImageUrl(imageRaw);
+  const thumbnail = item.thumbnail ? String(item.thumbnail) : undefined;
+  const image = getHighResImageUrl(item.image ? String(item.image) : undefined);
 
-  const minPlayers = parseInt(item.querySelector('minplayers')?.getAttribute('value') || '1', 10);
-  const maxPlayers = parseInt(item.querySelector('maxplayers')?.getAttribute('value') || '1', 10);
+  const minPlayTime = parseInt(item.minplaytime?.['@_value'], 10) || undefined;
+  const maxPlayTime = parseInt(item.maxplaytime?.['@_value'], 10) || undefined;
 
-  const minPlayTime = parseInt(item.querySelector('minplaytime')?.getAttribute('value') || '0', 10) || undefined;
-  const maxPlayTime = parseInt(item.querySelector('maxplaytime')?.getAttribute('value') || '0', 10) || undefined;
-
-  const yearPublished = parseInt(item.querySelector('yearpublished')?.getAttribute('value') || '0', 10) || undefined;
-
-  const description = decodeHtmlEntities(item.querySelector('description')?.textContent || '');
-
-  // Parse statistics (complexity/weight and rating)
-  const averageweight = item.querySelector('averageweight');
-  const complexity = averageweight ? parseFloat(averageweight.getAttribute('value') || '0') || undefined : undefined;
-
-  const average = item.querySelector('average');
-  const bggRating = average ? parseFloat(average.getAttribute('value') || '0') || undefined : undefined;
-
-  const mechanics: string[] = [];
-  item.querySelectorAll('link[type="boardgamemechanic"]').forEach(link => {
-    const value = link.getAttribute('value');
-    if (value) mechanics.push(decodeHtmlEntities(value));
-  });
-
-  const categories: string[] = [];
-  item.querySelectorAll('link[type="boardgamecategory"]').forEach(link => {
-    const value = link.getAttribute('value');
-    if (value) categories.push(decodeHtmlEntities(value));
-  });
-
-  const designers: string[] = [];
-  item.querySelectorAll('link[type="boardgamedesigner"]').forEach(link => {
-    const value = link.getAttribute('value');
-    if (value) designers.push(decodeHtmlEntities(value));
-  });
-
-  const publishers: string[] = [];
-  item.querySelectorAll('link[type="boardgamepublisher"]').forEach(link => {
-    const value = link.getAttribute('value');
-    if (value) publishers.push(decodeHtmlEntities(value));
-  });
+  const links = (type: string): string[] =>
+    asArray<any>(item.link)
+      .filter(l => l['@_type'] === type)
+      .map(l => decodeHtmlEntities(String(l['@_value'] ?? '')))
+      .filter(Boolean);
 
   return {
     id,
     name,
     thumbnail,
     image,
-    minPlayers,
-    maxPlayers,
-    minPlayTime: minPlayTime || undefined,
-    maxPlayTime: maxPlayTime || undefined,
-    yearPublished,
-    description,
-    mechanics,
-    categories,
-    designers,
-    publishers,
-    complexity,
-    bggRating,
+    minPlayers: parseInt(item.minplayers?.['@_value'], 10) || 1,
+    maxPlayers: parseInt(item.maxplayers?.['@_value'], 10) || 1,
+    minPlayTime,
+    maxPlayTime,
+    yearPublished: parseInt(item.yearpublished?.['@_value'], 10) || undefined,
+    description: decodeHtmlEntities(item.description ? String(item.description) : ''),
+    mechanics: links('boardgamemechanic'),
+    categories: links('boardgamecategory'),
+    designers: links('boardgamedesigner'),
+    publishers: links('boardgamepublisher'),
+    complexity: parseFloat(item.statistics?.ratings?.averageweight?.['@_value']) || undefined,
+    bggRating: parseFloat(item.statistics?.ratings?.average?.['@_value']) || undefined,
   };
 }

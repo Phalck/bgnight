@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
+import { bggHeaders } from './bgg-headers';
 
 export interface BGGGameData {
   title: string;
@@ -176,12 +177,7 @@ export async function fetchBGGGameById(gameId: number): Promise<BGGGameData | nu
     const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1`;
     console.log('[BGG Import] URL:', detailsUrl);
     
-    const headers: Record<string, string> = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'application/xml, text/xml, */*',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Referer': 'https://boardgamegeek.com/',
-    };
+    const headers = bggHeaders();
     
     if (bggToken) {
       headers['Authorization'] = `Bearer ${bggToken}`;
